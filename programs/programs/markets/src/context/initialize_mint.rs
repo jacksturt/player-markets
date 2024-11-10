@@ -32,7 +32,7 @@ pub struct InitializeMint<'info> {
         payer = payer,
         seeds = [b"mint", player_id.as_bytes(), timestamp.as_bytes()],
         bump,
-        mint::authority = config,
+        mint::authority = player_token_mint,
         mint::decimals = 6,
     )]
     pub player_token_mint: InterfaceAccount<'info, Mint>,
@@ -49,10 +49,11 @@ impl<'info> InitializeMint<'info> {
         timestamp: String,
         bumps: &InitializeMintBumps,
     ) -> Result<()> {
-        let config_bump = bumps.config;
+        let (config_bump, player_token_bump) = (bumps.config, bumps.player_token_mint);
 
         self.config.set_inner(PlayerMintConfig {
-            bump: config_bump,
+            config_bump,
+            player_token_bump,
             base_token_mint: self.base_token_mint.key(),
             player_token_mint: self.player_token_mint.key(),
             cost,

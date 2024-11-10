@@ -2,16 +2,17 @@ use anchor_lang::prelude::*;
 
 #[account]
 pub struct PlayerMintConfig {
-    pub bump: u8,
+    pub config_bump: u8,
     pub base_token_mint: Pubkey,
     pub player_token_mint: Pubkey,
+    pub player_token_bump: u8,
     pub cost: u64,
     pub timestamp: String,
     pub player_id: String,
 }
 
 impl Space for PlayerMintConfig {
-    const INIT_SPACE: usize = 1 + 32 + 32 + 8 + (4 + 8) + (4 + 13) + 8;
+    const INIT_SPACE: usize = 1 + 1 + 32 + 32 + 8 + (4 + 8) + (4 + 13) + 8;
 }
 
 impl PlayerMintConfig {

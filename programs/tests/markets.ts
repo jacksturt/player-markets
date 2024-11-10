@@ -98,11 +98,7 @@ describe("markets", () => {
     ).address;
 
     console.log("takerAta", takerAta.toBase58());
-    vault = getAssociatedTokenAddressSync(
-      base_token_mint,
-      player_token_mint,
-      true
-    );
+    vault = getAssociatedTokenAddressSync(base_token_mint, config, true);
 
     console.log(`Your mint ata is: ${makerAta.toBase58()}`);
     // Mint to ATA
