@@ -90,4 +90,16 @@ pub mod markets {
         ctx.accounts.swap(is_x, amount, min, expiration).unwrap();
         Ok(())
     }
+
+    pub fn init_payout(ctx: Context<InitializePayout>, payout_rate: u64) -> Result<()> {
+        ctx.accounts
+            .initialize_payout(&ctx.bumps, payout_rate)
+            .unwrap();
+        Ok(())
+    }
+
+    pub fn payout(ctx: Context<Payout>) -> Result<()> {
+        ctx.accounts.payout().unwrap();
+        Ok(())
+    }
 }

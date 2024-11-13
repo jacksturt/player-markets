@@ -56,6 +56,11 @@ describe("markets", () => {
     program.programId
   )[0];
 
+  const payoutConfig = PublicKey.findProgramAddressSync(
+    [Buffer.from("payout"), mintConfig.toBuffer()],
+    program.programId
+  )[0];
+
   const seed = new BN(randomBytes(8));
   const baseConfig = PublicKey.findProgramAddressSync(
     [Buffer.from("baseConfig")],
@@ -432,6 +437,64 @@ describe("markets", () => {
       .signers([maker])
       .rpc()
       .then(confirm)
+      .then(log)
+      .then(async () => {
+        const makerBase = await getAccount(connection, makerAtaBase);
+        console.log("maker base amount after", makerBase.amount);
+
+        const makerPlayer = await getAccount(connection, makerAtaPlayer);
+        console.log("maker player amount after", makerPlayer.amount);
+      });
+  });
+
+  it("Initialize Payout!", async () => {
+    const tx = await program.methods
+      .initPayout(new BN(20000))
+      .accountsStrict({
+        payer: maker.publicKey,
+        mintConfig,
+        payoutConfig,
+        tokenProgram: TOKEN_PROGRAM_ID,
+        associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
+        systemProgram: SystemProgram.programId,
+      })
+      .signers([maker])
+      .rpc()
+      .then(confirm)
       .then(log);
+  });
+
+  it("Payout", async () => {
+    const context = {
+      payer: maker.publicKey,
+      baseTokenMint: base_token_mint,
+      payerBaseTokenAccount: makerAtaBase,
+      playerTokenMint: player_token_mint,
+      payerPlayerTokenAccount: makerAtaPlayer,
+      mintConfig,
+      payoutConfig,
+      baseConfig,
+      tokenProgram: TOKEN_PROGRAM_ID,
+      associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
+      systemProgram: SystemProgram.programId,
+    };
+
+    Object.entries(context).forEach(([key, value]) => {
+      console.log(key, value.toBase58());
+    });
+
+    const tx = await program.methods
+      .payout()
+      .accountsStrict(context)
+      .signers([maker])
+      .rpc()
+      .then(confirm)
+      .then(log)
+      .then(async () => {
+        const makerBase = await getAccount(connection, makerAtaBase);
+        console.log("maker base amount after", makerBase.amount);
+        const makerPlayer = await getAccount(connection, makerAtaPlayer);
+        console.log("maker player amount after", makerPlayer.amount);
+      });
   });
 });
