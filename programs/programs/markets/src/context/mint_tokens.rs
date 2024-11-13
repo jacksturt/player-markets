@@ -3,7 +3,7 @@ use anchor_lang::prelude::*;
 use anchor_spl::{
     associated_token::AssociatedToken,
     token::Token,
-    token_interface::{mint_to, MintTo},
+    token_interface::{mint_to, transfer_checked, MintTo, TransferChecked},
     token_interface::{Mint, TokenAccount},
 };
 
@@ -15,7 +15,7 @@ pub struct MintTokens<'info> {
         bump,
         mint::authority = player_token_mint,
     )]
-    pub player_token_mint: Account<'info, Mint>,
+    pub player_token_mint: InterfaceAccount<'info, Mint>,
     #[account(
         seeds = [b"config", config.player_id.as_ref(), config.timestamp.as_ref()],
         bump,
@@ -27,10 +27,22 @@ pub struct MintTokens<'info> {
         associated_token::mint = player_token_mint,
         associated_token::authority = payer,
     )]
-    pub destination: Account<'info, TokenAccount>,
+    pub destination: InterfaceAccount<'info, TokenAccount>,
     #[account(mut)]
     pub payer: Signer<'info>,
-    pub rent: Sysvar<'info, Rent>,
+    #[account(
+        mut,
+        associated_token::mint = base_token_mint,
+        associated_token::authority = payer
+    )]
+    pub payer_ata_base: InterfaceAccount<'info, TokenAccount>,
+    pub base_token_mint: InterfaceAccount<'info, Mint>,
+    #[account(
+        mut,
+        associated_token::mint = base_token_mint,
+        associated_token::authority = config
+    )]
+    pub vault: InterfaceAccount<'info, TokenAccount>,
     pub system_program: Program<'info, System>,
     pub token_program: Program<'info, Token>,
     pub associated_token_program: Program<'info, AssociatedToken>,
@@ -57,6 +69,21 @@ impl<'info> MintTokens<'info> {
                 &signer,
             ),
             quantity,
+        )?;
+        let cpi_accounts = TransferChecked {
+            from: self.payer_ata_base.to_account_info(),
+            to: self.vault.to_account_info(),
+            mint: self.base_token_mint.to_account_info(),
+            authority: self.payer.to_account_info(),
+        };
+        let cpi_program = self.token_program.to_account_info();
+
+        let cpi_context = CpiContext::new(cpi_program, cpi_accounts);
+
+        transfer_checked(
+            cpi_context,
+            self.config.cost * quantity,
+            self.base_token_mint.decimals,
         )?;
 
         Ok(())
