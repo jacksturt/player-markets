@@ -2,12 +2,14 @@
   "license": "ISC",  
   "scripts": {
     "lint:fix": "prettier */*.js \"*/**/*{.js,.ts}\" -w",
-    "lint": "prettier */*.js \"*/**/*{.js,.ts}\" --check"
+    "lint": "prettier */*.js \"*/**/*{.js,.ts}\" --check",
+    "test-markets": "ts-mocha -p ./tsconfig.json -t 1000000 'tests/markets.ts'"
   },
   "dependencies": {
     "@coral-xyz/anchor": "^0.30.1",
     "@solana/spl-token": "^0.4.9",
-    "@solana/web3.js": "^1.39.0"
+    "@solana/web3.js": "^1.39.0",
+    "@cks-systems/manifest-sdk": "0.1.69"
   },
   "devDependencies": {
     "chai": "^4.3.4",

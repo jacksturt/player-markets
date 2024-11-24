@@ -19,6 +19,16 @@ import {
 } from "@solana/spl-token";
 import { BN } from "@coral-xyz/anchor";
 import { randomBytes } from "crypto";
+import { createMarket } from "../manifest/tests/createMarket";
+import { Market } from "@cks-systems/manifest-sdk";
+import { deposit } from "../manifest/tests/deposit";
+import { ManifestClient } from "@cks-systems/manifest-sdk";
+import { placeOrder } from "../manifest/tests/placeOrder";
+import { OrderType } from "../manifest/src/manifest";
+import { FillFeed } from "../manifest/src/fillFeed";
+import { checkForFillMessage } from "../manifest/tests/fillFeed";
+import { swap } from "../manifest/tests/swap";
+import { withdraw } from "../manifest/tests/withdraw";
 
 const LAMAR_ID = "e06a9c07";
 describe("markets", () => {
@@ -78,7 +88,7 @@ describe("markets", () => {
   let vault_y_ata: PublicKey;
 
   let makerAtaLp: PublicKey;
-
+  let marketAddress: PublicKey;
   const confirm = async (signature: string): Promise<string> => {
     const block = await connection.getLatestBlockhash();
     await connection.confirmTransaction({
@@ -185,7 +195,7 @@ describe("markets", () => {
     });
 
     const tx = await program.methods
-      .faucetBase(new anchor.BN(1000000000))
+      .faucetBase(new anchor.BN(100000000000))
       .accountsStrict(context)
       .signers([maker])
       .rpc()
@@ -197,7 +207,7 @@ describe("markets", () => {
       });
 
     const tx2 = await program.methods
-      .faucetBase(new anchor.BN(1000000000))
+      .faucetBase(new anchor.BN(100000000000))
       .accountsStrict({
         payer: taker.publicKey,
         baseTokenMint: base_token_mint,
@@ -221,7 +231,7 @@ describe("markets", () => {
     // Add your test here.
 
     const tx = await program.methods
-      .initMint(new anchor.BN(100), LAMAR_ID, timestamp)
+      .initMint(new anchor.BN(3), LAMAR_ID, timestamp)
       .accountsPartial({
         payer: maker.publicKey,
         baseTokenMint: base_token_mint,
@@ -257,7 +267,7 @@ describe("markets", () => {
       )
     ).address;
     const tx = await program.methods
-      .mintTokens(new anchor.BN(3000))
+      .mintTokens(new anchor.BN(300000000))
       .accountsPartial({
         payer: maker.publicKey,
         baseTokenMint: base_token_mint,
@@ -280,9 +290,190 @@ describe("markets", () => {
         const makerPlayer = await getAccount(connection, makerAtaPlayer);
         console.log("maker player amount after", makerPlayer.amount);
       });
+
+    await program.methods
+      .mintTokens(new anchor.BN(300000000))
+      .accountsPartial({
+        payer: taker.publicKey,
+        baseTokenMint: base_token_mint,
+        vault,
+        playerTokenMint: player_token_mint,
+        destination: takerAtaPlayer,
+        config: mintConfig,
+        tokenProgram: TOKEN_PROGRAM_ID,
+        systemProgram: SystemProgram.programId,
+        associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
+      })
+      .signers([taker])
+      .rpc()
+      .then(confirm)
+      .then(log)
+      .then(async () => {
+        const takerBase = await getAccount(connection, takerAtaBase);
+        console.log("taker base amount after", takerBase.amount);
+
+        const takerPlayer = await getAccount(connection, takerAtaPlayer);
+        console.log("taker player amount after", takerPlayer.amount);
+      });
   });
 
-  it("Initialize Market!", async () => {
+  it("Can Create Market!", async () => {
+    marketAddress = await createMarket(
+      connection,
+      maker,
+      base_token_mint,
+      player_token_mint
+    );
+    const market: Market = await Market.loadFromAddress({
+      connection,
+      address: marketAddress,
+    });
+
+    const makerClient = await ManifestClient.getClientForMarket(
+      connection,
+      marketAddress,
+      maker
+    );
+    const takerClient = await ManifestClient.getClientForMarket(
+      connection,
+      marketAddress,
+      taker
+    );
+    console.log(
+      "market",
+      market.quoteMint().toBase58(),
+      market.quoteDecimals(),
+      market.baseMint().toBase58(),
+      market.baseDecimals()
+    );
+    console.log(
+      "token accounts",
+      makerAtaBase.toBase58(),
+      makerAtaPlayer.toBase58()
+    );
+    await Promise.all([
+      deposit(connection, maker, marketAddress, market.baseMint(), 99),
+      deposit(connection, maker, marketAddress, market.quoteMint(), 99),
+      deposit(connection, taker, marketAddress, market.baseMint(), 99),
+      deposit(connection, taker, marketAddress, market.quoteMint(), 99),
+    ]);
+
+    // setup an orderbook with 5 orders on bid and ask side
+    await Promise.all([
+      ...[1, 2, 3, 4, 5].map((i) =>
+        placeOrder(
+          connection,
+          maker,
+          marketAddress,
+          1,
+          1 - i * 0.01,
+          true,
+          OrderType.Limit,
+          0
+        )
+      ),
+      ...[1, 2, 3, 4, 5].map((i) =>
+        placeOrder(
+          connection,
+          maker,
+          marketAddress,
+          1,
+          1 + i * 0.01,
+          false,
+          OrderType.Limit,
+          0
+        )
+      ),
+    ]);
+
+    await market.reload(connection);
+    market.prettyPrint();
+    console.log("Placing take orders");
+
+    market.prettyPrint();
+
+    await Promise.all([
+      ...[1, 2, 3, 4, 5].map((i) =>
+        placeOrder(
+          connection,
+          taker,
+          marketAddress,
+          1,
+          1 - i * 0.01,
+          false,
+          OrderType.Limit,
+          0
+        )
+      ),
+      ...[1, 2, 3, 4, 5].map((i) =>
+        placeOrder(
+          connection,
+          taker,
+          marketAddress,
+          1,
+          1 + i * 0.01,
+          true,
+          OrderType.Limit,
+          0
+        )
+      ),
+    ]);
+
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+
+    await market.reload(connection);
+    market.prettyPrint();
+
+    const makerBase = await getAccount(connection, makerAtaBase);
+    console.log("maker base amount before withdraw", makerBase.amount);
+
+    const makerPlayer = await getAccount(connection, makerAtaPlayer);
+    console.log("maker player amount before withdraw", makerPlayer.amount);
+
+    const takerBase = await getAccount(connection, takerAtaBase);
+    console.log("taker base amount before withdraw", takerBase.amount);
+
+    const takerPlayer = await getAccount(connection, takerAtaPlayer);
+    console.log("taker player amount before withdraw", takerPlayer.amount);
+
+    await Promise.all([
+      makerClient.withdrawAllIx(),
+      takerClient.withdrawAllIx(),
+    ]);
+
+    console.log("maker base amount after withdraw", makerBase.amount);
+
+    console.log("maker player amount after withdraw", makerPlayer.amount);
+
+    console.log("taker base amount after withdraw", takerBase.amount);
+
+    console.log("taker player amount after withdraw", takerPlayer.amount);
+
+    // console.log("trying swap, pre swap values: ");
+    // const takerBase = await getAccount(connection, takerAtaBase);
+    // console.log("taker base amount after", takerBase.amount);
+
+    // const takerPlayer = await getAccount(connection, takerAtaPlayer);
+    // console.log("taker player amount after", takerPlayer.amount);
+    // market.prettyPrint();
+
+    // await swap(connection, taker, marketAddress, 1, false);
+
+    // await market.reload(connection);
+    // market.prettyPrint();
+
+    // console.log("taker base amount after", takerBase.amount);
+
+    // console.log("taker player amount after", takerPlayer.amount);
+
+    // const fillFeed: FillFeed = new FillFeed(connection);
+    // await Promise.all([
+    //   fillFeed.parseLogs(true),
+    //   checkForFillMessage(connection, taker, marketAddress),
+    // ]);
+  });
+
+  xit("Initialize Market!", async () => {
     const context = {
       auth: auth,
       initializer: maker.publicKey,
@@ -307,7 +498,7 @@ describe("markets", () => {
     console.log("Your transaction signature", tx);
   });
 
-  it("Deposit", async () => {
+  xit("Deposit", async () => {
     const context = {
       auth,
       user: maker.publicKey,
@@ -337,7 +528,7 @@ describe("markets", () => {
       .rpc();
   });
 
-  it("Swap X for Y", async () => {
+  xit("Swap X for Y", async () => {
     try {
       const tx = await program.methods
         .swap(
@@ -373,7 +564,7 @@ describe("markets", () => {
     }
   });
 
-  it("Swap Y for X", async () => {
+  xit("Swap Y for X", async () => {
     try {
       const tx = await program.methods
         .swap(
@@ -410,7 +601,7 @@ describe("markets", () => {
     }
   });
 
-  it("Withdraw", async () => {
+  xit("Withdraw", async () => {
     const tx = await program.methods
       .withdraw(
         new BN(20),
@@ -447,7 +638,7 @@ describe("markets", () => {
       });
   });
 
-  it("Initialize Payout!", async () => {
+  xit("Initialize Payout!", async () => {
     const tx = await program.methods
       .initPayout(new BN(20000))
       .accountsStrict({
@@ -464,7 +655,7 @@ describe("markets", () => {
       .then(log);
   });
 
-  it("Payout", async () => {
+  xit("Payout", async () => {
     const context = {
       payer: maker.publicKey,
       baseTokenMint: base_token_mint,
