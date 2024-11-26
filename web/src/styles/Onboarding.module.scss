@@ -1,0 +1,43 @@
+.main {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  min-height: 100vh;
+  background-color: #F2C1FB;
+}
+
+.content {
+  padding: 0rem 2rem;
+}
+
+.mainImage {
+  max-width: 25rem;
+  width: 100%;
+}
+
+.input {
+  width: 100%;
+  margin-top: 1rem;
+  outline: black;
+}
+
+.signInButton {
+  height: 3rem;
+  width: 100%;
+  margin-top: 1rem;
+  background-color: black;
+  color: white;
+  &:hover {
+    background-color: black;
+    color: white;
+    opacity: 0.8;
+  }
+}
+
+.inviteCode {
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: black;
+  margin-top: 1rem;
+}

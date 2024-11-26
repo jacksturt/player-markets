@@ -1,0 +1,157 @@
+.main {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: center;
+  min-height: 108vh;
+}
+
+.content {
+  width: 100%;
+  height: 100%;
+  padding: 0rem 1rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+}
+
+.innerContent {
+  height: 100%;
+  max-width: var(--max-width);
+  width: 100%;
+  margin: 4rem 0rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+}
+
+.profileData {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  & img {
+    width: 10rem;
+    border-radius: 24rem;
+  }
+  & h1 {
+    font-size: 2.4rem;
+    font-weight: 600;
+    color: var(--primary);
+    text-align: center;
+  }
+  & h2 {
+    font-size: 1.6rem;
+    font-weight: 500;
+    color: var(--primary);
+    text-align: center;
+    opacity: 0.6;
+  }
+  margin-bottom: 1.2rem;
+}
+
+.username {
+  display: flex;
+  position: relative;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.profileDataDetails {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  & p {
+    font-size: 1rem;
+    font-weight: 400;
+    color: var(--primary);
+    opacity: 0.85;
+  }
+}
+
+.profileDataLeft {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.5rem;
+}
+
+.profileDataRight {
+  display: flex;
+  align-items: right;
+  flex-direction: column;
+  justify-content: flex-end;
+}
+
+.profileContent {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  margin-top: 2rem;
+}
+
+.skeletons {
+  width: 100%;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1rem;
+  margin-top: 2.4rem;
+  align-items: center;
+  justify-items: center;
+  // @media only screen and (max-width: 1500px) {
+  //   grid-template-columns: 1fr 1fr;
+  // }
+  @media only screen and (max-width: 1000px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.markets {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  margin-top: 2.4rem;
+}
+
+.sortOptions {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-top: 1.2rem;
+}
+
+.sortOptionsTrigger {
+  width: 145px;
+  border: 2px solid #f2c1fb;
+  color: white;
+}
+
+.sortOptionsContent {
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+.rewardsPanel {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin-top: 1.2rem;
+  :hover {
+    background-color: #f2c1fb;
+    color: black;
+  }
+}
+.rewardsPanel:hover .btn {
+  background-color: black;
+  color: #fff;
+}

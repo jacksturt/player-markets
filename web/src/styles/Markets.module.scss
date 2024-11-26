@@ -1,0 +1,376 @@
+.main {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: center;
+  min-height: 100vh;
+  height: 100%;
+  overflow: hidden; 
+}
+
+.threeColumnLayout {
+  width: 100%;
+  display: flex;
+  height: calc(100vh - 4.4rem);
+
+  @media (max-width: 1200px) {
+    flex-direction: column;
+    height: auto;
+    overflow-y: auto;
+  }
+}
+
+.leftColumn,
+.centerColumn,
+.rightColumn {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow-y: auto; 
+
+  @media (max-width: 1200px) {
+    width: 100%;
+    height: auto;
+    overflow: visible;
+  }
+}
+
+.leftColumn,
+.rightColumn {
+  width: 32rem;
+  @media (max-width: 1800px) {
+    width: 28rem;
+  }
+  @media (max-width: 1200px) {
+    width: 100%;
+  }
+}
+
+.centerColumn {
+  flex-grow: 1;
+  border-left: 1px solid hsl(var(--border));
+  border-right: 1px solid hsl(var(--border));
+}
+
+.mediaContainer {
+  height: 60%;
+  min-height: 0;
+  overflow-y: auto;
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: center;
+  border-bottom: 1px solid hsl(var(--border));
+
+  /* Scrollbar styling */
+  scrollbar-width: thin;
+  scrollbar-color: #f2c1fb transparent;
+  direction: rtl;
+
+  & > * {
+    direction: ltr;
+  }
+
+  &::-webkit-scrollbar {
+    width: 1px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background-color: #f2c1fb;
+    border-radius: 1px;
+  }
+
+  img {
+    max-width: 100%;
+    display: block;
+    margin: auto;
+  }
+
+  @media (max-width: 1200px) {
+    height: auto;
+  }
+}
+
+.topCollectorsTitle {
+  font-size: 1.5rem;
+  font-weight: 600;
+  text-align: center;
+  color: var(--primary);
+  margin-top: 0.5rem;
+}
+
+.topCollectors {
+  height: 40%;
+  overflow-y: auto;
+
+  @media (max-width: 1200px) {
+    height: auto;
+    max-height: 50vh;
+  }
+}
+
+.innerContent {
+  height: 60%;
+  display: flex;
+  flex-direction: column;
+  border-top: 1px solid hsl(var(--border));
+
+  @media (max-width: 1200px) {
+    height: auto;
+  }
+}
+
+.marketDataChild {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: center;
+  & > div::-webkit-scrollbar {
+    display: none !important;
+  }
+  & > div {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+}
+
+.tradingViewContainer {
+  height: calc(100% - 80px);
+  min-height: 0;
+  width: 100%;
+  border-bottom: 1px solid hsl(var(--border));
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  overflow: hidden;
+}
+
+.tradesTitle {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--primary);
+  text-align: center;
+  margin-top: 0.5rem;
+}
+
+.trades {
+  height: 40%;
+  width: 100%;
+  display: flex;
+  overflow-y: auto;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: center;
+  scrollbar-width: thin;
+  scrollbar-color: #f2c1fb transparent;
+
+  &::-webkit-scrollbar {
+    width: 1px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background-color: #f2c1fb;
+    border-radius: 1px;
+  }
+
+  @media (max-width: 1200px) {
+    height: auto;
+    max-height: 50vh;
+  }
+}
+
+.buyContainer {
+  height: 60%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  max-width: 32rem;
+  width: 100%;
+  padding: 0rem 1rem;
+  border-bottom: 1px solid hsl(var(--border));
+
+  @media (max-width: 1800px) {
+    max-width: 28rem;
+  }
+  @media (max-width: 1200px) {
+    max-width: 100%;
+    height: auto;
+  }
+}
+
+.collectionTitle {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--primary);
+  text-align: center;
+  margin-top: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.collectionContainer {
+  height: 40%;
+  padding: 0 1rem;
+  overflow-y: auto;
+
+  @media (max-width: 1200px) {
+    height: auto;
+    max-height: 50vh;
+  }
+}
+
+.rarityGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+.rarityItem {
+  background-color: hsl(var(--muted));
+  border-radius: 0.5rem;
+  padding: 1rem;
+  text-align: center;
+  border: 2px solid transparent;
+}
+
+.rarityItemCommon {
+  border-color: #c0c0c0;
+}
+
+.rarityItemRare {
+  border-color: #0070dd;
+}
+
+.rarityItemEpic {
+  border-color: #a335ee;
+}
+
+.rarityItemLegendary {
+  border-color: #ff8000;
+}
+
+.trendingBangers {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+}
+
+.tradeBoxParent {
+  width: 100%;
+  margin-top: 1rem;
+  margin-bottom: 1rem;
+}
+
+.tradeInfo {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 1rem;
+  width: 100%;
+  height: 8rem;
+  background-color: hsl(var(--muted));
+  border-radius: 0.5rem;
+  margin-top: 1.8rem !important;
+  color: hsl(var(--muted-foreground));
+}
+
+.noTrades {
+  flex-grow: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: hsl(var(--muted-foreground));
+}
+
+.noTradesText {
+  color: hsl(var(--muted-foreground));
+  margin-top: 10rem;
+  text-align: center;
+}
+
+.tradeSettingsContainer {
+  position: absolute;
+  top: 1.5rem;
+  right: 1.5rem;
+}
+
+.tradeSettingsButton {
+  background-color: hsl(var(--muted));
+  border-radius: 0.5rem;
+  padding: 0.5rem;
+}
+
+.selectTab {
+  position: absolute;
+  top: 1.5rem;
+  right: 5rem;
+}
+
+// Auctions
+.heading {
+  font-size: 3rem;
+  font-weight: 600;
+  color: var(--primary);
+  text-align: center;
+}
+
+.auctionContent {
+  width: 100%;
+  height: 100%;
+  padding: 0rem 1rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+}
+
+.auctionInnerContent {
+  height: 100%;
+  max-width: var(--max-width);
+  width: 100%;
+  margin: 2rem 0rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+}
+
+.countdown {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  margin-top: 2rem;
+}
+
+.countdownLabels {
+  width: 14rem;
+  height: 14rem;
+  border-radius: 1rem;
+  font-size: 3rem;
+  font-weight: 600;
+  color: black;
+  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #f2c1fb;
+}
+
+.auctionDetails {
+  max-width: 44rem;
+  width: 100%;
+}
