@@ -73,6 +73,131 @@ export function MintPlayerTokens() {
   );
 }
 
+export function CreateMarket() {
+  const { createMarket } = usePlayerMarket(
+    "LAMAR",
+    "1734806520656",
+    new PublicKey("7LpfB6CKHbCXofLT64KeJrfrhvk98U9jUcAHCdZiSqdL")
+  );
+
+  return (
+    <button
+      className="btn btn-xs lg:btn-md btn-primary"
+      onClick={() => createMarket.mutateAsync()}
+      disabled={createMarket.isPending}
+    >
+      Create Market {createMarket.isPending && "..."}
+    </button>
+  );
+}
+
+export function DepositBase() {
+  const { depositBase } = usePlayerMarket(
+    "LAMAR",
+    "1734806520656",
+    new PublicKey("7LpfB6CKHbCXofLT64KeJrfrhvk98U9jUcAHCdZiSqdL")
+  );
+
+  return (
+    <button
+      className="btn btn-xs lg:btn-md btn-primary"
+      onClick={() => depositBase.mutateAsync(100)}
+      disabled={depositBase.isPending}
+    >
+      Deposit Base {depositBase.isPending && "..."}
+    </button>
+  );
+}
+
+export function DepositQuote() {
+  const { depositQuote } = usePlayerMarket(
+    "LAMAR",
+    "1734806520656",
+    new PublicKey("7LpfB6CKHbCXofLT64KeJrfrhvk98U9jUcAHCdZiSqdL")
+  );
+
+  return (
+    <button
+      className="btn btn-xs lg:btn-md btn-primary"
+      onClick={() => depositQuote.mutateAsync(100)}
+      disabled={depositQuote.isPending}
+    >
+      Deposit Quote {depositQuote.isPending && "..."}
+    </button>
+  );
+}
+
+export function Buy() {
+  const { buy } = usePlayerMarket(
+    "LAMAR",
+    "1734806520656",
+    new PublicKey("7LpfB6CKHbCXofLT64KeJrfrhvk98U9jUcAHCdZiSqdL")
+  );
+
+  return (
+    <button
+      className="btn btn-xs lg:btn-md btn-primary"
+      onClick={() => buy.mutateAsync(10)}
+      disabled={buy.isPending}
+    >
+      Buy {buy.isPending && "..."}
+    </button>
+  );
+}
+
+export function Sell() {
+  const { sell } = usePlayerMarket(
+    "LAMAR",
+    "1734806520656",
+    new PublicKey("7LpfB6CKHbCXofLT64KeJrfrhvk98U9jUcAHCdZiSqdL")
+  );
+
+  return (
+    <button
+      className="btn btn-xs lg:btn-md btn-primary"
+      onClick={() => sell.mutateAsync(10)}
+      disabled={sell.isPending}
+    >
+      Sell {sell.isPending && "..."}
+    </button>
+  );
+}
+
+export function WithdrawAll() {
+  const { withdrawAll } = usePlayerMarket(
+    "LAMAR",
+    "1734806520656",
+    new PublicKey("7LpfB6CKHbCXofLT64KeJrfrhvk98U9jUcAHCdZiSqdL")
+  );
+
+  return (
+    <button
+      className="btn btn-xs lg:btn-md btn-primary"
+      onClick={() => withdrawAll.mutateAsync()}
+      disabled={withdrawAll.isPending}
+    >
+      Withdraw All {withdrawAll.isPending && "..."}
+    </button>
+  );
+}
+export function PrintMarket() {
+  const { printMarket } = usePlayerMarket(
+    "LAMAR",
+    "1734806520656",
+    new PublicKey("7LpfB6CKHbCXofLT64KeJrfrhvk98U9jUcAHCdZiSqdL")
+  );
+
+  return (
+    <button
+      className="btn btn-xs lg:btn-md btn-primary"
+      onClick={() => printMarket.mutateAsync()}
+      disabled={printMarket.isPending}
+    >
+      Print Market {printMarket.isPending && "..."}
+    </button>
+  );
+}
+
 export function InitPayout() {
   const { initPayout } = usePlayerMarket(
     "LAMAR",
@@ -106,152 +231,5 @@ export function Payout() {
     >
       Payout {payout.isPending && "..."}
     </button>
-  );
-}
-
-export function WebCreate() {
-  const { initialize } = useWebProgram();
-
-  return (
-    <button
-      className="btn btn-xs lg:btn-md btn-primary"
-      onClick={() => initialize.mutateAsync(Keypair.generate())}
-      disabled={initialize.isPending}
-    >
-      Create {initialize.isPending && "..."}
-    </button>
-  );
-}
-
-export function WebList() {
-  const { accounts, getProgramAccount } = useWebProgram();
-
-  if (getProgramAccount.isLoading) {
-    return <span className="loading loading-spinner loading-lg"></span>;
-  }
-  if (!getProgramAccount.data?.value) {
-    return (
-      <div className="alert alert-info flex justify-center">
-        <span>
-          Program account not found. Make sure you have deployed the program and
-          are on the correct cluster.
-        </span>
-      </div>
-    );
-  }
-  return (
-    <div className={"space-y-6"}>
-      {accounts.isLoading ? (
-        <span className="loading loading-spinner loading-lg"></span>
-      ) : accounts.data?.length ? (
-        <div className="grid md:grid-cols-2 gap-4">
-          {accounts.data?.map((account) => (
-            <WebCard
-              key={account.publicKey.toString()}
-              account={account.publicKey}
-            />
-          ))}
-        </div>
-      ) : (
-        <div className="text-center">
-          <h2 className={"text-2xl"}>No accounts</h2>
-          No accounts found. Create one above to get started.
-        </div>
-      )}
-    </div>
-  );
-}
-
-function WebCard({ account }: { account: PublicKey }) {
-  const {
-    accountQuery,
-    incrementMutation,
-    setMutation,
-    decrementMutation,
-    closeMutation,
-  } = useWebProgramAccount({
-    account,
-  });
-
-  const count = useMemo(
-    () => accountQuery.data?.count ?? 0,
-    [accountQuery.data?.count]
-  );
-
-  return accountQuery.isLoading ? (
-    <span className="loading loading-spinner loading-lg"></span>
-  ) : (
-    <div className="card card-bordered border-base-300 border-4 text-neutral-content">
-      <div className="card-body items-center text-center">
-        <div className="space-y-6">
-          <h2
-            className="card-title justify-center text-3xl cursor-pointer"
-            onClick={() => accountQuery.refetch()}
-          >
-            {count}
-          </h2>
-          <div className="card-actions justify-around">
-            <button
-              className="btn btn-xs lg:btn-md btn-outline"
-              onClick={() => incrementMutation.mutateAsync()}
-              disabled={incrementMutation.isPending}
-            >
-              Increment
-            </button>
-            <button
-              className="btn btn-xs lg:btn-md btn-outline"
-              onClick={() => {
-                const value = window.prompt(
-                  "Set value to:",
-                  count.toString() ?? "0"
-                );
-                if (
-                  !value ||
-                  parseInt(value) === count ||
-                  isNaN(parseInt(value))
-                ) {
-                  return;
-                }
-                return setMutation.mutateAsync(parseInt(value));
-              }}
-              disabled={setMutation.isPending}
-            >
-              Set
-            </button>
-            <button
-              className="btn btn-xs lg:btn-md btn-outline"
-              onClick={() => decrementMutation.mutateAsync()}
-              disabled={decrementMutation.isPending}
-            >
-              Decrement
-            </button>
-          </div>
-          <div className="text-center space-y-4">
-            <p>
-              <ExplorerLink
-                path={`account/${account}`}
-                label={ellipsify(account.toString())}
-              />
-            </p>
-            <button
-              className="btn btn-xs btn-secondary btn-outline"
-              onClick={() => {
-                if (
-                  !window.confirm(
-                    "Are you sure you want to close this account?"
-                  )
-                ) {
-                  return;
-                }
-                return closeMutation.mutateAsync();
-              }}
-              disabled={closeMutation.isPending}
-            >
-              Close
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
   );
 }

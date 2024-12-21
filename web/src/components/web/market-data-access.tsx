@@ -3,7 +3,14 @@
 import { getMarketsProgram, getMarketsProgramId } from "@project/anchor";
 import { BN } from "@coral-xyz/anchor";
 import { useConnection } from "@solana/wallet-adapter-react";
-import { Cluster, Keypair, PublicKey, SystemProgram } from "@solana/web3.js";
+import {
+  Cluster,
+  Keypair,
+  PublicKey,
+  SystemProgram,
+  Transaction,
+  TransactionInstruction,
+} from "@solana/web3.js";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useMemo } from "react";
 import toast from "react-hot-toast";
@@ -17,6 +24,24 @@ import {
   getAssociatedTokenAddressSync,
   TOKEN_PROGRAM_ID,
 } from "@solana/spl-token";
+import { createMarketTX } from "manifest/instructions/createMarket";
+import NodeWallet from "@coral-xyz/anchor/dist/cjs/nodewallet";
+import { ManifestClient } from "manifest/src/client";
+// import {
+//   ManifestClient,
+//   Wrapper,
+//   manifest,
+//   wrapper,
+// } from "@cks-systems/manifest-sdk";
+// const {
+//   createCreateWrapperInstruction,
+//   PROGRAM_ID: WRAPPER_PROGRAM_ID,
+//   createClaimSeatInstruction,
+// } = wrapper;
+// manifest;
+import { FIXED_WRAPPER_HEADER_SIZE } from "manifest/src/constants";
+import { OrderType } from "manifest/src/manifest";
+import { Market } from "manifest/src";
 
 export function useBaseToken() {
   const { connection } = useConnection();
@@ -188,17 +213,20 @@ export function useMarkets() {
 export function usePlayerMarket(
   playerId: string,
   timestamp: string,
-  publicKey: PublicKey
+  playerMintPK: PublicKey
 ) {
   const { cluster } = useCluster();
   const transactionToast = useTransactionToast();
   const { program, accounts, baseToken } = useBaseToken();
   const provider = useAnchorProvider();
+  const marketPK = new PublicKey(
+    "8U53ooCTZR6kqeNHT6cEEP7WpVbQWNwVkjMc8HdVodwQ"
+  );
 
-  const market = useQuery({
+  const marketAccount = useQuery({
     queryKey: ["market", "fetch", { cluster }],
     queryFn: async () => {
-      const market = await program.account.playerMintConfig.fetch(publicKey);
+      const market = await program.account.playerMintConfig.fetch(playerMintPK);
       console.log("market", market);
       return market;
     },
@@ -240,6 +268,162 @@ export function usePlayerMarket(
       return accounts.refetch();
     },
     onError: () => toast.error("Failed to mint tokens"),
+  });
+
+  const createMarket = useMutation({
+    mutationKey: ["market", "create", { cluster }],
+    mutationFn: () => {
+      const player_token_mint = PublicKey.findProgramAddressSync(
+        [Buffer.from("mint"), Buffer.from(playerId), Buffer.from(timestamp)],
+        program.programId
+      )[0];
+      return createMarketTX(
+        provider.connection,
+        provider,
+        baseToken,
+        player_token_mint
+      );
+    },
+    onSuccess: (signature) => {
+      transactionToast(`Market created: ${signature.toBase58()}`);
+      return accounts.refetch();
+    },
+    onError: () => toast.error("Failed to create market"),
+  });
+
+  const depositBase = useMutation({
+    mutationKey: ["market", "deposit-base", { cluster }],
+    mutationFn: async (amount: number) => {
+      const client = await ManifestClient.getClientForMarket(
+        provider,
+        marketPK
+      );
+      const depositIx = client.depositIx(provider.publicKey, baseToken, amount);
+      const transaction = new Transaction().add(depositIx);
+      const signature = await provider.sendAndConfirm(transaction);
+      return signature;
+    },
+    onSuccess: (signature) => {
+      transactionToast(`Deposited base: ${signature}`);
+      return accounts.refetch();
+    },
+    onError: () => toast.error("Failed to deposit base"),
+  });
+
+  const depositQuote = useMutation({
+    mutationKey: ["market", "deposit-quote", { cluster }],
+    mutationFn: async (amount: number) => {
+      const client = await ManifestClient.getClientForMarket(
+        provider,
+        marketPK
+      );
+      const player_token_mint = PublicKey.findProgramAddressSync(
+        [Buffer.from("mint"), Buffer.from(playerId), Buffer.from(timestamp)],
+        program.programId
+      )[0];
+      const depositIx = client.depositIx(
+        provider.publicKey,
+        player_token_mint,
+        amount
+      );
+      const transaction = new Transaction().add(depositIx);
+      const signature = await provider.sendAndConfirm(transaction);
+      return signature;
+    },
+    onSuccess: (signature) => {
+      transactionToast(`Deposited base: ${signature}`);
+      return accounts.refetch();
+    },
+    onError: () => toast.error("Failed to deposit base"),
+  });
+
+  const buy = useMutation({
+    mutationKey: ["market", "sell-quote", { cluster }],
+    mutationFn: async (amount: number) => {
+      const client = await ManifestClient.getClientForMarket(
+        provider,
+        marketPK
+      );
+      const orderIx = client.placeOrderIx({
+        numBaseTokens: 10,
+        tokenPrice: 15,
+        isBid: true,
+        lastValidSlot: 0,
+        orderType: OrderType.Limit,
+        clientOrderId: 0,
+      });
+
+      const transaction = new Transaction().add(orderIx);
+      const signature = await provider.sendAndConfirm(transaction);
+      return signature;
+    },
+    onSuccess: (signature) => {
+      transactionToast(`Deposited base: ${signature}`);
+      return accounts.refetch();
+    },
+    onError: () => toast.error("Failed to deposit base"),
+  });
+
+  const sell = useMutation({
+    mutationKey: ["market", "sell-quote", { cluster }],
+    mutationFn: async (amount: number) => {
+      const client = await ManifestClient.getClientForMarket(
+        provider,
+        marketPK
+      );
+      const orderIx = client.placeOrderIx({
+        numBaseTokens: 10,
+        tokenPrice: 15,
+        isBid: false,
+        lastValidSlot: 0,
+        orderType: OrderType.Limit,
+        clientOrderId: 0,
+      });
+
+      const transaction = new Transaction().add(orderIx);
+      const signature = await provider.sendAndConfirm(transaction);
+      return signature;
+    },
+    onSuccess: (signature) => {
+      transactionToast(`Deposited base: ${signature}`);
+      return accounts.refetch();
+    },
+    onError: () => toast.error("Failed to deposit base"),
+  });
+
+  const withdrawAll = useMutation({
+    mutationKey: ["market", "withdraw-all", { cluster }],
+    mutationFn: async () => {
+      const client = await ManifestClient.getClientForMarket(
+        provider,
+        marketPK
+      );
+      const withdrawIx = await client.withdrawAllIx();
+      const transaction = new Transaction().add(...withdrawIx);
+      const signature = await provider.sendAndConfirm(transaction);
+      return signature;
+    },
+    onSuccess: (signature) => {
+      transactionToast(`Deposited base: ${signature}`);
+      return accounts.refetch();
+    },
+    onError: () => toast.error("Failed to deposit base"),
+  });
+
+  const printMarket = useMutation({
+    mutationKey: ["market", "print", { cluster }],
+    mutationFn: async () => {
+      const market: Market = await Market.loadFromAddress({
+        connection: provider.connection,
+        address: marketPK,
+      });
+      market.prettyPrint();
+    },
+    onSuccess: () => {
+      transactionToast(`Market printed`);
+      return accounts.refetch();
+    },
+    onError: () => toast.error("Failed to print market"),
   });
 
   const initPayout = useMutation({
@@ -329,8 +513,15 @@ export function usePlayerMarket(
   });
 
   return {
-    market,
+    marketAccount,
     mint,
+    createMarket,
+    depositBase,
+    depositQuote,
+    buy,
+    sell,
+    withdrawAll,
+    printMarket,
     initPayout,
     payout,
   };

@@ -12,6 +12,13 @@ import {
   MintPlayerTokens,
   InitPayout,
   Payout,
+  CreateMarket,
+  DepositBase,
+  DepositQuote,
+  Sell,
+  Buy,
+  PrintMarket,
+  WithdrawAll,
 } from "./web-ui";
 
 export default function MarketFeature() {
@@ -47,6 +54,13 @@ export default function MarketFeature() {
           </div>
         ))} */}
         <MintPlayerTokens />
+        <CreateMarket />
+        <DepositBase />
+        <DepositQuote />
+        <Buy />
+        <Sell />
+        <PrintMarket />
+        <WithdrawAll />
         <InitPayout />
         <Payout />
       </div>
