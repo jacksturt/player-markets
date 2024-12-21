@@ -1,12 +1,4 @@
 /** @type {import('next').NextConfig} */
-const nextConfig = {
-  experimental: {
-    serverComponentsExternalPackages: ["@coral-xyz/anchor"],
-  },
-  images: {
-    domains: ['pbs.twimg.com', 'abs.twimg.com', 'ton.twimg.com', 'i0.wp.com',  'source.boringavatars.com'],
-
-  },
-};
+const nextConfig = {};
 
 export default nextConfig;
