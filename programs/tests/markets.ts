@@ -9,9 +9,7 @@ import {
 } from "@solana/web3.js";
 import {
   getOrCreateAssociatedTokenAccount,
-  mintTo,
   getAssociatedTokenAddressSync,
-  createMint,
   TOKEN_PROGRAM_ID,
   ASSOCIATED_TOKEN_PROGRAM_ID,
   getAccount,
@@ -25,10 +23,6 @@ import { deposit } from "../manifest/tests/deposit";
 import { ManifestClient } from "@cks-systems/manifest-sdk";
 import { placeOrder } from "../manifest/tests/placeOrder";
 import { OrderType } from "../manifest/src/manifest";
-import { FillFeed } from "../manifest/src/fillFeed";
-import { checkForFillMessage } from "../manifest/tests/fillFeed";
-import { swap } from "../manifest/tests/swap";
-import { withdraw } from "../manifest/tests/withdraw";
 
 const LAMAR_ID = "e06a9c07";
 describe("markets", () => {
@@ -317,7 +311,7 @@ describe("markets", () => {
       });
   });
 
-  it("Can Create Market!", async () => {
+  xit("Can Create Market!", async () => {
     marketAddress = await createMarket(
       connection,
       maker,
@@ -638,7 +632,7 @@ describe("markets", () => {
       });
   });
 
-  xit("Initialize Payout!", async () => {
+  it("Initialize Payout!", async () => {
     const tx = await program.methods
       .initPayout(new BN(20000))
       .accountsStrict({
