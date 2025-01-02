@@ -5,7 +5,7 @@ import { WalletButton } from "../solana/solana-provider";
 import { AppHero, ellipsify } from "../ui/ui-layout";
 import { ExplorerLink } from "../cluster/cluster-ui";
 import {
-  useBaseToken,
+  useQuoteToken,
   useMarkets,
   usePlayerMarket,
 } from "./market-data-access";
@@ -36,9 +36,9 @@ export default function MarketFeature({
   const { bids, asks, setPlayerMarket } = usePlayerMarket();
   const { marketAddress } = params;
 
-  useEffect(() => {
-    setPlayerMarket(new PublicKey(marketAddress));
-  }, [marketAddress]);
+  // useEffect(() => {
+  //   setPlayerMarket(new PublicKey(marketAddress));
+  // }, [marketAddress]);
 
   const isAdmin = true;
 
@@ -57,7 +57,7 @@ export default function MarketFeature({
             {bids.data?.map((bid) => (
               <>
                 <div>{minimizePubkey(bid.trader.toBase58())}</div>
-                <div>{bid.tokenPrice.toString()}</div>
+                <div>{bid.tokenPrice.toFixed(6)}</div>
                 <div>{bid.numBaseTokens.toString()}</div>
               </>
             ))}
@@ -72,7 +72,7 @@ export default function MarketFeature({
             {asks.data?.map((ask) => (
               <>
                 <div>{minimizePubkey(ask.trader.toBase58())}</div>
-                <div>{ask.tokenPrice.toString()}</div>
+                <div>{ask.tokenPrice.toFixed(6)}</div>
                 <div>{ask.numBaseTokens.toString()}</div>
               </>
             ))}

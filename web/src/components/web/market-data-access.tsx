@@ -25,21 +25,8 @@ import {
   TOKEN_PROGRAM_ID,
 } from "@solana/spl-token";
 import { createMarketTX } from "manifest/instructions/createMarket";
-import NodeWallet from "@coral-xyz/anchor/dist/cjs/nodewallet";
 import { ManifestClient } from "manifest/src/client";
-// import {
-//   ManifestClient,
-//   Wrapper,
-//   manifest,
-//   wrapper,
-// } from "@cks-systems/manifest-sdk";
-// const {
-//   createCreateWrapperInstruction,
-//   PROGRAM_ID: WRAPPER_PROGRAM_ID,
-//   createClaimSeatInstruction,
-// } = wrapper;
-// manifest;
-import { FIXED_WRAPPER_HEADER_SIZE } from "manifest/src/constants";
+
 import { OrderType } from "manifest/src/manifest";
 import { Market } from "manifest/src";
 
@@ -217,9 +204,11 @@ export function usePlayerMarket() {
   const provider = useAnchorProvider();
   const queryClient = useQueryClient();
 
-  const [playerMintPK, setPlayerMintPK] = useState<null | PublicKey>(null);
-  const [timestamp, setTimestamp] = useState<string>("");
-  const [playerId, setPlayerId] = useState<string>("");
+  const [marketPK, setMarketPK] = useState<null | PublicKey>(
+    new PublicKey("AckvadKiZceZEA3jukWXHb41RZBGm8HutJLfX8d1rCYq")
+  );
+  const [timestamp, setTimestamp] = useState<string>("1735853159505");
+  const [playerId, setPlayerId] = useState<string>("LAMAR");
 
   const setPlayerMarket = async (mintAddress: PublicKey) => {
     const market = await program.account.playerMintConfig.fetch(mintAddress);
@@ -227,19 +216,19 @@ export function usePlayerMarket() {
     setTimestamp(market.timestamp);
     console.log("market", market);
     console.log("playerMintPK", market.playerTokenMint.toBase58());
-    setPlayerMintPK(new PublicKey(market.playerTokenMint));
+    setMarketPK(new PublicKey(market.playerTokenMint));
     queryClient.invalidateQueries({
-      queryKey: ["market", { playerMintPK }],
+      queryKey: ["market", { playerMintPK: marketPK }],
     });
   };
 
   const bids = useQuery({
-    queryKey: ["market", "bids", { playerMintPK }],
+    queryKey: ["market", "bids", { playerMintPK: marketPK }],
     queryFn: async () => {
       // console.log("bids", playerMintPK?.toBase58());
       const market = await Market.loadFromAddress({
         connection: provider.connection,
-        address: playerMintPK!,
+        address: marketPK!,
       });
       const bids = await market.bids();
       return bids;
@@ -247,11 +236,11 @@ export function usePlayerMarket() {
   });
 
   const asks = useQuery({
-    queryKey: ["market", "asks", { playerMintPK }],
+    queryKey: ["market", "asks", { playerMintPK: marketPK }],
     queryFn: async () => {
       const market = await Market.loadFromAddress({
         connection: provider.connection,
-        address: playerMintPK!,
+        address: marketPK!,
       });
       const asks = await market.asks();
       return asks;
@@ -259,7 +248,7 @@ export function usePlayerMarket() {
   });
 
   const mint = useMutation({
-    mutationKey: ["market", "mint", { playerMintPK }],
+    mutationKey: ["market", "mint", { playerMintPK: marketPK }],
     mutationFn: () => {
       const player_token_mint = PublicKey.findProgramAddressSync(
         [Buffer.from("mint"), Buffer.from(playerId), Buffer.from(timestamp)],
@@ -297,14 +286,10 @@ export function usePlayerMarket() {
   });
 
   const createMarket = useMutation({
-    mutationKey: ["market", "create", { playerMintPK }],
+    mutationKey: ["market", "create", { playerMintPK: marketPK }],
     mutationFn: () => {
       const player_token_mint = PublicKey.findProgramAddressSync(
-        [
-          Buffer.from("mint"),
-          Buffer.from(playerId),
-          Buffer.from("1735852543216"),
-        ],
+        [Buffer.from("mint"), Buffer.from(playerId), Buffer.from(timestamp)],
         program.programId
       )[0];
       return createMarketTX(
@@ -322,11 +307,11 @@ export function usePlayerMarket() {
   });
 
   const depositBase = useMutation({
-    mutationKey: ["market", "deposit-base", { playerMintPK }],
+    mutationKey: ["market", "deposit-base", { playerMintPK: marketPK }],
     mutationFn: async (amount: number) => {
       const client = await ManifestClient.getClientForMarket(
         provider,
-        playerMintPK!
+        marketPK!
       );
       const depositIx = client.depositIx(provider.publicKey, baseToken, amount);
       const transaction = new Transaction().add(depositIx);
@@ -341,11 +326,11 @@ export function usePlayerMarket() {
   });
 
   const depositQuote = useMutation({
-    mutationKey: ["market", "deposit-quote", { playerMintPK }],
+    mutationKey: ["market", "deposit-quote", { playerMintPK: marketPK }],
     mutationFn: async (amount: number) => {
       const client = await ManifestClient.getClientForMarket(
         provider,
-        playerMintPK!
+        marketPK!
       );
       const player_token_mint = PublicKey.findProgramAddressSync(
         [Buffer.from("mint"), Buffer.from(playerId), Buffer.from(timestamp)],
@@ -368,7 +353,7 @@ export function usePlayerMarket() {
   });
 
   const buy = useMutation({
-    mutationKey: ["market", "sell-quote", { playerMintPK }],
+    mutationKey: ["market", "buy-base", { playerMintPK: marketPK }],
     mutationFn: async ({
       numBaseTokens,
       tokenPrice,
@@ -378,7 +363,7 @@ export function usePlayerMarket() {
     }) => {
       const client = await ManifestClient.getClientForMarket(
         provider,
-        playerMintPK!
+        marketPK!
       );
       const orderIx = client.placeOrderIx({
         numBaseTokens: numBaseTokens,
@@ -396,10 +381,10 @@ export function usePlayerMarket() {
     onSuccess: (signature) => {
       transactionToast(`Deposited base: ${signature}`);
       queryClient.invalidateQueries({
-        queryKey: ["market", "bids", { playerMintPK }],
+        queryKey: ["market", "bids", { playerMintPK: marketPK }],
       });
       queryClient.invalidateQueries({
-        queryKey: ["market", "asks", { playerMintPK }],
+        queryKey: ["market", "asks", { playerMintPK: marketPK }],
       });
       return accounts.refetch();
     },
@@ -407,7 +392,7 @@ export function usePlayerMarket() {
   });
 
   const sell = useMutation({
-    mutationKey: ["market", "sell-quote", { playerMintPK }],
+    mutationKey: ["market", "sell-base", { playerMintPK: marketPK }],
     mutationFn: async ({
       numBaseTokens,
       tokenPrice,
@@ -417,7 +402,7 @@ export function usePlayerMarket() {
     }) => {
       const client = await ManifestClient.getClientForMarket(
         provider,
-        playerMintPK!
+        marketPK!
       );
       const orderIx = client.placeOrderIx({
         numBaseTokens: numBaseTokens,
@@ -440,11 +425,11 @@ export function usePlayerMarket() {
   });
 
   const withdrawAll = useMutation({
-    mutationKey: ["market", "withdraw-all", { playerMintPK }],
+    mutationKey: ["market", "withdraw-all", { playerMintPK: marketPK }],
     mutationFn: async () => {
       const client = await ManifestClient.getClientForMarket(
         provider,
-        playerMintPK!
+        marketPK!
       );
       const withdrawIx = await client.withdrawAllIx();
       const transaction = new Transaction().add(...withdrawIx);
@@ -454,10 +439,10 @@ export function usePlayerMarket() {
     onSuccess: (signature) => {
       transactionToast(`Deposited base: ${signature}`);
       queryClient.invalidateQueries({
-        queryKey: ["market", "bids", { playerMintPK }],
+        queryKey: ["market", "bids", { playerMintPK: marketPK }],
       });
       queryClient.invalidateQueries({
-        queryKey: ["market", "asks", { playerMintPK }],
+        queryKey: ["market", "asks", { playerMintPK: marketPK }],
       });
       return accounts.refetch();
     },
@@ -465,11 +450,11 @@ export function usePlayerMarket() {
   });
 
   const printMarket = useMutation({
-    mutationKey: ["market", "print", { playerMintPK }],
+    mutationKey: ["market", "print", { playerMintPK: marketPK }],
     mutationFn: async () => {
       const market: Market = await Market.loadFromAddress({
         connection: provider.connection,
-        address: playerMintPK!,
+        address: marketPK!,
       });
       market.prettyPrint();
     },
@@ -481,7 +466,7 @@ export function usePlayerMarket() {
   });
 
   const initPayout = useMutation({
-    mutationKey: ["market", "init-payout", { playerMintPK }],
+    mutationKey: ["market", "init-payout", { playerMintPK: marketPK }],
     mutationFn: () => {
       const mintConfig = PublicKey.findProgramAddressSync(
         [Buffer.from("config"), Buffer.from(playerId), Buffer.from(timestamp)],
@@ -511,7 +496,7 @@ export function usePlayerMarket() {
   });
 
   const payout = useMutation({
-    mutationKey: ["market", "init-payout", { playerMintPK }],
+    mutationKey: ["market", "init-payout", { playerMintPK: marketPK }],
     mutationFn: () => {
       const mintConfig = PublicKey.findProgramAddressSync(
         [Buffer.from("config"), Buffer.from(playerId), Buffer.from(timestamp)],

@@ -95,7 +95,7 @@ export function DepositBase() {
   return (
     <button
       className="btn btn-xs lg:btn-md btn-primary"
-      onClick={() => depositBase.mutateAsync(100)}
+      onClick={() => depositBase.mutateAsync(10000)}
       disabled={depositBase.isPending}
     >
       Deposit Base {depositBase.isPending && "..."}
@@ -109,7 +109,7 @@ export function DepositQuote() {
   return (
     <button
       className="btn btn-xs lg:btn-md btn-primary"
-      onClick={() => depositQuote.mutateAsync(100)}
+      onClick={() => depositQuote.mutateAsync(500)}
       disabled={depositQuote.isPending}
     >
       Deposit Quote {depositQuote.isPending && "..."}
