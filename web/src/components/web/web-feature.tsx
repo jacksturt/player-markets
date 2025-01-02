@@ -1,15 +1,14 @@
-'use client'
+"use client";
 
-import { useWallet } from '@solana/wallet-adapter-react'
-import { WalletButton } from '../solana/solana-provider'
-import { AppHero, ellipsify } from '../ui/ui-layout'
-import { ExplorerLink } from '../cluster/cluster-ui'
-import { useWebProgram } from './web-data-access'
-import { WebCreate, WebList } from './web-ui'
+import { useWallet } from "@solana/wallet-adapter-react";
+import { WalletButton } from "../solana/solana-provider";
+import { AppHero, ellipsify } from "../ui/ui-layout";
+import { ExplorerLink } from "../cluster/cluster-ui";
+import { useWebProgram } from "./web-data-access";
 
 export default function WebFeature() {
-  const { publicKey } = useWallet()
-  const { programId } = useWebProgram()
+  const { publicKey } = useWallet();
+  const { programId } = useWebProgram();
 
   return publicKey ? (
     <div>
@@ -20,11 +19,12 @@ export default function WebFeature() {
         }
       >
         <p className="mb-6">
-          <ExplorerLink path={`account/${programId}`} label={ellipsify(programId.toString())} />
+          <ExplorerLink
+            path={`account/${programId}`}
+            label={ellipsify(programId.toString())}
+          />
         </p>
-        <WebCreate />
       </AppHero>
-      <WebList />
     </div>
   ) : (
     <div className="max-w-4xl mx-auto">
@@ -34,5 +34,5 @@ export default function WebFeature() {
         </div>
       </div>
     </div>
-  )
+  );
 }
