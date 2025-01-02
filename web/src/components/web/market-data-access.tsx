@@ -274,7 +274,11 @@ export function usePlayerMarket(
     mutationKey: ["market", "create", { cluster }],
     mutationFn: () => {
       const player_token_mint = PublicKey.findProgramAddressSync(
-        [Buffer.from("mint"), Buffer.from(playerId), Buffer.from(timestamp)],
+        [
+          Buffer.from("mint"),
+          Buffer.from(playerId),
+          Buffer.from("1735852999497"),
+        ],
         program.programId
       )[0];
       return createMarketTX(
