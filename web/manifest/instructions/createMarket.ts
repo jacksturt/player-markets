@@ -20,6 +20,7 @@ export async function createMarketTX(
   quoteMint: PublicKey
 ): Promise<PublicKey> {
   const marketKeypair: Keypair = Keypair.generate();
+  console.log("marketKeypair", marketKeypair.publicKey.toBase58());
   console.log(`Cluster is ${await getClusterFromConnection(connection)}`);
 
   // Get SOL for rent and make airdrop states.

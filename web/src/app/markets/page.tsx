@@ -1,5 +1,5 @@
-import MarketFeature from "@/components/web/market-feature";
+import Markets from "@/components/web/markets";
 
 export default function Page() {
-  return <MarketFeature />;
+  return <Markets />;
 }
