@@ -16,8 +16,8 @@ import { AnchorProvider } from "@coral-xyz/anchor";
 export async function createMarketTX(
   connection: Connection,
   provider: AnchorProvider,
-  baseMint: PublicKey,
-  quoteMint: PublicKey
+  quoteMint: PublicKey,
+  baseMint: PublicKey
 ): Promise<PublicKey> {
   const marketKeypair: Keypair = Keypair.generate();
   console.log("marketKeypair", marketKeypair.publicKey.toBase58());

@@ -1,6 +1,6 @@
 "use client";
 
-import { getMarketsProgram, getMarketsProgramId } from "@project/anchor";
+import { getTradetalkProgram, getTradetalkProgramId } from "@project/anchor";
 import { BN } from "@coral-xyz/anchor";
 import { useConnection } from "@solana/wallet-adapter-react";
 import {
@@ -30,23 +30,23 @@ import { ManifestClient } from "manifest/src/client";
 import { OrderType } from "manifest/src/manifest";
 import { Market } from "manifest/src";
 
-export function useBaseToken() {
+export function useQuoteToken() {
   const { connection } = useConnection();
   const { cluster } = useCluster();
   const transactionToast = useTransactionToast();
   const provider = useAnchorProvider();
   const programId = useMemo(
-    () => getMarketsProgramId(cluster.network as Cluster),
+    () => getTradetalkProgramId(cluster.network as Cluster),
     [cluster]
   );
   const program = useMemo(
-    () => getMarketsProgram(provider, programId),
+    () => getTradetalkProgram(provider, programId),
     [provider, programId]
   );
 
   const accounts = useQuery({
     queryKey: ["markets", "all", { cluster }],
-    queryFn: () => program.account.marketConfig.all(),
+    queryFn: () => program.account.playerMintConfig.all(),
   });
 
   const getProgramAccount = useQuery({
@@ -54,24 +54,24 @@ export function useBaseToken() {
     queryFn: () => connection.getParsedAccountInfo(programId),
   });
 
-  let baseTokenMint = PublicKey.findProgramAddressSync(
-    [Buffer.from("base")],
+  let quoteTokenMint = PublicKey.findProgramAddressSync(
+    [Buffer.from("quote")],
     program.programId
   )[0];
-  const baseConfig = PublicKey.findProgramAddressSync(
-    [Buffer.from("baseConfig")],
+  const quoteConfig = PublicKey.findProgramAddressSync(
+    [Buffer.from("quoteConfig")],
     program.programId
   )[0];
 
   const initialize = useMutation({
-    mutationKey: ["base-token", "initialize", { cluster }],
+    mutationKey: ["quote-token", "initialize", { cluster }],
     mutationFn: () =>
       program.methods
-        .initBase()
+        .initQuote()
         .accountsStrict({
           payer: provider.publicKey,
-          baseTokenMint,
-          config: baseConfig,
+          quoteTokenMint,
+          config: quoteConfig,
           tokenProgram: TOKEN_PROGRAM_ID,
           associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
           systemProgram: SystemProgram.programId,
@@ -84,17 +84,18 @@ export function useBaseToken() {
     onError: () => toast.error("Failed to initialize account"),
   });
 
-  const baseTokenAccount = useQuery({
-    queryKey: ["base-token-account", { cluster }],
-    queryFn: () => getAssociatedTokenAddress(baseTokenMint, provider.publicKey),
+  const quoteTokenAccount = useQuery({
+    queryKey: ["quote-token-account", { cluster }],
+    queryFn: () =>
+      getAssociatedTokenAddress(quoteTokenMint, provider.publicKey),
   });
 
-  const baseTokenBalance = useQuery({
-    queryKey: ["base-token-balance", { cluster, baseTokenAccount }],
+  const quoteTokenBalance = useQuery({
+    queryKey: ["quote-token-balance", { cluster, quoteTokenAccount }],
     queryFn: async () => {
       try {
-        if (!baseTokenAccount.data) return "loading...";
-        const account = await getAccount(connection, baseTokenAccount.data);
+        if (!quoteTokenAccount.data) return "loading...";
+        const account = await getAccount(connection, quoteTokenAccount.data);
 
         return account.amount.toString();
       } catch (error) {
@@ -104,16 +105,16 @@ export function useBaseToken() {
     },
   });
 
-  const faucetBase = useMutation({
-    mutationKey: ["base-token", "faucet", { cluster }],
+  const faucetQuote = useMutation({
+    mutationKey: ["quote-token", "faucet", { cluster }],
     mutationFn: () =>
       program.methods
-        .faucetBase(new BN(100000000000))
+        .faucetQuote(new BN(100000000000))
         .accountsStrict({
           payer: provider.publicKey,
-          baseTokenMint,
-          config: baseConfig,
-          destination: baseTokenAccount.data!,
+          quoteTokenMint,
+          config: quoteConfig,
+          destination: quoteTokenAccount.data!,
           tokenProgram: TOKEN_PROGRAM_ID,
           associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
           systemProgram: SystemProgram.programId,
@@ -132,17 +133,17 @@ export function useBaseToken() {
     accounts,
     getProgramAccount,
     initialize,
-    baseToken: baseTokenMint,
-    baseTokenAccount,
-    faucetBase,
-    baseTokenBalance,
+    quoteToken: quoteTokenMint,
+    quoteTokenAccount,
+    faucetQuote,
+    quoteTokenBalance,
   };
 }
 
 export function useMarkets() {
   const { cluster } = useCluster();
   const transactionToast = useTransactionToast();
-  const { program, accounts, baseToken } = useBaseToken();
+  const { program, accounts, quoteToken } = useQuoteToken();
   const provider = useAnchorProvider();
 
   const markets = useQuery({
@@ -167,12 +168,12 @@ export function useMarkets() {
         [Buffer.from("config"), Buffer.from(playerId), Buffer.from(timestamp)],
         program.programId
       )[0];
-      const vault = getAssociatedTokenAddressSync(baseToken, mintConfig, true);
+      const vault = getAssociatedTokenAddressSync(quoteToken, mintConfig, true);
       return program.methods
         .initMint(new BN(3), playerId, timestamp)
         .accountsStrict({
           payer: provider.publicKey,
-          baseTokenMint: baseToken,
+          quoteTokenMint: quoteToken,
           vault,
           playerTokenMint: player_token_mint,
           config: mintConfig,
@@ -189,8 +190,6 @@ export function useMarkets() {
     onError: () => toast.error("Failed to initialize account"),
   });
 
-  const timestamp = "1734806520656";
-
   return {
     markets,
     initialize,
@@ -200,14 +199,14 @@ export function useMarkets() {
 export function usePlayerMarket() {
   const { cluster } = useCluster();
   const transactionToast = useTransactionToast();
-  const { program, accounts, baseToken } = useBaseToken();
+  const { program, accounts, quoteToken } = useQuoteToken();
   const provider = useAnchorProvider();
   const queryClient = useQueryClient();
 
   const [marketPK, setMarketPK] = useState<null | PublicKey>(
-    new PublicKey("AckvadKiZceZEA3jukWXHb41RZBGm8HutJLfX8d1rCYq")
+    new PublicKey("2h4VgNWauwJ7zTp3dxjF3ztGTXXfrsnyRGTKBbXVAdMM")
   );
-  const [timestamp, setTimestamp] = useState<string>("1735853159505");
+  const [timestamp, setTimestamp] = useState<string>("1735857860574");
   const [playerId, setPlayerId] = useState<string>("LAMAR");
 
   const setPlayerMarket = async (mintAddress: PublicKey) => {
@@ -258,16 +257,16 @@ export function usePlayerMarket() {
         [Buffer.from("config"), Buffer.from(playerId), Buffer.from(timestamp)],
         program.programId
       )[0];
-      const vault = getAssociatedTokenAddressSync(baseToken, mintConfig, true);
+      const vault = getAssociatedTokenAddressSync(quoteToken, mintConfig, true);
       const destination = getAssociatedTokenAddressSync(
         player_token_mint,
         provider.publicKey
       );
       return program.methods
-        .mintTokens(new BN(300000000))
+        .mintTokens(new BN(30000000000))
         .accountsPartial({
           payer: provider.publicKey,
-          baseTokenMint: baseToken,
+          quoteTokenMint: quoteToken,
           vault,
           playerTokenMint: player_token_mint,
           destination,
@@ -295,7 +294,7 @@ export function usePlayerMarket() {
       return createMarketTX(
         provider.connection,
         provider,
-        baseToken,
+        quoteToken,
         player_token_mint
       );
     },
@@ -306,27 +305,31 @@ export function usePlayerMarket() {
     onError: () => toast.error("Failed to create market"),
   });
 
-  const depositBase = useMutation({
-    mutationKey: ["market", "deposit-base", { playerMintPK: marketPK }],
+  const depositQuote = useMutation({
+    mutationKey: ["market", "deposit-quote", { playerMintPK: marketPK }],
     mutationFn: async (amount: number) => {
       const client = await ManifestClient.getClientForMarket(
         provider,
         marketPK!
       );
-      const depositIx = client.depositIx(provider.publicKey, baseToken, amount);
+      const depositIx = client.depositIx(
+        provider.publicKey,
+        quoteToken,
+        amount
+      );
       const transaction = new Transaction().add(depositIx);
       const signature = await provider.sendAndConfirm(transaction);
       return signature;
     },
     onSuccess: (signature) => {
-      transactionToast(`Deposited base: ${signature}`);
+      transactionToast(`Deposited quote: ${signature}`);
       return accounts.refetch();
     },
-    onError: () => toast.error("Failed to deposit base"),
+    onError: () => toast.error("Failed to deposit quote"),
   });
 
-  const depositQuote = useMutation({
-    mutationKey: ["market", "deposit-quote", { playerMintPK: marketPK }],
+  const depositBase = useMutation({
+    mutationKey: ["market", "deposit-base", { playerMintPK: marketPK }],
     mutationFn: async (amount: number) => {
       const client = await ManifestClient.getClientForMarket(
         provider,
@@ -346,14 +349,14 @@ export function usePlayerMarket() {
       return signature;
     },
     onSuccess: (signature) => {
-      transactionToast(`Deposited base: ${signature}`);
+      transactionToast(`Deposited quote: ${signature}`);
       return accounts.refetch();
     },
     onError: () => toast.error("Failed to deposit base"),
   });
 
   const buy = useMutation({
-    mutationKey: ["market", "buy-base", { playerMintPK: marketPK }],
+    mutationKey: ["market", "buy-quote", { playerMintPK: marketPK }],
     mutationFn: async ({
       numBaseTokens,
       tokenPrice,
@@ -379,7 +382,7 @@ export function usePlayerMarket() {
       return signature;
     },
     onSuccess: (signature) => {
-      transactionToast(`Deposited base: ${signature}`);
+      transactionToast(`Deposited quote: ${signature}`);
       queryClient.invalidateQueries({
         queryKey: ["market", "bids", { playerMintPK: marketPK }],
       });
@@ -388,11 +391,11 @@ export function usePlayerMarket() {
       });
       return accounts.refetch();
     },
-    onError: () => toast.error("Failed to deposit base"),
+    onError: () => toast.error("Failed to deposit quote"),
   });
 
   const sell = useMutation({
-    mutationKey: ["market", "sell-base", { playerMintPK: marketPK }],
+    mutationKey: ["market", "sell-quote", { playerMintPK: marketPK }],
     mutationFn: async ({
       numBaseTokens,
       tokenPrice,
@@ -418,10 +421,10 @@ export function usePlayerMarket() {
       return signature;
     },
     onSuccess: (signature) => {
-      transactionToast(`Deposited base: ${signature}`);
+      transactionToast(`Deposited quote: ${signature}`);
       return accounts.refetch();
     },
-    onError: () => toast.error("Failed to deposit base"),
+    onError: () => toast.error("Failed to deposit quote"),
   });
 
   const withdrawAll = useMutation({
@@ -437,7 +440,7 @@ export function usePlayerMarket() {
       return signature;
     },
     onSuccess: (signature) => {
-      transactionToast(`Deposited base: ${signature}`);
+      transactionToast(`Deposited quote: ${signature}`);
       queryClient.invalidateQueries({
         queryKey: ["market", "bids", { playerMintPK: marketPK }],
       });
@@ -446,7 +449,7 @@ export function usePlayerMarket() {
       });
       return accounts.refetch();
     },
-    onError: () => toast.error("Failed to deposit base"),
+    onError: () => toast.error("Failed to deposit quote"),
   });
 
   const printMarket = useMutation({
@@ -514,24 +517,24 @@ export function usePlayerMarket() {
         player_token_mint,
         provider.publicKey
       );
-      const baseTokenAccount = getAssociatedTokenAddressSync(
-        baseToken,
+      const quoteTokenAccount = getAssociatedTokenAddressSync(
+        quoteToken,
         provider.publicKey
       );
-      const baseConfig = PublicKey.findProgramAddressSync(
-        [Buffer.from("baseConfig")],
+      const quoteConfig = PublicKey.findProgramAddressSync(
+        [Buffer.from("quoteConfig")],
         program.programId
       )[0];
 
       const context = {
         payer: provider.publicKey,
-        baseTokenMint: baseToken,
+        quoteTokenMint: quoteToken,
         playerTokenMint: player_token_mint,
-        payerBaseTokenAccount: baseTokenAccount,
+        payerQuoteTokenAccount: quoteTokenAccount,
         payerPlayerTokenAccount: playerTokenAccount,
         mintConfig,
         payoutConfig,
-        baseConfig,
+        quoteConfig,
         tokenProgram: TOKEN_PROGRAM_ID,
         associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
         systemProgram: SystemProgram.programId,

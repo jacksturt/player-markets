@@ -6,8 +6,8 @@ import { AppHero, ellipsify } from "../ui/ui-layout";
 import { ExplorerLink } from "../cluster/cluster-ui";
 import { useQuoteToken } from "./market-data-access";
 import {
-  BaseTokenCreate,
-  BaseTokenFaucet,
+  QuoteTokenCreate,
+  QuoteTokenFaucet,
   InitPlayerMarket,
   MintPlayerTokens,
   CreateMarket,
@@ -21,8 +21,8 @@ export default function MarketAdmin() {
     <div className="w-full">
       <div className=" w-full">
         <div className="flex flex-col gap-4">
-          <BaseTokenCreate />
-          <BaseTokenFaucet />
+          <QuoteTokenCreate />
+          <QuoteTokenFaucet />
           <InitPlayerMarket />
           <MintPlayerTokens />
           <CreateMarket />

@@ -6,9 +6,9 @@ import { ellipsify } from "../ui/ui-layout";
 import { ExplorerLink } from "../cluster/cluster-ui";
 import { useWebProgram, useWebProgramAccount } from "./web-data-access";
 import {
-  useBaseToken,
   useMarkets,
   usePlayerMarket,
+  useQuoteToken,
 } from "./market-data-access";
 import React, { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -17,8 +17,8 @@ import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 
-export function BaseTokenCreate() {
-  const { initialize } = useBaseToken();
+export function QuoteTokenCreate() {
+  const { initialize } = useQuoteToken();
 
   return (
     <button
@@ -31,17 +31,17 @@ export function BaseTokenCreate() {
   );
 }
 
-export function BaseTokenFaucet() {
-  const { faucetBase, baseTokenBalance } = useBaseToken();
+export function QuoteTokenFaucet() {
+  const { faucetQuote, quoteTokenBalance } = useQuoteToken();
 
   return (
     <button
       className="btn btn-xs lg:btn-md btn-primary"
-      onClick={() => faucetBase.mutateAsync()}
-      disabled={faucetBase.isPending}
+      onClick={() => faucetQuote.mutateAsync()}
+      disabled={faucetQuote.isPending}
     >
-      Faucet Base Token (balance: {baseTokenBalance.data ?? 0}){" "}
-      {faucetBase.isPending && "..."}
+      Faucet Quote Token (balance: {quoteTokenBalance.data ?? 0}){" "}
+      {faucetQuote.isPending && "..."}
     </button>
   );
 }
@@ -109,7 +109,7 @@ export function DepositQuote() {
   return (
     <button
       className="btn btn-xs lg:btn-md btn-primary"
-      onClick={() => depositQuote.mutateAsync(500)}
+      onClick={() => depositQuote.mutateAsync(5000)}
       disabled={depositQuote.isPending}
     >
       Deposit Quote {depositQuote.isPending && "..."}
