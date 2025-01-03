@@ -18,7 +18,18 @@ import {
 } from "./web-ui";
 import { PublicKey } from "@solana/web3.js";
 import { minimizePubkey } from "@/utils/web3";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
+import SendbirdChat from "@sendbird/chat";
+import {
+  OpenChannelModule,
+  SendbirdOpenChat,
+} from "@sendbird/chat/openChannel";
+import { UserMessage } from "@sendbird/chat/message";
+
+const sb = SendbirdChat.init({
+  appId: "434D4E2C-4EEF-41DB-AE99-30D00B5AFF1D",
+  modules: [new OpenChannelModule()],
+}) as SendbirdOpenChat;
 
 export default function MarketFeature({
   params,
@@ -26,13 +37,66 @@ export default function MarketFeature({
   params: { marketAddress: string };
 }) {
   const { publicKey } = useWallet();
+  const [username, setUsername] = useState<string>("");
+  const [messages, setMessages] = useState<
+    {
+      message: string;
+      sender: string;
+    }[]
+  >([]);
+  const { bids, asks } = usePlayerMarket();
 
-  const { bids, asks, setPlayerMarket } = usePlayerMarket();
-  const { marketAddress } = params;
+  const connectToChat = async () => {
+    const user = await sb.connect(username);
+    const open_channel_params = {
+      channelUrl: "market",
+      name: "Market",
+    };
+    // const channel = await sb.openChannel.createChannel(open_channel_params);
+    sb.openChannel.getChannel("market").then(async (channel) => {
+      channel.enter();
+      const chat_params = {
+        // UserMessageCreateParams can be imported from @sendbird/chat/message.
+        message: "Hello2",
+      };
+      const params = {
+        prevResultSize: 100,
+        nextResultSize: 100,
+      };
+      const ts = Date.now() - 1000 * 60 * 60 * 24;
+      const messages = await channel.getMessagesByTimestamp(ts, params);
+      setMessages(
+        messages.map((message) => {
+          const sender = message.isUserMessage() ? message.sender : null;
+          console.log(sender);
+          const senderName = sender
+            ? sender.nickname !== ""
+              ? sender.nickname
+              : sender.userId
+            : null;
+          console.log(senderName);
+          return {
+            message: message.message,
+            sender: senderName ?? "Market",
+          };
+        })
+      );
 
-  // useEffect(() => {
-  //   setPlayerMarket(new PublicKey(marketAddress));
-  // }, [marketAddress]);
+      channel
+        .sendUserMessage(chat_params)
+        .onPending((message) => {
+          // The pending message for the message being sent has been created.
+          // The pending message has the same reqId value as the corresponding failed/succeeded message.
+        })
+        .onFailed((err, message) => {
+          console.log(err);
+        })
+        .onSucceeded((message) => {
+          // The message is successfully sent to the channel.
+          // The current user can receive messages from other users through the onMessageReceived() method of an event handler.
+        });
+    });
+  };
 
   const isAdmin = true;
 
@@ -69,6 +133,25 @@ export default function MarketFeature({
                 <div>{ask.tokenPrice.toFixed(6)}</div>
                 <div>{ask.numBaseTokens.toString()}</div>
               </>
+            ))}
+          </div>
+          <h1 className="text-2xl font-bold">Trades</h1>
+          <div>
+            <input
+              type="text"
+              className="border border-gray-300 rounded-md p-2 bg-gray-100"
+              placeholder="Username"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+            />
+            <button onClick={connectToChat}>Connect</button>
+          </div>
+          <div>
+            {messages.map((message, index) => (
+              <div key={index} className="flex flex-row">
+                <div>{message.sender}</div>
+                <div>{message.message}</div>
+              </div>
             ))}
           </div>
         </div>
