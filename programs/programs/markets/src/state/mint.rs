@@ -3,7 +3,7 @@ use anchor_lang::prelude::*;
 #[account]
 pub struct PlayerMintConfig {
     pub config_bump: u8,
-    pub base_token_mint: Pubkey,
+    pub quote_token_mint: Pubkey,
     pub player_token_mint: Pubkey,
     pub player_token_bump: u8,
     pub cost: u64,
@@ -17,7 +17,7 @@ impl Space for PlayerMintConfig {
 
 impl PlayerMintConfig {
     pub fn to_slice(&self) -> Vec<u8> {
-        let mut s = self.base_token_mint.to_bytes().to_vec();
+        let mut s = self.quote_token_mint.to_bytes().to_vec();
         s.extend_from_slice(&self.player_token_mint.to_bytes());
         s.extend_from_slice(&self.cost.to_le_bytes());
         s.extend_from_slice(&self.player_id.as_bytes());

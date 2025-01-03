@@ -11,11 +11,11 @@ use anchor_spl::{
 pub struct InitializeMint<'info> {
     #[account(mut)]
     pub payer: Signer<'info>,
-    pub base_token_mint: InterfaceAccount<'info, Mint>,
+    pub quote_token_mint: InterfaceAccount<'info, Mint>,
     #[account(
         init,
         payer = payer,
-        associated_token::mint = base_token_mint,
+        associated_token::mint = quote_token_mint,
         associated_token::authority = config
     )]
     pub vault: InterfaceAccount<'info, TokenAccount>,
@@ -54,7 +54,7 @@ impl<'info> InitializeMint<'info> {
         self.config.set_inner(PlayerMintConfig {
             config_bump,
             player_token_bump,
-            base_token_mint: self.base_token_mint.key(),
+            quote_token_mint: self.quote_token_mint.key(),
             player_token_mint: self.player_token_mint.key(),
             cost,
             timestamp,

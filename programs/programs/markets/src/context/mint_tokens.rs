@@ -32,14 +32,14 @@ pub struct MintTokens<'info> {
     pub payer: Signer<'info>,
     #[account(
         mut,
-        associated_token::mint = base_token_mint,
+        associated_token::mint = quote_token_mint,
         associated_token::authority = payer
     )]
-    pub payer_ata_base: InterfaceAccount<'info, TokenAccount>,
-    pub base_token_mint: InterfaceAccount<'info, Mint>,
+    pub payer_ata_quote: InterfaceAccount<'info, TokenAccount>,
+    pub quote_token_mint: InterfaceAccount<'info, Mint>,
     #[account(
         mut,
-        associated_token::mint = base_token_mint,
+        associated_token::mint = quote_token_mint,
         associated_token::authority = config
     )]
     pub vault: InterfaceAccount<'info, TokenAccount>,
@@ -71,9 +71,9 @@ impl<'info> MintTokens<'info> {
             quantity,
         )?;
         let cpi_accounts = TransferChecked {
-            from: self.payer_ata_base.to_account_info(),
+            from: self.payer_ata_quote.to_account_info(),
             to: self.vault.to_account_info(),
-            mint: self.base_token_mint.to_account_info(),
+            mint: self.quote_token_mint.to_account_info(),
             authority: self.payer.to_account_info(),
         };
         let cpi_program = self.token_program.to_account_info();
@@ -83,7 +83,7 @@ impl<'info> MintTokens<'info> {
         transfer_checked(
             cpi_context,
             self.config.cost * quantity,
-            self.base_token_mint.decimals,
+            self.quote_token_mint.decimals,
         )?;
 
         Ok(())

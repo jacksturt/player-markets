@@ -119,7 +119,7 @@ export function useQuoteToken() {
           associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
           systemProgram: SystemProgram.programId,
         })
-        .rpc(),
+        .rpc({ skipPreflight: true }),
     onSuccess: (signature) => {
       transactionToast(signature);
       return accounts.refetch();

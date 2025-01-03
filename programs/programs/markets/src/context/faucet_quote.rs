@@ -1,4 +1,4 @@
-use crate::state::base::BaseMintConfig;
+use crate::state::quote::QuoteMintConfig;
 use anchor_lang::prelude::*;
 use anchor_spl::{
     associated_token::AssociatedToken,
@@ -8,25 +8,25 @@ use anchor_spl::{
 };
 
 #[derive(Accounts)]
-pub struct FaucetBase<'info> {
+pub struct FaucetQuote<'info> {
     #[account(mut)]
     pub payer: Signer<'info>,
     #[account(
         mut,
-        // seeds = [b"base"],
+        // seeds = [b"quote"],
         // bump,
-        mint::authority = base_token_mint,
+        mint::authority = quote_token_mint,
     )]
-    pub base_token_mint: InterfaceAccount<'info, Mint>,
+    pub quote_token_mint: InterfaceAccount<'info, Mint>,
     #[account(
-        seeds = [b"baseConfig"],
+        seeds = [b"quoteConfig"],
         bump,
     )]
-    pub config: Account<'info, BaseMintConfig>,
+    pub config: Account<'info, QuoteMintConfig>,
     #[account(
         init_if_needed,
         payer = payer,
-        associated_token::mint = base_token_mint,
+        associated_token::mint = quote_token_mint,
         associated_token::authority = payer,
     )]
     pub destination: InterfaceAccount<'info, TokenAccount>,
@@ -36,18 +36,18 @@ pub struct FaucetBase<'info> {
     pub associated_token_program: Program<'info, AssociatedToken>,
 }
 
-impl<'info> FaucetBase<'info> {
-    pub fn faucet_base(&mut self, quantity: u64) -> Result<()> {
-        let seeds = &["base".as_bytes(), &[self.config.base_token_bump]];
+impl<'info> FaucetQuote<'info> {
+    pub fn faucet_quote(&mut self, quantity: u64) -> Result<()> {
+        let seeds = &["quote".as_bytes(), &[self.config.quote_token_bump]];
         let signer = [&seeds[..]];
 
         mint_to(
             CpiContext::new_with_signer(
                 self.token_program.to_account_info(),
                 MintTo {
-                    authority: self.base_token_mint.to_account_info(),
+                    authority: self.quote_token_mint.to_account_info(),
                     to: self.destination.to_account_info(),
-                    mint: self.base_token_mint.to_account_info(),
+                    mint: self.quote_token_mint.to_account_info(),
                 },
                 &signer,
             ),

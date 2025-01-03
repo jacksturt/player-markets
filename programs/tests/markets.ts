@@ -35,14 +35,14 @@ describe("markets", () => {
   const taker = Keypair.generate();
   console.log("maker", maker.publicKey.toBase58());
   console.log("taker", taker.publicKey.toBase58());
-  let base_token_mint = PublicKey.findProgramAddressSync(
-    [Buffer.from("base")],
+  let quote_token_mint = PublicKey.findProgramAddressSync(
+    [Buffer.from("quote")],
     program.programId
   )[0];
 
-  let makerAtaBase: PublicKey;
+  let makerAtaQuote: PublicKey;
   let makerAtaPlayer: PublicKey;
-  let takerAtaBase: PublicKey;
+  let takerAtaQuote: PublicKey;
   let takerAtaPlayer: PublicKey;
   const timestamp = Date.now().toString();
   console.log(timestamp.length + LAMAR_ID.length);
@@ -66,8 +66,8 @@ describe("markets", () => {
   )[0];
 
   const seed = new BN(randomBytes(8));
-  const baseConfig = PublicKey.findProgramAddressSync(
-    [Buffer.from("baseConfig")],
+  const quoteConfig = PublicKey.findProgramAddressSync(
+    [Buffer.from("quoteConfig")],
     program.programId
   )[0];
   const marketConfig = PublicKey.findProgramAddressSync(
@@ -110,13 +110,13 @@ describe("markets", () => {
       .then(log);
   });
 
-  it("Can Init Base!", async () => {
+  it("Can Init Quote!", async () => {
     const tx = await program.methods
-      .initBase()
+      .initQuote()
       .accountsStrict({
         payer: maker.publicKey,
-        baseTokenMint: base_token_mint,
-        config: baseConfig,
+        quoteTokenMint: quote_token_mint,
+        config: quoteConfig,
         tokenProgram: TOKEN_PROGRAM_ID,
         systemProgram: SystemProgram.programId,
         associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
@@ -128,20 +128,20 @@ describe("markets", () => {
   });
 
   it("Create mints and mint to", async () => {
-    makerAtaBase = (
+    makerAtaQuote = (
       await getOrCreateAssociatedTokenAccount(
         connection,
         maker,
-        base_token_mint,
+        quote_token_mint,
         maker.publicKey
       )
     ).address;
 
-    takerAtaBase = (
+    takerAtaQuote = (
       await getOrCreateAssociatedTokenAccount(
         connection,
         taker,
-        base_token_mint,
+        quote_token_mint,
         taker.publicKey
       )
     ).address;
@@ -153,14 +153,14 @@ describe("markets", () => {
       TOKEN_PROGRAM_ID
     );
 
-    console.log("takerAta", takerAtaBase.toBase58());
-    vault = getAssociatedTokenAddressSync(base_token_mint, mintConfig, true);
+    console.log("takerAta", takerAtaQuote.toBase58());
+    vault = getAssociatedTokenAddressSync(quote_token_mint, mintConfig, true);
 
-    console.log(`Your mint ata is: ${makerAtaBase.toBase58()}`);
+    console.log(`Your mint ata is: ${makerAtaQuote.toBase58()}`);
     // Mint to ATA
 
     vault_x_ata = await getAssociatedTokenAddress(
-      base_token_mint,
+      quote_token_mint,
       auth,
       true,
       TOKEN_PROGRAM_ID
@@ -173,12 +173,12 @@ describe("markets", () => {
     );
   });
 
-  it("Can Faucet Base!", async () => {
+  it("Can Faucet Quote!", async () => {
     const context = {
       payer: maker.publicKey,
-      baseTokenMint: base_token_mint,
-      config: baseConfig,
-      destination: makerAtaBase,
+      quoteTokenMint: quote_token_mint,
+      config: quoteConfig,
+      destination: makerAtaQuote,
       tokenProgram: TOKEN_PROGRAM_ID,
       systemProgram: SystemProgram.programId,
       associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
@@ -189,24 +189,24 @@ describe("markets", () => {
     });
 
     const tx = await program.methods
-      .faucetBase(new anchor.BN(100000000000))
+      .faucetQuote(new anchor.BN(100000000000))
       .accountsStrict(context)
       .signers([maker])
       .rpc()
       .then(confirm)
       .then(log)
       .then(async () => {
-        const base = await getAccount(connection, makerAtaBase);
-        console.log("maker base amount after", base.amount);
+        const quote = await getAccount(connection, makerAtaQuote);
+        console.log("maker quote amount after", quote.amount);
       });
 
     const tx2 = await program.methods
-      .faucetBase(new anchor.BN(100000000000))
+      .faucetQuote(new anchor.BN(100000000000))
       .accountsStrict({
         payer: taker.publicKey,
-        baseTokenMint: base_token_mint,
-        config: baseConfig,
-        destination: takerAtaBase,
+        quoteTokenMint: quote_token_mint,
+        config: quoteConfig,
+        destination: takerAtaQuote,
         tokenProgram: TOKEN_PROGRAM_ID,
         systemProgram: SystemProgram.programId,
         associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
@@ -216,8 +216,8 @@ describe("markets", () => {
       .then(confirm)
       .then(log)
       .then(async () => {
-        const base = await getAccount(connection, takerAtaBase);
-        console.log("taker base amount after", base.amount);
+        const quote = await getAccount(connection, takerAtaQuote);
+        console.log("taker quote amount after", quote.amount);
       });
   });
 
@@ -228,7 +228,7 @@ describe("markets", () => {
       .initMint(new anchor.BN(3), LAMAR_ID, timestamp)
       .accountsPartial({
         payer: maker.publicKey,
-        baseTokenMint: base_token_mint,
+        quoteTokenMint: quote_token_mint,
         vault,
         playerTokenMint: player_token_mint,
         config: mintConfig,
@@ -264,7 +264,7 @@ describe("markets", () => {
       .mintTokens(new anchor.BN(300000000))
       .accountsPartial({
         payer: maker.publicKey,
-        baseTokenMint: base_token_mint,
+        quoteTokenMint: quote_token_mint,
         vault,
         playerTokenMint: player_token_mint,
         destination: makerAtaPlayer,
@@ -278,8 +278,8 @@ describe("markets", () => {
       .then(confirm)
       .then(log)
       .then(async () => {
-        const makerBase = await getAccount(connection, makerAtaBase);
-        console.log("maker base amount after", makerBase.amount);
+        const makerQuote = await getAccount(connection, makerAtaQuote);
+        console.log("maker quote amount after", makerQuote.amount);
 
         const makerPlayer = await getAccount(connection, makerAtaPlayer);
         console.log("maker player amount after", makerPlayer.amount);
@@ -289,7 +289,7 @@ describe("markets", () => {
       .mintTokens(new anchor.BN(300000000))
       .accountsPartial({
         payer: taker.publicKey,
-        baseTokenMint: base_token_mint,
+        quoteTokenMint: quote_token_mint,
         vault,
         playerTokenMint: player_token_mint,
         destination: takerAtaPlayer,
@@ -303,8 +303,8 @@ describe("markets", () => {
       .then(confirm)
       .then(log)
       .then(async () => {
-        const takerBase = await getAccount(connection, takerAtaBase);
-        console.log("taker base amount after", takerBase.amount);
+        const takerQuote = await getAccount(connection, takerAtaQuote);
+        console.log("taker quote amount after", takerQuote.amount);
 
         const takerPlayer = await getAccount(connection, takerAtaPlayer);
         console.log("taker player amount after", takerPlayer.amount);
@@ -315,7 +315,7 @@ describe("markets", () => {
     marketAddress = await createMarket(
       connection,
       maker,
-      base_token_mint,
+      quote_token_mint,
       player_token_mint
     );
     const market: Market = await Market.loadFromAddress({
@@ -337,18 +337,18 @@ describe("markets", () => {
       "market",
       market.quoteMint().toBase58(),
       market.quoteDecimals(),
-      market.baseMint().toBase58(),
-      market.baseDecimals()
+      market.quoteMint().toBase58(),
+      market.quoteDecimals()
     );
     console.log(
       "token accounts",
-      makerAtaBase.toBase58(),
+      makerAtaQuote.toBase58(),
       makerAtaPlayer.toBase58()
     );
     await Promise.all([
-      deposit(connection, maker, marketAddress, market.baseMint(), 99),
       deposit(connection, maker, marketAddress, market.quoteMint(), 99),
-      deposit(connection, taker, marketAddress, market.baseMint(), 99),
+      deposit(connection, maker, marketAddress, market.quoteMint(), 99),
+      deposit(connection, taker, marketAddress, market.quoteMint(), 99),
       deposit(connection, taker, marketAddress, market.quoteMint(), 99),
     ]);
 
@@ -418,14 +418,14 @@ describe("markets", () => {
     await market.reload(connection);
     market.prettyPrint();
 
-    const makerBase = await getAccount(connection, makerAtaBase);
-    console.log("maker base amount before withdraw", makerBase.amount);
+    const makerQuote = await getAccount(connection, makerAtaQuote);
+    console.log("maker quote amount before withdraw", makerQuote.amount);
 
     const makerPlayer = await getAccount(connection, makerAtaPlayer);
     console.log("maker player amount before withdraw", makerPlayer.amount);
 
-    const takerBase = await getAccount(connection, takerAtaBase);
-    console.log("taker base amount before withdraw", takerBase.amount);
+    const takerQuote = await getAccount(connection, takerAtaQuote);
+    console.log("taker quote amount before withdraw", takerQuote.amount);
 
     const takerPlayer = await getAccount(connection, takerAtaPlayer);
     console.log("taker player amount before withdraw", takerPlayer.amount);
@@ -435,17 +435,17 @@ describe("markets", () => {
       takerClient.withdrawAllIx(),
     ]);
 
-    console.log("maker base amount after withdraw", makerBase.amount);
+    console.log("maker quote amount after withdraw", makerQuote.amount);
 
     console.log("maker player amount after withdraw", makerPlayer.amount);
 
-    console.log("taker base amount after withdraw", takerBase.amount);
+    console.log("taker quote amount after withdraw", takerQuote.amount);
 
     console.log("taker player amount after withdraw", takerPlayer.amount);
 
     // console.log("trying swap, pre swap values: ");
-    // const takerBase = await getAccount(connection, takerAtaBase);
-    // console.log("taker base amount after", takerBase.amount);
+    // const takerQuote = await getAccount(connection, takerAtaQuote);
+    // console.log("taker quote amount after", takerQuote.amount);
 
     // const takerPlayer = await getAccount(connection, takerAtaPlayer);
     // console.log("taker player amount after", takerPlayer.amount);
@@ -456,7 +456,7 @@ describe("markets", () => {
     // await market.reload(connection);
     // market.prettyPrint();
 
-    // console.log("taker base amount after", takerBase.amount);
+    // console.log("taker quote amount after", takerQuote.amount);
 
     // console.log("taker player amount after", takerPlayer.amount);
 
@@ -465,171 +465,6 @@ describe("markets", () => {
     //   fillFeed.parseLogs(true),
     //   checkForFillMessage(connection, taker, marketAddress),
     // ]);
-  });
-
-  xit("Initialize Market!", async () => {
-    const context = {
-      auth: auth,
-      initializer: maker.publicKey,
-      mintX: base_token_mint,
-      mintY: player_token_mint,
-      mintLp: mint_lp,
-      vaultX: vault_x_ata,
-      vaultY: vault_y_ata,
-      config: marketConfig,
-      tokenProgram: TOKEN_PROGRAM_ID,
-      associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
-      systemProgram: SystemProgram.programId,
-    };
-
-    const tx = await program.methods
-      .initMarket(seed, 0, maker.publicKey)
-      .accountsPartial(context)
-      .signers([maker])
-      .rpc()
-      .then(confirm)
-      .then(log);
-    console.log("Your transaction signature", tx);
-  });
-
-  xit("Deposit", async () => {
-    const context = {
-      auth,
-      user: maker.publicKey,
-      mintX: base_token_mint,
-      mintY: player_token_mint,
-      mintLp: mint_lp,
-      userX: makerAtaBase,
-      userY: makerAtaPlayer,
-      userLp: makerAtaLp,
-      vaultX: vault_x_ata,
-      vaultY: vault_y_ata,
-      config: marketConfig,
-      tokenProgram: TOKEN_PROGRAM_ID,
-      associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
-      systemProgram: SystemProgram.programId,
-    };
-
-    const tx = await program.methods
-      .deposit(
-        new BN(20),
-        new BN(20),
-        new BN(30),
-        new BN(Math.floor(new Date().getTime() / 1000) + 600)
-      )
-      .accountsStrict(context)
-      .signers([maker])
-      .rpc();
-  });
-
-  xit("Swap X for Y", async () => {
-    try {
-      const tx = await program.methods
-        .swap(
-          true,
-          new BN(5),
-          new BN(6),
-          new BN(Math.floor(new Date().getTime() / 1000) + 600)
-        )
-        .accountsStrict({
-          auth,
-          user: maker.publicKey,
-          mintX: base_token_mint,
-          mintY: player_token_mint,
-          userX: makerAtaBase,
-          userY: makerAtaPlayer,
-          vaultX: vault_x_ata,
-          vaultY: vault_y_ata,
-          config: marketConfig,
-          tokenProgram: TOKEN_PROGRAM_ID,
-          associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
-          systemProgram: SystemProgram.programId,
-        })
-        .signers([maker])
-        .rpc()
-        .then(confirm)
-        .then(log);
-    } catch (e) {
-      let err = e as anchor.AnchorError;
-      console.error(e);
-      if (err.error.errorCode.code !== "InvalidAuthority") {
-        throw e;
-      }
-    }
-  });
-
-  xit("Swap Y for X", async () => {
-    try {
-      const tx = await program.methods
-        .swap(
-          false,
-          new BN(6),
-          new BN(5),
-          new BN(Math.floor(new Date().getTime() / 1000) + 600)
-        )
-        .accountsStrict({
-          auth,
-          user: maker.publicKey,
-          mintX: base_token_mint,
-          mintY: player_token_mint,
-          userX: makerAtaBase,
-          userY: makerAtaPlayer,
-          vaultX: vault_x_ata,
-          vaultY: vault_y_ata,
-          config: marketConfig,
-          tokenProgram: TOKEN_PROGRAM_ID,
-          associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
-          systemProgram: SystemProgram.programId,
-        })
-        .signers([maker])
-        .rpc()
-        .then(confirm)
-        .then(log);
-      console.log("Your transaction signature", tx);
-    } catch (e) {
-      let err = e as anchor.AnchorError;
-      console.error(e);
-      if (err.error.errorCode.code !== "InvalidAuthority") {
-        throw e;
-      }
-    }
-  });
-
-  xit("Withdraw", async () => {
-    const tx = await program.methods
-      .withdraw(
-        new BN(20),
-        new BN(20),
-        new BN(30),
-        new BN(Math.floor(new Date().getTime() / 1000) + 600)
-      )
-      .accountsStrict({
-        auth,
-        user: maker.publicKey,
-        mintX: base_token_mint,
-        mintY: player_token_mint,
-        mintLp: mint_lp,
-        userX: makerAtaBase,
-        userY: makerAtaPlayer,
-        userLp: makerAtaLp,
-        vaultX: vault_x_ata,
-        vaultY: vault_y_ata,
-        config: marketConfig,
-        tokenProgram: TOKEN_PROGRAM_ID,
-        associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
-        systemProgram: SystemProgram.programId,
-      })
-      .signers([maker])
-      .rpc()
-      .then(confirm)
-      .then(log)
-      .then(async () => {
-        const makerBase = await getAccount(connection, makerAtaBase);
-        console.log("maker base amount after", makerBase.amount);
-
-        const makerPlayer = await getAccount(connection, makerAtaPlayer);
-        console.log("maker player amount after", makerPlayer.amount);
-      });
   });
 
   it("Initialize Payout!", async () => {
@@ -652,13 +487,13 @@ describe("markets", () => {
   xit("Payout", async () => {
     const context = {
       payer: maker.publicKey,
-      baseTokenMint: base_token_mint,
-      payerBaseTokenAccount: makerAtaBase,
+      quoteTokenMint: quote_token_mint,
+      payerQuoteTokenAccount: makerAtaQuote,
       playerTokenMint: player_token_mint,
       payerPlayerTokenAccount: makerAtaPlayer,
       mintConfig,
       payoutConfig,
-      baseConfig,
+      quoteConfig,
       tokenProgram: TOKEN_PROGRAM_ID,
       associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
       systemProgram: SystemProgram.programId,
@@ -676,8 +511,8 @@ describe("markets", () => {
       .then(confirm)
       .then(log)
       .then(async () => {
-        const makerBase = await getAccount(connection, makerAtaBase);
-        console.log("maker base amount after", makerBase.amount);
+        const makerQuote = await getAccount(connection, makerAtaQuote);
+        console.log("maker quote amount after", makerQuote.amount);
         const makerPlayer = await getAccount(connection, makerAtaPlayer);
         console.log("maker player amount after", makerPlayer.amount);
       });

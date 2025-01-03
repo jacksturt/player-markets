@@ -1,6 +1,6 @@
-use crate::state::base::BaseMintConfig;
 use crate::state::mint::PlayerMintConfig;
 use crate::state::payout::PayoutConfig;
+use crate::state::quote::QuoteMintConfig;
 use anchor_lang::prelude::*;
 use anchor_spl::{associated_token::AssociatedToken, token::Token, token_interface::Mint};
 

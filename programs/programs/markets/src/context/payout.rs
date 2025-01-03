@@ -1,6 +1,6 @@
-use crate::state::base::BaseMintConfig;
 use crate::state::mint::PlayerMintConfig;
 use crate::state::payout::PayoutConfig;
+use crate::state::quote::QuoteMintConfig;
 use anchor_lang::prelude::*;
 use anchor_spl::{
     associated_token::AssociatedToken,
@@ -14,18 +14,18 @@ pub struct Payout<'info> {
     pub payer: Signer<'info>,
     #[account(
         mut,
-        seeds = [b"base"],
-        mint::authority = base_token_mint,
+        seeds = [b"quote"],
+        mint::authority = quote_token_mint,
         mint::decimals = 6,
         bump,
     )]
-    pub base_token_mint: InterfaceAccount<'info, Mint>,
+    pub quote_token_mint: InterfaceAccount<'info, Mint>,
     #[account(
         mut,
-        associated_token::mint = base_token_mint,
+        associated_token::mint = quote_token_mint,
         associated_token::authority = payer,
     )]
-    pub payer_base_token_account: InterfaceAccount<'info, TokenAccount>,
+    pub payer_quote_token_account: InterfaceAccount<'info, TokenAccount>,
     #[account(
         mut,
         // seeds = [b"player"],
@@ -49,10 +49,10 @@ pub struct Payout<'info> {
     )]
     pub mint_config: Box<Account<'info, PlayerMintConfig>>,
     #[account(
-        seeds = [b"baseConfig"],
+        seeds = [b"quoteConfig"],
         bump,
     )]
-    pub base_config: Box<Account<'info, BaseMintConfig>>,
+    pub quote_config: Box<Account<'info, QuoteMintConfig>>,
     pub system_program: Program<'info, System>,
     pub token_program: Program<'info, Token>,
     pub associated_token_program: Program<'info, AssociatedToken>,
@@ -60,24 +60,24 @@ pub struct Payout<'info> {
 
 impl<'info> Payout<'info> {
     pub fn payout(&mut self) -> Result<()> {
-        self.mint_base_tokens(
+        self.mint_quote_tokens(
             self.payer_player_token_account.amount * self.payout_config.payout_rate,
         )?;
         self.burn_player_tokens()?;
         Ok(())
     }
 
-    pub fn mint_base_tokens(&self, amount: u64) -> Result<()> {
-        let seeds = &["base".as_bytes(), &[self.base_config.base_token_bump]];
+    pub fn mint_quote_tokens(&self, amount: u64) -> Result<()> {
+        let seeds = &["quote".as_bytes(), &[self.quote_config.quote_token_bump]];
         let signer = [&seeds[..]];
 
         mint_to(
             CpiContext::new_with_signer(
                 self.token_program.to_account_info(),
                 MintTo {
-                    authority: self.base_token_mint.to_account_info(),
-                    to: self.payer_base_token_account.to_account_info(),
-                    mint: self.base_token_mint.to_account_info(),
+                    authority: self.quote_token_mint.to_account_info(),
+                    to: self.payer_quote_token_account.to_account_info(),
+                    mint: self.quote_token_mint.to_account_info(),
                 },
                 &signer,
             ),
