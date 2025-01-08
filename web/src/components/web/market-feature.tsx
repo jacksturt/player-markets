@@ -25,6 +25,8 @@ import {
   SendbirdOpenChat,
 } from "@sendbird/chat/openChannel";
 import { UserMessage } from "@sendbird/chat/message";
+import { FillLogResult } from "manifest/src";
+import toast from "react-hot-toast";
 
 const sb = SendbirdChat.init({
   appId: "434D4E2C-4EEF-41DB-AE99-30D00B5AFF1D",
@@ -45,6 +47,34 @@ export default function MarketFeature({
     }[]
   >([]);
   const { bids, asks } = usePlayerMarket();
+
+  useEffect(() => {
+    const feedUrl = "ws://localhost:1234";
+    if (!feedUrl) {
+      toast.error("NEXT_PUBLIC_FEED_URL not set");
+      throw new Error("NEXT_PUBLIC_FEED_URL not set");
+    }
+    const ws = new WebSocket(feedUrl);
+
+    ws.onopen = () => {
+      console.log("Connected to server");
+    };
+
+    ws.onclose = (event) => {
+      console.log("Disconnected from server", event);
+    };
+
+    ws.onmessage = async (message): Promise<void> => {
+      console.log("message received", message);
+      const fill: FillLogResult = JSON.parse(message.data);
+      console.log("message received");
+      if (fill.market !== params.marketAddress) {
+        console.log("market not match");
+        return;
+      }
+      console.log("market match");
+    };
+  }, [params.marketAddress]);
 
   const connectToChat = async () => {
     const user = await sb.connect(username);
@@ -108,15 +138,21 @@ export default function MarketFeature({
           <h2 className="text-lg font-bold">Bids</h2>
           <div className="grid grid-cols-3 gap-4 mb-4">
             <>
-              <h3>Trader</h3>
-              <h3>Price</h3>
-              <h3>Quantity</h3>
+              <h3 key="trader">Trader</h3>
+              <h3 key="price">Price</h3>
+              <h3 key="quantity">Quantity</h3>
             </>
             {bids.data?.map((bid) => (
               <>
-                <div>{minimizePubkey(bid.trader.toBase58())}</div>
-                <div>{bid.tokenPrice.toFixed(6)}</div>
-                <div>{bid.numBaseTokens.toString()}</div>
+                <div key={"trader-" + bid.trader.toBase58()}>
+                  {minimizePubkey(bid.trader.toBase58())}
+                </div>
+                <div key={"price-" + bid.trader.toBase58()}>
+                  {bid.tokenPrice.toFixed(6)}
+                </div>
+                <div key={"quantity-" + bid.trader.toBase58()}>
+                  {bid.numBaseTokens.toString()}
+                </div>
               </>
             ))}
           </div>
@@ -129,9 +165,15 @@ export default function MarketFeature({
             </>
             {asks.data?.map((ask) => (
               <>
-                <div>{minimizePubkey(ask.trader.toBase58())}</div>
-                <div>{ask.tokenPrice.toFixed(6)}</div>
-                <div>{ask.numBaseTokens.toString()}</div>
+                <div key={"trader-" + ask.trader.toBase58()}>
+                  {minimizePubkey(ask.trader.toBase58())}
+                </div>
+                <div key={"price-" + ask.trader.toBase58()}>
+                  {ask.tokenPrice.toFixed(6)}
+                </div>
+                <div key={"quantity-" + ask.trader.toBase58()}>
+                  {ask.numBaseTokens.toString()}
+                </div>
               </>
             ))}
           </div>
@@ -148,7 +190,7 @@ export default function MarketFeature({
           </div>
           <div>
             {messages.map((message, index) => (
-              <div key={index} className="flex flex-row">
+              <div key={"message-" + index} className="flex flex-row">
                 <div>{message.sender}</div>
                 <div>{message.message}</div>
               </div>
