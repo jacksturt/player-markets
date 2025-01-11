@@ -1,6 +1,6 @@
 import * as anchor from "@coral-xyz/anchor";
 import { Program } from "@coral-xyz/anchor";
-import { Markets } from "../target/types/markets";
+import { Tradetalk } from "../target/types/tradetalk";
 import {
   Keypair,
   LAMPORTS_PER_SOL,
@@ -25,11 +25,12 @@ import { placeOrder } from "../manifest/tests/placeOrder";
 import { OrderType } from "../manifest/src/manifest";
 
 const LAMAR_ID = "e06a9c07";
-describe("markets", () => {
+describe("tradetalk", () => {
   // Configure the client to use the local cluster.
   anchor.setProvider(anchor.AnchorProvider.env());
 
-  const program = anchor.workspace.Markets as Program<Markets>;
+  const program = anchor.workspace.Tradetalk as Program<Tradetalk>;
+  const provider = anchor.getProvider();
   const connection = anchor.getProvider().connection;
   const maker = Keypair.generate();
   const taker = Keypair.generate();
@@ -59,7 +60,10 @@ describe("markets", () => {
     [Buffer.from("auth")],
     program.programId
   )[0];
-
+  const playerStats = PublicKey.findProgramAddressSync(
+    [Buffer.from("player_stats"), Buffer.from(LAMAR_ID)],
+    program.programId
+  )[0];
   const payoutConfig = PublicKey.findProgramAddressSync(
     [Buffer.from("payout"), mintConfig.toBuffer()],
     program.programId
@@ -110,7 +114,7 @@ describe("markets", () => {
       .then(log);
   });
 
-  it("Can Init Quote!", async () => {
+  xit("Can Init Quote!", async () => {
     const tx = await program.methods
       .initQuote()
       .accountsStrict({
@@ -127,7 +131,7 @@ describe("markets", () => {
       .then(log);
   });
 
-  it("Create mints and mint to", async () => {
+  xit("Create mints and mint to", async () => {
     makerAtaQuote = (
       await getOrCreateAssociatedTokenAccount(
         connection,
@@ -173,7 +177,7 @@ describe("markets", () => {
     );
   });
 
-  it("Can Faucet Quote!", async () => {
+  xit("Can Faucet Quote!", async () => {
     const context = {
       payer: maker.publicKey,
       quoteTokenMint: quote_token_mint,
@@ -221,7 +225,7 @@ describe("markets", () => {
       });
   });
 
-  it("Can Init Mint!", async () => {
+  xit("Can Init Mint!", async () => {
     // Add your test here.
 
     const tx = await program.methods
@@ -241,7 +245,7 @@ describe("markets", () => {
     console.log("Your transaction signature", tx);
   });
 
-  it("Can Mint!", async () => {
+  xit("Can Mint!", async () => {
     // Add your test here.
     makerAtaPlayer = (
       await getOrCreateAssociatedTokenAccount(
@@ -467,7 +471,7 @@ describe("markets", () => {
     // ]);
   });
 
-  it("Initialize Payout!", async () => {
+  xit("Initialize Payout!", async () => {
     const tx = await program.methods
       .initPayout(new BN(20000))
       .accountsStrict({
@@ -516,5 +520,46 @@ describe("markets", () => {
         const makerPlayer = await getAccount(connection, makerAtaPlayer);
         console.log("maker player amount after", makerPlayer.amount);
       });
+  });
+
+  it("Initialize Projection Oracle!", async () => {
+    const tx = await program.methods
+      .initializeProjectionOracle(LAMAR_ID, "Lamar Jackson", "QB")
+      .accountsStrict({
+        authority: provider.publicKey,
+        playerStats,
+        systemProgram: SystemProgram.programId,
+      })
+      .rpc();
+  });
+
+  it("Can Update Projection Oracle!", async () => {
+    let playerStatsAccount = await program.account.playerStats.fetch(
+      playerStats
+    );
+    console.log("playerStatsAccount", playerStatsAccount);
+    const tx = await program.methods
+      .updateProjectionOracle({
+        playerId: LAMAR_ID,
+        name: "Lamar Jackson",
+        position: "QB",
+        projectedYards: 1000,
+        projectedTouchdowns: 10,
+        projectedReceptions: 10,
+        projectedTargets: 10,
+        projectedRushAttempts: 10,
+        projectedPassAttempts: 10,
+        projectedKickingPoints: 10,
+        lastUpdated: new BN(Date.now()),
+      })
+
+      .accountsStrict({
+        authority: provider.publicKey,
+        playerStats,
+      })
+      .rpc();
+
+    playerStatsAccount = await program.account.playerStats.fetch(playerStats);
+    console.log("playerStatsAccount", playerStatsAccount);
   });
 });

@@ -3,7 +3,7 @@
   "scripts": {
     "lint:fix": "prettier */*.js \"*/**/*{.js,.ts}\" -w",
     "lint": "prettier */*.js \"*/**/*{.js,.ts}\" --check",
-    "test-markets": "ts-mocha -p ./tsconfig.json -t 1000000 'tests/markets.ts'"
+    "test-tradetalk": "ts-mocha -p ./tsconfig.json -t 1000000 'tests/tradetalk.ts'"
   },
   "dependencies": {
     "@coral-xyz/anchor": "^0.30.1",

@@ -11,7 +11,7 @@ use crate::errors::*;
 
 use crate::state::PlayerStats;
 
-declare_id!("trdtLkaq6ZsAa3XMWQDonaZN8JhurDoAwcVs9C8wYpM");
+declare_id!("EvNCTSJ988SDRDUrg9KK9Hsy3NAdy6gui63nQ6KNHiNd");
 
 #[program]
 pub mod tradetalk {
@@ -57,8 +57,15 @@ pub mod tradetalk {
         Ok(())
     }
 
-    pub fn init_projection_oracle(ctx: Context<InitializeProjectionOracle>) -> Result<()> {
-        ctx.accounts.initialize_projection_oracle().unwrap();
+    pub fn initialize_projection_oracle(
+        ctx: Context<InitializeProjectionOracle>,
+        player_id: String,
+        name: String,
+        position: String,
+    ) -> Result<()> {
+        ctx.accounts
+            .initialize_projection_oracle(player_id, name, position)
+            .unwrap();
         Ok(())
     }
 
