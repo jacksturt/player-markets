@@ -9,10 +9,13 @@ use crate::constants::*;
 use crate::context::*;
 use crate::errors::*;
 
+use crate::state::PlayerStats;
+
 declare_id!("trdtLkaq6ZsAa3XMWQDonaZN8JhurDoAwcVs9C8wYpM");
 
 #[program]
 pub mod tradetalk {
+
     use super::*;
 
     pub fn init_quote(ctx: Context<InitializeQuote>) -> Result<()> {
@@ -51,6 +54,19 @@ pub mod tradetalk {
 
     pub fn payout(ctx: Context<Payout>) -> Result<()> {
         ctx.accounts.payout().unwrap();
+        Ok(())
+    }
+
+    pub fn init_projection_oracle(ctx: Context<InitializeProjectionOracle>) -> Result<()> {
+        ctx.accounts.initialize_projection_oracle().unwrap();
+        Ok(())
+    }
+
+    pub fn update_projection_oracle(
+        ctx: Context<UpdateProjectionOracle>,
+        player_data: PlayerStats,
+    ) -> Result<()> {
+        ctx.accounts.update_projection_oracle(player_data).unwrap();
         Ok(())
     }
 }
