@@ -1265,6 +1265,7 @@ dependencies = [
  "anchor-lang",
  "anchor-spl",
  "constant-product-curve",
+ "serde",
 ]
 
 [[package]]

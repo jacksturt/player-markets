@@ -6,4 +6,6 @@ pub enum OracleError {
     DefaultError,
     #[msg("Unauthorized update.")]
     UnauthorizedUpdate,
+    #[msg("Unauthorized authority.")]
+    UnauthorizedAuthority,
 }

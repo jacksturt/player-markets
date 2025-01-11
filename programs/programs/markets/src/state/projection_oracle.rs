@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use anchor_lang::prelude::*;
 
-#[derive(AnchorSerialize, AnchorDeserialize, Clone, Debug)]
+#[account]
 pub struct PlayerStats {
     pub player_id: String,
     pub name: String,
@@ -15,11 +15,4 @@ pub struct PlayerStats {
     pub projected_pass_attempts: Option<i32>,
     pub projected_kicking_points: Option<i32>,
     pub last_updated: i64,
-}
-
-#[account]
-pub struct ProjectionOracleState {
-    pub authority: Pubkey,
-    pub player_stats: HashMap<String, PlayerStats>,
-    pub last_update: i64,
 }
