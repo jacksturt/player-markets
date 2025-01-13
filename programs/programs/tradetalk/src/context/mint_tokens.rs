@@ -1,4 +1,4 @@
-use crate::state::mint::PlayerMintConfig;
+use crate::state::{mint::PlayerMintConfig, PlayerStats};
 use anchor_lang::prelude::*;
 use anchor_spl::{
     associated_token::AssociatedToken,
@@ -16,6 +16,13 @@ pub struct MintTokens<'info> {
         mint::authority = player_token_mint,
     )]
     pub player_token_mint: InterfaceAccount<'info, Mint>,
+
+    #[account(
+        mut,
+        seeds = [b"player_stats", config.player_id.as_ref()],
+        bump,
+    )]
+    pub player_stats: Account<'info, PlayerStats>,
     #[account(
         seeds = [b"config", config.player_id.as_ref(), config.timestamp.as_ref()],
         bump,
@@ -82,7 +89,7 @@ impl<'info> MintTokens<'info> {
 
         transfer_checked(
             cpi_context,
-            self.config.cost * quantity,
+            (self.player_stats.projected_points * quantity as f64) as u64,
             self.quote_token_mint.decimals,
         )?;
 

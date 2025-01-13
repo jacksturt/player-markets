@@ -23,6 +23,7 @@ import { deposit } from "../manifest/tests/deposit";
 import { ManifestClient } from "@cks-systems/manifest-sdk";
 import { placeOrder } from "../manifest/tests/placeOrder";
 import { OrderType } from "../manifest/src/manifest";
+import { assert } from "chai";
 
 const LAMAR_ID = "e06a9c07";
 describe("tradetalk", () => {
@@ -82,6 +83,9 @@ describe("tradetalk", () => {
     [Buffer.from("lp"), marketConfig.toBuffer()],
     program.programId
   )[0];
+  const projection1 = 23.54;
+  const projection2 = 31.65;
+  const actual = 29.39;
   let vault_x_ata: PublicKey;
   let vault_y_ata: PublicKey;
 
@@ -114,7 +118,7 @@ describe("tradetalk", () => {
       .then(log);
   });
 
-  xit("Can Init Quote!", async () => {
+  it("Can Init Quote!", async () => {
     const tx = await program.methods
       .initQuote()
       .accountsStrict({
@@ -131,7 +135,7 @@ describe("tradetalk", () => {
       .then(log);
   });
 
-  xit("Create mints and mint to", async () => {
+  it("Create mints and mint to", async () => {
     makerAtaQuote = (
       await getOrCreateAssociatedTokenAccount(
         connection,
@@ -177,7 +181,7 @@ describe("tradetalk", () => {
     );
   });
 
-  xit("Can Faucet Quote!", async () => {
+  it("Can Faucet Quote!", async () => {
     const context = {
       payer: maker.publicKey,
       quoteTokenMint: quote_token_mint,
@@ -188,9 +192,9 @@ describe("tradetalk", () => {
       associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
     };
 
-    Object.entries(context).forEach(([key, value]) => {
-      console.log(key, value.toBase58());
-    });
+    // Object.entries(context).forEach(([key, value]) => {
+    //   console.log(key, value.toBase58());
+    // });
 
     const tx = await program.methods
       .faucetQuote(new anchor.BN(100000000000))
@@ -225,27 +229,49 @@ describe("tradetalk", () => {
       });
   });
 
-  xit("Can Init Mint!", async () => {
+  it("Can Init Mint!", async () => {
     // Add your test here.
+    const context = {
+      payer: provider.publicKey,
+      quoteTokenMint: quote_token_mint,
+      playerStats,
+      vault,
+      playerTokenMint: player_token_mint,
+      config: mintConfig,
+      tokenProgram: TOKEN_PROGRAM_ID,
+      systemProgram: SystemProgram.programId,
+      associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
+    };
 
+    Object.entries(context).forEach(([key, value]) => {
+      console.log(key, value.toBase58());
+    });
     const tx = await program.methods
-      .initMint(new anchor.BN(3), LAMAR_ID, timestamp)
-      .accountsPartial({
-        payer: maker.publicKey,
-        quoteTokenMint: quote_token_mint,
-        vault,
-        playerTokenMint: player_token_mint,
-        config: mintConfig,
-        tokenProgram: TOKEN_PROGRAM_ID,
-        systemProgram: SystemProgram.programId,
-        associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
-      })
-      .signers([maker])
+      .initMint(LAMAR_ID, timestamp, "Lamar Jackson", "QB")
+      .accountsPartial(context)
       .rpc();
     console.log("Your transaction signature", tx);
   });
 
-  xit("Can Mint!", async () => {
+  it("Can Update Projection Oracle!", async () => {
+    let playerStatsAccount = await program.account.playerStats.fetch(
+      playerStats
+    );
+    console.log("playerStatsAccount", playerStatsAccount);
+    const tx = await program.methods
+      .updateProjectionOracle(projection1)
+      .accountsStrict({
+        authority: provider.publicKey,
+        playerStats,
+        config: mintConfig,
+      })
+      .rpc();
+
+    playerStatsAccount = await program.account.playerStats.fetch(playerStats);
+    console.log("playerStatsAccount", playerStatsAccount);
+  });
+
+  it("Can Mint!", async () => {
     // Add your test here.
     makerAtaPlayer = (
       await getOrCreateAssociatedTokenAccount(
@@ -287,6 +313,11 @@ describe("tradetalk", () => {
 
         const makerPlayer = await getAccount(connection, makerAtaPlayer);
         console.log("maker player amount after", makerPlayer.amount);
+        assert(
+          makerQuote.amount +
+            BigInt(projection1 * Number(makerPlayer.amount)) ===
+            BigInt(100000000000)
+        );
       });
 
     await program.methods
@@ -315,7 +346,100 @@ describe("tradetalk", () => {
       });
   });
 
-  xit("Can Create Market!", async () => {
+  it("Can Update Projection Oracle again!", async () => {
+    let playerStatsAccount = await program.account.playerStats.fetch(
+      playerStats
+    );
+    console.log("playerStatsAccount", playerStatsAccount);
+    const tx = await program.methods
+      .updateProjectionOracle(projection2)
+      .accountsStrict({
+        authority: provider.publicKey,
+        playerStats,
+        config: mintConfig,
+      })
+      .rpc();
+
+    playerStatsAccount = await program.account.playerStats.fetch(playerStats);
+    console.log("playerStatsAccount", playerStatsAccount);
+  });
+
+  it("Can Mint at new projection!", async () => {
+    const tx = await program.methods
+      .mintTokens(new anchor.BN(300000000))
+      .accountsPartial({
+        payer: maker.publicKey,
+        quoteTokenMint: quote_token_mint,
+        vault,
+        playerTokenMint: player_token_mint,
+        destination: makerAtaPlayer,
+        config: mintConfig,
+        tokenProgram: TOKEN_PROGRAM_ID,
+        systemProgram: SystemProgram.programId,
+        associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
+      })
+      .signers([maker])
+      .rpc()
+      .then(confirm)
+      .then(log)
+      .then(async () => {
+        const makerQuote = await getAccount(connection, makerAtaQuote);
+        console.log("maker quote amount after", makerQuote.amount);
+
+        const makerPlayer = await getAccount(connection, makerAtaPlayer);
+        console.log("maker player amount after", makerPlayer.amount);
+        assert(
+          makerQuote.amount +
+            BigInt(projection2 * Number(makerPlayer.amount)) ===
+            BigInt(102433000000)
+        );
+      });
+
+    await program.methods
+      .mintTokens(new anchor.BN(300000000))
+      .accountsPartial({
+        payer: taker.publicKey,
+        quoteTokenMint: quote_token_mint,
+        vault,
+        playerTokenMint: player_token_mint,
+        destination: takerAtaPlayer,
+        config: mintConfig,
+        tokenProgram: TOKEN_PROGRAM_ID,
+        systemProgram: SystemProgram.programId,
+        associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
+      })
+      .signers([taker])
+      .rpc()
+      .then(confirm)
+      .then(log)
+      .then(async () => {
+        const takerQuote = await getAccount(connection, takerAtaQuote);
+        console.log("taker quote amount after", takerQuote.amount);
+
+        const takerPlayer = await getAccount(connection, takerAtaPlayer);
+        console.log("taker player amount after", takerPlayer.amount);
+      });
+  });
+
+  it("Can Update Projection Oracle again again!", async () => {
+    let playerStatsAccount = await program.account.playerStats.fetch(
+      playerStats
+    );
+    console.log("playerStatsAccount", playerStatsAccount);
+    const tx = await program.methods
+      .updateProjectionOracle(actual)
+      .accountsStrict({
+        authority: provider.publicKey,
+        playerStats,
+        config: mintConfig,
+      })
+      .rpc();
+
+    playerStatsAccount = await program.account.playerStats.fetch(playerStats);
+    console.log("playerStatsAccount", playerStatsAccount);
+  });
+
+  it("Can Create Market!", async () => {
     marketAddress = await createMarket(
       connection,
       maker,
@@ -471,24 +595,7 @@ describe("tradetalk", () => {
     // ]);
   });
 
-  xit("Initialize Payout!", async () => {
-    const tx = await program.methods
-      .initPayout(new BN(20000))
-      .accountsStrict({
-        payer: maker.publicKey,
-        mintConfig,
-        payoutConfig,
-        tokenProgram: TOKEN_PROGRAM_ID,
-        associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
-        systemProgram: SystemProgram.programId,
-      })
-      .signers([maker])
-      .rpc()
-      .then(confirm)
-      .then(log);
-  });
-
-  xit("Payout", async () => {
+  it("Payout", async () => {
     const context = {
       payer: maker.publicKey,
       quoteTokenMint: quote_token_mint,
@@ -496,8 +603,8 @@ describe("tradetalk", () => {
       playerTokenMint: player_token_mint,
       payerPlayerTokenAccount: makerAtaPlayer,
       mintConfig,
-      payoutConfig,
-      quoteConfig,
+      playerStats,
+      vault,
       tokenProgram: TOKEN_PROGRAM_ID,
       associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
       systemProgram: SystemProgram.programId,
@@ -520,46 +627,5 @@ describe("tradetalk", () => {
         const makerPlayer = await getAccount(connection, makerAtaPlayer);
         console.log("maker player amount after", makerPlayer.amount);
       });
-  });
-
-  it("Initialize Projection Oracle!", async () => {
-    const tx = await program.methods
-      .initializeProjectionOracle(LAMAR_ID, "Lamar Jackson", "QB")
-      .accountsStrict({
-        authority: provider.publicKey,
-        playerStats,
-        systemProgram: SystemProgram.programId,
-      })
-      .rpc();
-  });
-
-  it("Can Update Projection Oracle!", async () => {
-    let playerStatsAccount = await program.account.playerStats.fetch(
-      playerStats
-    );
-    console.log("playerStatsAccount", playerStatsAccount);
-    const tx = await program.methods
-      .updateProjectionOracle({
-        playerId: LAMAR_ID,
-        name: "Lamar Jackson",
-        position: "QB",
-        projectedYards: 1000,
-        projectedTouchdowns: 10,
-        projectedReceptions: 10,
-        projectedTargets: 10,
-        projectedRushAttempts: 10,
-        projectedPassAttempts: 10,
-        projectedKickingPoints: 10,
-        lastUpdated: new BN(Date.now()),
-      })
-
-      .accountsStrict({
-        authority: provider.publicKey,
-        playerStats,
-      })
-      .rpc();
-
-    playerStatsAccount = await program.account.playerStats.fetch(playerStats);
-    console.log("playerStatsAccount", playerStatsAccount);
   });
 });

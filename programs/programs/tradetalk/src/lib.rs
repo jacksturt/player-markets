@@ -9,8 +9,6 @@ use crate::constants::*;
 use crate::context::*;
 use crate::errors::*;
 
-use crate::state::PlayerStats;
-
 declare_id!("EvNCTSJ988SDRDUrg9KK9Hsy3NAdy6gui63nQ6KNHiNd");
 
 #[program]
@@ -30,12 +28,16 @@ pub mod tradetalk {
 
     pub fn init_mint(
         ctx: Context<InitializeMint>,
-        cost: u64,
         player_id: String,
         timestamp: String,
+        name: String,
+        position: String,
     ) -> Result<()> {
         ctx.accounts
-            .initialize_mint(cost, player_id, timestamp, &ctx.bumps)
+            .initialize_mint(player_id.clone(), timestamp, &ctx.bumps)
+            .unwrap();
+        ctx.accounts
+            .initialize_projection_oracle(player_id, name, position)
             .unwrap();
         Ok(())
     }
@@ -45,35 +47,18 @@ pub mod tradetalk {
         Ok(())
     }
 
-    pub fn init_payout(ctx: Context<InitializePayout>, payout_rate: u64) -> Result<()> {
-        ctx.accounts
-            .initialize_payout(&ctx.bumps, payout_rate)
-            .unwrap();
-        Ok(())
-    }
-
     pub fn payout(ctx: Context<Payout>) -> Result<()> {
         ctx.accounts.payout().unwrap();
         Ok(())
     }
 
-    pub fn initialize_projection_oracle(
-        ctx: Context<InitializeProjectionOracle>,
-        player_id: String,
-        name: String,
-        position: String,
-    ) -> Result<()> {
-        ctx.accounts
-            .initialize_projection_oracle(player_id, name, position)
-            .unwrap();
-        Ok(())
-    }
-
     pub fn update_projection_oracle(
         ctx: Context<UpdateProjectionOracle>,
-        player_data: PlayerStats,
+        projected_points: f64,
     ) -> Result<()> {
-        ctx.accounts.update_projection_oracle(player_data).unwrap();
+        ctx.accounts
+            .update_projection_oracle(projected_points)
+            .unwrap();
         Ok(())
     }
 }

@@ -34,8 +34,7 @@ impl<'info> InitializeProjectionOracle<'info> {
         player_stats.player_id = player_id;
         player_stats.name = name;
         player_stats.position = position;
-        player_stats.projected_yards = 0;
-        player_stats.projected_touchdowns = 0;
+        player_stats.projected_points = 0.0;
         player_stats.last_updated = Clock::get()?.unix_timestamp;
 
         Ok(())

@@ -1,5 +1,4 @@
 pub mod faucet_quote;
-pub mod init_payout;
 pub mod initialize_mint;
 pub mod initialize_projection_oracle;
 pub mod initialize_quote;
@@ -8,7 +7,6 @@ pub mod payout;
 pub mod update_projection_oracle;
 
 pub use faucet_quote::*;
-pub use init_payout::*;
 pub use initialize_mint::*;
 pub use initialize_projection_oracle::*;
 pub use initialize_quote::*;

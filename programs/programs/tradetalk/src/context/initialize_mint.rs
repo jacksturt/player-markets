@@ -6,19 +6,23 @@ use anchor_spl::{
     token_interface::{Mint, TokenAccount},
 };
 
+use crate::state::PlayerStats;
+use crate::OracleError;
+use crate::ADMIN_PUBKEY;
+
 #[derive(Accounts)]
-#[instruction(cost: u64, player_id: String, timestamp: String)]
+#[instruction(player_id: String, timestamp: String)]
 pub struct InitializeMint<'info> {
     #[account(mut)]
     pub payer: Signer<'info>,
-    pub quote_token_mint: InterfaceAccount<'info, Mint>,
+    pub quote_token_mint: Box<InterfaceAccount<'info, Mint>>,
     #[account(
         init,
         payer = payer,
         associated_token::mint = quote_token_mint,
         associated_token::authority = config
     )]
-    pub vault: InterfaceAccount<'info, TokenAccount>,
+    pub vault: Box<InterfaceAccount<'info, TokenAccount>>,
     #[account(
         init,
         payer = payer,
@@ -26,7 +30,7 @@ pub struct InitializeMint<'info> {
         bump,
         space = PlayerMintConfig::INIT_SPACE,
     )]
-    pub config: Account<'info, PlayerMintConfig>,
+    pub config: Box<Account<'info, PlayerMintConfig>>,
     #[account(
         init,
         payer = payer,
@@ -35,7 +39,15 @@ pub struct InitializeMint<'info> {
         mint::authority = player_token_mint,
         mint::decimals = 6,
     )]
-    pub player_token_mint: InterfaceAccount<'info, Mint>,
+    pub player_token_mint: Box<InterfaceAccount<'info, Mint>>,
+    #[account(
+        init,
+        payer = payer,
+        space = 8 + 32 + 200, // Adjust space as needed
+        seeds = [b"player_stats", player_id.as_bytes()],
+        bump
+    )]
+    pub player_stats: Box<Account<'info, PlayerStats>>,
     pub system_program: Program<'info, System>,
     pub token_program: Program<'info, Token>,
     pub associated_token_program: Program<'info, AssociatedToken>,
@@ -44,7 +56,6 @@ pub struct InitializeMint<'info> {
 impl<'info> InitializeMint<'info> {
     pub fn initialize_mint(
         &mut self,
-        cost: u64,
         player_id: String,
         timestamp: String,
         bumps: &InitializeMintBumps,
@@ -56,10 +67,30 @@ impl<'info> InitializeMint<'info> {
             player_token_bump,
             quote_token_mint: self.quote_token_mint.key(),
             player_token_mint: self.player_token_mint.key(),
-            cost,
+            player_stats: self.player_stats.key(),
             timestamp,
             player_id,
         });
+        Ok(())
+    }
+
+    pub fn initialize_projection_oracle(
+        &mut self,
+        player_id: String,
+        name: String,
+        position: String,
+    ) -> Result<()> {
+        require!(
+            self.payer.key().to_string() == ADMIN_PUBKEY,
+            OracleError::UnauthorizedAuthority
+        );
+        let player_stats = &mut self.player_stats;
+        player_stats.player_id = player_id;
+        player_stats.name = name;
+        player_stats.position = position;
+        player_stats.projected_points = 0.0;
+        player_stats.last_updated = Clock::get()?.unix_timestamp;
+
         Ok(())
     }
 }

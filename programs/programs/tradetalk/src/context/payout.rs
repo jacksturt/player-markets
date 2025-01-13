@@ -1,11 +1,9 @@
-use crate::state::mint::PlayerMintConfig;
-use crate::state::payout::PayoutConfig;
-use crate::state::quote::QuoteMintConfig;
+use crate::state::{mint::PlayerMintConfig, PlayerStats};
 use anchor_lang::prelude::*;
 use anchor_spl::{
     associated_token::AssociatedToken,
     token::Token,
-    token_interface::{burn, mint_to, Burn, Mint, MintTo, TokenAccount},
+    token_interface::{burn, transfer_checked, Burn, Mint, TokenAccount, TransferChecked},
 };
 
 #[derive(Accounts)]
@@ -39,20 +37,20 @@ pub struct Payout<'info> {
     )]
     pub payer_player_token_account: InterfaceAccount<'info, TokenAccount>,
     #[account(
-        seeds = [b"payout", mint_config.key().as_ref()],
-        bump,
-    )]
-    pub payout_config: Box<Account<'info, PayoutConfig>>,
-    #[account(
         seeds = [b"config", mint_config.player_id.as_bytes(), mint_config.timestamp.as_bytes()],
         bump,
     )]
     pub mint_config: Box<Account<'info, PlayerMintConfig>>,
-    #[account(
-        seeds = [b"quoteConfig"],
+    #[account(mut,
+        associated_token::mint = quote_token_mint,
+        associated_token::authority = mint_config
+    )]
+    pub vault: Box<InterfaceAccount<'info, TokenAccount>>,
+    #[account(mut,
+        seeds = [b"player_stats", mint_config.player_id.as_ref()],
         bump,
     )]
-    pub quote_config: Box<Account<'info, QuoteMintConfig>>,
+    pub player_stats: Account<'info, PlayerStats>,
     pub system_program: Program<'info, System>,
     pub token_program: Program<'info, Token>,
     pub associated_token_program: Program<'info, AssociatedToken>,
@@ -60,30 +58,36 @@ pub struct Payout<'info> {
 
 impl<'info> Payout<'info> {
     pub fn payout(&mut self) -> Result<()> {
-        self.mint_quote_tokens(
-            self.payer_player_token_account.amount * self.payout_config.payout_rate,
-        )?;
+        self.transfer_quote_tokens()?;
         self.burn_player_tokens()?;
         Ok(())
     }
 
-    pub fn mint_quote_tokens(&self, amount: u64) -> Result<()> {
-        let seeds = &["quote".as_bytes(), &[self.quote_config.quote_token_bump]];
-        let signer = [&seeds[..]];
+    pub fn transfer_quote_tokens(&mut self) -> Result<()> {
+        let cpi_program = self.token_program.to_account_info();
+        let bump = self.mint_config.config_bump;
 
-        mint_to(
-            CpiContext::new_with_signer(
-                self.token_program.to_account_info(),
-                MintTo {
-                    authority: self.quote_token_mint.to_account_info(),
-                    to: self.payer_quote_token_account.to_account_info(),
-                    mint: self.quote_token_mint.to_account_info(),
-                },
-                &signer,
-            ),
-            amount,
-        )?;
+        let cpi_accounts = TransferChecked {
+            from: self.vault.to_account_info(),
+            to: self.payer_quote_token_account.to_account_info(),
+            authority: self.mint_config.to_account_info(),
+            mint: self.quote_token_mint.to_account_info(),
+        };
 
+        let seeds = &[
+            "config".as_bytes(),
+            &self.mint_config.player_id.as_bytes(),
+            &self.mint_config.timestamp.as_bytes(),
+            &[bump],
+        ];
+        let signer_seeds = &[&seeds[..]];
+
+        let cpi_ctx = CpiContext::new_with_signer(cpi_program, cpi_accounts, signer_seeds);
+
+        let amount = (self.player_stats.projected_points
+            * self.payer_player_token_account.amount as f64) as u64;
+
+        transfer_checked(cpi_ctx, amount, self.quote_token_mint.decimals)?;
         Ok(())
     }
 
