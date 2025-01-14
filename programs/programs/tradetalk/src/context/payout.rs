@@ -1,4 +1,4 @@
-use crate::state::{mint::PlayerMintConfig, PlayerStats};
+use crate::state::{mint::PlayerMintConfig, MintRecord, PlayerStats};
 use anchor_lang::prelude::*;
 use anchor_spl::{
     associated_token::AssociatedToken,
@@ -37,6 +37,7 @@ pub struct Payout<'info> {
     )]
     pub payer_player_token_account: InterfaceAccount<'info, TokenAccount>,
     #[account(
+        mut,
         seeds = [b"config", mint_config.player_id.as_bytes(), mint_config.timestamp.as_bytes()],
         bump,
     )]
@@ -51,6 +52,11 @@ pub struct Payout<'info> {
         bump,
     )]
     pub player_stats: Account<'info, PlayerStats>,
+    #[account(mut,
+        seeds = [b"mint_record", mint_config.key().as_ref(), payer.key().as_ref()],
+        bump,
+    )]
+    pub mint_record: Box<Account<'info, MintRecord>>,
     pub system_program: Program<'info, System>,
     pub token_program: Program<'info, Token>,
     pub associated_token_program: Program<'info, AssociatedToken>,
@@ -58,12 +64,22 @@ pub struct Payout<'info> {
 
 impl<'info> Payout<'info> {
     pub fn payout(&mut self) -> Result<()> {
-        self.transfer_quote_tokens()?;
         self.burn_player_tokens()?;
+        self.transfer_quote_tokens()?;
         Ok(())
     }
 
     pub fn transfer_quote_tokens(&mut self) -> Result<()> {
+        msg!("vault total: {}", self.vault.amount);
+        msg!("player token supply: {}", self.player_token_mint.supply);
+        let vault_remaining = self.vault.amount
+            - (self.player_token_mint.supply as f64 * self.player_stats.projected_points) as u64;
+        msg!("vault remaining: {}", vault_remaining);
+
+        let percent_due = self.mint_record.deposited_amount as f64
+            / self.mint_config.total_deposited_amount as f64;
+
+        let minter_rewards = vault_remaining as f64 * percent_due;
         let cpi_program = self.token_program.to_account_info();
         let bump = self.mint_config.config_bump;
 
@@ -87,7 +103,12 @@ impl<'info> Payout<'info> {
         let amount = (self.player_stats.projected_points
             * self.payer_player_token_account.amount as f64) as u64;
 
-        transfer_checked(cpi_ctx, amount, self.quote_token_mint.decimals)?;
+        transfer_checked(
+            cpi_ctx,
+            amount + minter_rewards as u64,
+            self.quote_token_mint.decimals,
+        )?;
+        self.mint_config.total_deposited_amount -= self.mint_record.deposited_amount;
         Ok(())
     }
 
@@ -100,5 +121,17 @@ impl<'info> Payout<'info> {
 
         let ctx = CpiContext::new(self.token_program.to_account_info(), cpi_accounts);
         burn(ctx, self.payer_player_token_account.amount)
+    }
+
+    pub fn close_accounts(&mut self) -> Result<()> {
+        self.payer_player_token_account
+            .close(self.payer.to_account_info())?;
+        self.mint_record.close(self.payer.to_account_info())?;
+        if self.mint_config.total_deposited_amount == 0 {
+            self.vault.close(self.payer.to_account_info())?;
+            self.mint_config.close(self.payer.to_account_info())?;
+            self.player_stats.close(self.payer.to_account_info())?;
+        }
+        Ok(())
     }
 }

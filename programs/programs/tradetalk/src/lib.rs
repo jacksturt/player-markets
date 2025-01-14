@@ -30,14 +30,12 @@ pub mod tradetalk {
         ctx: Context<InitializeMint>,
         player_id: String,
         timestamp: String,
-        name: String,
-        position: String,
     ) -> Result<()> {
         ctx.accounts
             .initialize_mint(player_id.clone(), timestamp, &ctx.bumps)
             .unwrap();
         ctx.accounts
-            .initialize_projection_oracle(player_id, name, position)
+            .initialize_projection_oracle(player_id)
             .unwrap();
         Ok(())
     }

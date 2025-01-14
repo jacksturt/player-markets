@@ -43,7 +43,7 @@ pub struct InitializeMint<'info> {
     #[account(
         init,
         payer = payer,
-        space = 8 + 32 + 200, // Adjust space as needed
+        space = PlayerStats::INIT_SPACE,
         seeds = [b"player_stats", player_id.as_bytes()],
         bump
     )]
@@ -70,24 +70,18 @@ impl<'info> InitializeMint<'info> {
             player_stats: self.player_stats.key(),
             timestamp,
             player_id,
+            total_deposited_amount: 0,
         });
         Ok(())
     }
 
-    pub fn initialize_projection_oracle(
-        &mut self,
-        player_id: String,
-        name: String,
-        position: String,
-    ) -> Result<()> {
+    pub fn initialize_projection_oracle(&mut self, player_id: String) -> Result<()> {
         require!(
             self.payer.key().to_string() == ADMIN_PUBKEY,
             OracleError::UnauthorizedAuthority
         );
         let player_stats = &mut self.player_stats;
         player_stats.player_id = player_id;
-        player_stats.name = name;
-        player_stats.position = position;
         player_stats.projected_points = 0.0;
         player_stats.last_updated = Clock::get()?.unix_timestamp;
 

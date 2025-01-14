@@ -1,4 +1,7 @@
-use crate::state::{mint::PlayerMintConfig, PlayerStats};
+use crate::{
+    state::{mint::PlayerMintConfig, MintRecord, PlayerStats},
+    MINTER_COLLATERAL_RATE,
+};
 use anchor_lang::prelude::*;
 use anchor_spl::{
     associated_token::AssociatedToken,
@@ -15,26 +18,27 @@ pub struct MintTokens<'info> {
         bump,
         mint::authority = player_token_mint,
     )]
-    pub player_token_mint: InterfaceAccount<'info, Mint>,
+    pub player_token_mint: Box<InterfaceAccount<'info, Mint>>,
 
     #[account(
         mut,
         seeds = [b"player_stats", config.player_id.as_ref()],
         bump,
     )]
-    pub player_stats: Account<'info, PlayerStats>,
+    pub player_stats: Box<Account<'info, PlayerStats>>,
     #[account(
+        mut,
         seeds = [b"config", config.player_id.as_ref(), config.timestamp.as_ref()],
         bump,
     )]
-    pub config: Account<'info, PlayerMintConfig>,
+    pub config: Box<Account<'info, PlayerMintConfig>>,
     #[account(
         init_if_needed,
         payer = payer,
         associated_token::mint = player_token_mint,
         associated_token::authority = payer,
     )]
-    pub destination: InterfaceAccount<'info, TokenAccount>,
+    pub destination: Box<InterfaceAccount<'info, TokenAccount>>,
     #[account(mut)]
     pub payer: Signer<'info>,
     #[account(
@@ -42,14 +46,22 @@ pub struct MintTokens<'info> {
         associated_token::mint = quote_token_mint,
         associated_token::authority = payer
     )]
-    pub payer_ata_quote: InterfaceAccount<'info, TokenAccount>,
-    pub quote_token_mint: InterfaceAccount<'info, Mint>,
+    pub payer_ata_quote: Box<InterfaceAccount<'info, TokenAccount>>,
+    pub quote_token_mint: Box<InterfaceAccount<'info, Mint>>,
     #[account(
         mut,
         associated_token::mint = quote_token_mint,
         associated_token::authority = config
     )]
-    pub vault: InterfaceAccount<'info, TokenAccount>,
+    pub vault: Box<InterfaceAccount<'info, TokenAccount>>,
+    #[account(
+        init_if_needed,
+        payer = payer,
+        space = MintRecord::INIT_SPACE,
+        seeds = [b"mint_record", config.key().as_ref(), payer.key().as_ref()],
+        bump,
+    )]
+    pub mint_record: Box<Account<'info, MintRecord>>,
     pub system_program: Program<'info, System>,
     pub token_program: Program<'info, Token>,
     pub associated_token_program: Program<'info, AssociatedToken>,
@@ -87,11 +99,17 @@ impl<'info> MintTokens<'info> {
 
         let cpi_context = CpiContext::new(cpi_program, cpi_accounts);
 
+        let total_collateral =
+            (self.player_stats.projected_points * quantity as f64 * MINTER_COLLATERAL_RATE) as u64;
+
         transfer_checked(
             cpi_context,
-            (self.player_stats.projected_points * quantity as f64) as u64,
+            total_collateral,
             self.quote_token_mint.decimals,
         )?;
+
+        self.mint_record.deposited_amount += total_collateral;
+        self.config.total_deposited_amount += total_collateral;
 
         Ok(())
     }

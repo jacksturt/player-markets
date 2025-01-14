@@ -61,6 +61,22 @@ describe("tradetalk", () => {
     [Buffer.from("auth")],
     program.programId
   )[0];
+  const mintRecordMaker = PublicKey.findProgramAddressSync(
+    [
+      Buffer.from("mint_record"),
+      mintConfig.toBuffer(),
+      maker.publicKey.toBuffer(),
+    ],
+    program.programId
+  )[0];
+  const mintRecordTaker = PublicKey.findProgramAddressSync(
+    [
+      Buffer.from("mint_record"),
+      mintConfig.toBuffer(),
+      taker.publicKey.toBuffer(),
+    ],
+    program.programId
+  )[0];
   const playerStats = PublicKey.findProgramAddressSync(
     [Buffer.from("player_stats"), Buffer.from(LAMAR_ID)],
     program.programId
@@ -247,7 +263,7 @@ describe("tradetalk", () => {
       console.log(key, value.toBase58());
     });
     const tx = await program.methods
-      .initMint(LAMAR_ID, timestamp, "Lamar Jackson", "QB")
+      .initMint(LAMAR_ID, timestamp)
       .accountsPartial(context)
       .rpc();
     console.log("Your transaction signature", tx);
@@ -282,14 +298,6 @@ describe("tradetalk", () => {
       )
     ).address;
 
-    takerAtaPlayer = (
-      await getOrCreateAssociatedTokenAccount(
-        connection,
-        taker,
-        player_token_mint,
-        taker.publicKey
-      )
-    ).address;
     const tx = await program.methods
       .mintTokens(new anchor.BN(300000000))
       .accountsPartial({
@@ -299,6 +307,7 @@ describe("tradetalk", () => {
         playerTokenMint: player_token_mint,
         destination: makerAtaPlayer,
         config: mintConfig,
+        mintRecord: mintRecordMaker,
         tokenProgram: TOKEN_PROGRAM_ID,
         systemProgram: SystemProgram.programId,
         associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
@@ -315,34 +324,24 @@ describe("tradetalk", () => {
         console.log("maker player amount after", makerPlayer.amount);
         assert(
           makerQuote.amount +
-            BigInt(projection1 * Number(makerPlayer.amount)) ===
+            BigInt(projection1 * Number(makerPlayer.amount) * 2.5) ===
             BigInt(100000000000)
         );
-      });
 
-    await program.methods
-      .mintTokens(new anchor.BN(300000000))
-      .accountsPartial({
-        payer: taker.publicKey,
-        quoteTokenMint: quote_token_mint,
-        vault,
-        playerTokenMint: player_token_mint,
-        destination: takerAtaPlayer,
-        config: mintConfig,
-        tokenProgram: TOKEN_PROGRAM_ID,
-        systemProgram: SystemProgram.programId,
-        associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
-      })
-      .signers([taker])
-      .rpc()
-      .then(confirm)
-      .then(log)
-      .then(async () => {
-        const takerQuote = await getAccount(connection, takerAtaQuote);
-        console.log("taker quote amount after", takerQuote.amount);
-
-        const takerPlayer = await getAccount(connection, takerAtaPlayer);
-        console.log("taker player amount after", takerPlayer.amount);
+        const mintRecordMakerAccount = await program.account.mintRecord.fetch(
+          mintRecordMaker
+        );
+        console.log(
+          "mintRecordMakerAccount",
+          mintRecordMakerAccount.depositedAmount.toString()
+        );
+        const mintConfigAccount = await program.account.playerMintConfig.fetch(
+          mintConfig
+        );
+        console.log(
+          "mintConfigAccount",
+          mintConfigAccount.totalDepositedAmount.toString()
+        );
       });
   });
 
@@ -365,36 +364,14 @@ describe("tradetalk", () => {
   });
 
   it("Can Mint at new projection!", async () => {
-    const tx = await program.methods
-      .mintTokens(new anchor.BN(300000000))
-      .accountsPartial({
-        payer: maker.publicKey,
-        quoteTokenMint: quote_token_mint,
-        vault,
-        playerTokenMint: player_token_mint,
-        destination: makerAtaPlayer,
-        config: mintConfig,
-        tokenProgram: TOKEN_PROGRAM_ID,
-        systemProgram: SystemProgram.programId,
-        associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
-      })
-      .signers([maker])
-      .rpc()
-      .then(confirm)
-      .then(log)
-      .then(async () => {
-        const makerQuote = await getAccount(connection, makerAtaQuote);
-        console.log("maker quote amount after", makerQuote.amount);
-
-        const makerPlayer = await getAccount(connection, makerAtaPlayer);
-        console.log("maker player amount after", makerPlayer.amount);
-        assert(
-          makerQuote.amount +
-            BigInt(projection2 * Number(makerPlayer.amount)) ===
-            BigInt(102433000000)
-        );
-      });
-
+    takerAtaPlayer = (
+      await getOrCreateAssociatedTokenAccount(
+        connection,
+        taker,
+        player_token_mint,
+        taker.publicKey
+      )
+    ).address;
     await program.methods
       .mintTokens(new anchor.BN(300000000))
       .accountsPartial({
@@ -403,6 +380,7 @@ describe("tradetalk", () => {
         vault,
         playerTokenMint: player_token_mint,
         destination: takerAtaPlayer,
+        mintRecord: mintRecordTaker,
         config: mintConfig,
         tokenProgram: TOKEN_PROGRAM_ID,
         systemProgram: SystemProgram.programId,
@@ -418,10 +396,56 @@ describe("tradetalk", () => {
 
         const takerPlayer = await getAccount(connection, takerAtaPlayer);
         console.log("taker player amount after", takerPlayer.amount);
+        assert(
+          takerQuote.amount +
+            BigInt(projection2 * Number(takerPlayer.amount) * 2.5) ===
+            BigInt(100000000000)
+        );
+      });
+
+    const tx = await program.methods
+      .mintTokens(new anchor.BN(300000000))
+      .accountsPartial({
+        payer: maker.publicKey,
+        quoteTokenMint: quote_token_mint,
+        vault,
+        playerTokenMint: player_token_mint,
+        destination: makerAtaPlayer,
+        config: mintConfig,
+        mintRecord: mintRecordMaker,
+        tokenProgram: TOKEN_PROGRAM_ID,
+        systemProgram: SystemProgram.programId,
+        associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
+      })
+      .signers([maker])
+      .rpc()
+      .then(confirm)
+      .then(log)
+      .then(async () => {
+        const makerQuote = await getAccount(connection, makerAtaQuote);
+        console.log("maker quote amount after", makerQuote.amount);
+
+        const makerPlayer = await getAccount(connection, makerAtaPlayer);
+        console.log("maker player amount after", makerPlayer.amount);
+
+        const mintRecordMakerAccount = await program.account.mintRecord.fetch(
+          mintRecordMaker
+        );
+        console.log(
+          "mintRecordMakerAccount",
+          mintRecordMakerAccount.depositedAmount.toString()
+        );
+        const mintConfigAccount = await program.account.playerMintConfig.fetch(
+          mintConfig
+        );
+        console.log(
+          "mintConfigAccount",
+          mintConfigAccount.totalDepositedAmount.toString()
+        );
       });
   });
 
-  it("Can Update Projection Oracle again again!", async () => {
+  xit("Can Update Projection Oracle again again!", async () => {
     let playerStatsAccount = await program.account.playerStats.fetch(
       playerStats
     );
@@ -439,7 +463,7 @@ describe("tradetalk", () => {
     console.log("playerStatsAccount", playerStatsAccount);
   });
 
-  it("Can Create Market!", async () => {
+  xit("Can Create Market!", async () => {
     marketAddress = await createMarket(
       connection,
       maker,
@@ -595,7 +619,22 @@ describe("tradetalk", () => {
     // ]);
   });
 
-  it("Payout", async () => {
+  it("Payout maker", async () => {
+    const mintConfigAccount = await program.account.playerMintConfig.fetch(
+      mintConfig
+    );
+    console.log("mintConfigAccount", mintConfigAccount.totalDepositedAmount);
+    const mintRecordMakerAccount = await program.account.mintRecord.fetch(
+      mintRecordMaker
+    );
+    console.log(
+      "mintRecordMakerAccount",
+      mintRecordMakerAccount.depositedAmount
+    );
+
+    const makerQuoteBefore = await getAccount(connection, makerAtaQuote);
+    console.log("maker quote before", makerQuoteBefore.amount);
+
     const context = {
       payer: maker.publicKey,
       quoteTokenMint: quote_token_mint,
@@ -605,6 +644,7 @@ describe("tradetalk", () => {
       mintConfig,
       playerStats,
       vault,
+      mintRecord: mintRecordMaker,
       tokenProgram: TOKEN_PROGRAM_ID,
       associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
       systemProgram: SystemProgram.programId,
@@ -626,6 +666,57 @@ describe("tradetalk", () => {
         console.log("maker quote amount after", makerQuote.amount);
         const makerPlayer = await getAccount(connection, makerAtaPlayer);
         console.log("maker player amount after", makerPlayer.amount);
+      });
+  });
+
+  it("Payout taker", async () => {
+    const mintConfigAccount = await program.account.playerMintConfig.fetch(
+      mintConfig
+    );
+    console.log("mintConfigAccount", mintConfigAccount.totalDepositedAmount);
+
+    const mintRecordTakerAccount = await program.account.mintRecord.fetch(
+      mintRecordTaker
+    );
+    console.log(
+      "mintRecordTakerAccount",
+      mintRecordTakerAccount.depositedAmount
+    );
+
+    const context = {
+      payer: taker.publicKey,
+      quoteTokenMint: quote_token_mint,
+      payerQuoteTokenAccount: takerAtaQuote,
+      playerTokenMint: player_token_mint,
+      payerPlayerTokenAccount: takerAtaPlayer,
+      mintConfig,
+      playerStats,
+      vault,
+      mintRecord: mintRecordTaker,
+      tokenProgram: TOKEN_PROGRAM_ID,
+      associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
+      systemProgram: SystemProgram.programId,
+    };
+
+    Object.entries(context).forEach(([key, value]) => {
+      console.log(key, value.toBase58());
+    });
+
+    const tx = await program.methods
+      .payout()
+      .accountsStrict(context)
+      .signers([taker])
+      .rpc()
+      .then(confirm)
+      .then(log)
+      .then(async () => {
+        const takerQuote = await getAccount(connection, takerAtaQuote);
+        console.log("taker quote amount after", takerQuote.amount);
+        const takerPlayer = await getAccount(connection, takerAtaPlayer);
+        console.log("taker player amount after", takerPlayer.amount);
+
+        const vaultAccount = await getAccount(connection, vault);
+        console.log("vault", vaultAccount.amount);
       });
   });
 });

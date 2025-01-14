@@ -9,6 +9,7 @@ pub struct PlayerMintConfig {
     pub player_token_bump: u8,
     pub timestamp: String,
     pub player_id: String,
+    pub total_deposited_amount: u64,
 }
 
 impl Space for PlayerMintConfig {
@@ -22,6 +23,7 @@ impl PlayerMintConfig {
         s.extend_from_slice(&self.player_stats.to_bytes());
         s.extend_from_slice(&self.player_id.as_bytes());
         s.extend_from_slice(&self.timestamp.as_bytes());
+        s.extend_from_slice(&self.total_deposited_amount.to_le_bytes());
         s
     }
 }
