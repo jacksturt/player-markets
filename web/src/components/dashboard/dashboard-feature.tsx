@@ -1,16 +1,21 @@
-'use client'
+"use client";
 
-import { AppHero } from '../ui/ui-layout'
-
+import { AppHero } from "../ui/ui-layout";
+import { useSession } from "next-auth/react";
 const links: { label: string; href: string }[] = [
-  { label: 'Solana Docs', href: 'https://docs.solana.com/' },
-  { label: 'Solana Faucet', href: 'https://faucet.solana.com/' },
-  { label: 'Solana Cookbook', href: 'https://solanacookbook.com/' },
-  { label: 'Solana Stack Overflow', href: 'https://solana.stackexchange.com/' },
-  { label: 'Solana Developers GitHub', href: 'https://github.com/solana-developers/' },
-]
+  { label: "Solana Docs", href: "https://docs.solana.com/" },
+  { label: "Solana Faucet", href: "https://faucet.solana.com/" },
+  { label: "Solana Cookbook", href: "https://solanacookbook.com/" },
+  { label: "Solana Stack Overflow", href: "https://solana.stackexchange.com/" },
+  {
+    label: "Solana Developers GitHub",
+    href: "https://github.com/solana-developers/",
+  },
+];
 
 export default function DashboardFeature() {
+  const session = useSession();
+  console.log(session);
   return (
     <div>
       <AppHero title="gm" subtitle="Say hi to your new Solana dApp." />
@@ -19,7 +24,12 @@ export default function DashboardFeature() {
           <p>Here are some helpful links to get you started.</p>
           {links.map((link, index) => (
             <div key={index}>
-              <a href={link.href} className="link" target="_blank" rel="noopener noreferrer">
+              <a
+                href={link.href}
+                className="link"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
                 {link.label}
               </a>
             </div>
@@ -27,5 +37,5 @@ export default function DashboardFeature() {
         </div>
       </div>
     </div>
-  )
+  );
 }

@@ -27,6 +27,8 @@ import {
 import { UserMessage } from "@sendbird/chat/message";
 import { FillLogResult } from "manifest/src";
 import toast from "react-hot-toast";
+import { useSession } from "next-auth/react";
+import { capsule } from "@/lib/capsule";
 
 const sb = SendbirdChat.init({
   appId: "434D4E2C-4EEF-41DB-AE99-30D00B5AFF1D",
@@ -39,6 +41,8 @@ export default function MarketFeature({
   params: { marketAddress: string };
 }) {
   const { publicKey } = useWallet();
+  const session = useSession();
+  console.log("session", session);
   const [username, setUsername] = useState<string>("");
   const [messages, setMessages] = useState<
     {
@@ -47,6 +51,14 @@ export default function MarketFeature({
     }[]
   >([]);
   const { bids, asks } = usePlayerMarket();
+
+  useEffect(() => {
+    async function checkCapsuleSession() {
+      const isActive = await capsule.isSessionActive();
+      console.log("isActive", isActive);
+    }
+    checkCapsuleSession();
+  }, []);
 
   useEffect(() => {
     const feedUrl = "ws://localhost:1234";
