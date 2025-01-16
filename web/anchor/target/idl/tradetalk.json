@@ -1,5 +1,5 @@
 {
-  "address": "trdtLkaq6ZsAa3XMWQDonaZN8JhurDoAwcVs9C8wYpM",
+  "address": "7NBgMSauN6xquUkLFpqW6eaipf7vthZvbfCF7cjGwhPZ",
   "metadata": {
     "name": "tradetalk",
     "version": "0.1.0",
@@ -340,10 +340,6 @@
       ],
       "args": [
         {
-          "name": "cost",
-          "type": "u64"
-        },
-        {
           "name": "player_id",
           "type": "string"
         },
@@ -354,16 +350,16 @@
       ]
     },
     {
-      "name": "init_payout",
+      "name": "init_projection_oracle",
       "discriminator": [
-        108,
-        169,
-        52,
-        36,
-        91,
-        176,
-        115,
-        218
+        30,
+        220,
+        173,
+        27,
+        221,
+        99,
+        102,
+        178
       ],
       "accounts": [
         {
@@ -372,30 +368,7 @@
           "signer": true
         },
         {
-          "name": "payout_config",
-          "writable": true,
-          "pda": {
-            "seeds": [
-              {
-                "kind": "const",
-                "value": [
-                  112,
-                  97,
-                  121,
-                  111,
-                  117,
-                  116
-                ]
-              },
-              {
-                "kind": "account",
-                "path": "mint_config"
-              }
-            ]
-          }
-        },
-        {
-          "name": "mint_config",
+          "name": "config",
           "pda": {
             "seeds": [
               {
@@ -410,14 +383,45 @@
                 ]
               },
               {
-                "kind": "account",
-                "path": "mint_config.player_id",
-                "account": "PlayerMintConfig"
+                "kind": "arg",
+                "path": "player_id"
               },
               {
-                "kind": "account",
-                "path": "mint_config.timestamp",
-                "account": "PlayerMintConfig"
+                "kind": "arg",
+                "path": "timestamp"
+              }
+            ]
+          }
+        },
+        {
+          "name": "player_stats",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  112,
+                  108,
+                  97,
+                  121,
+                  101,
+                  114,
+                  95,
+                  115,
+                  116,
+                  97,
+                  116,
+                  115
+                ]
+              },
+              {
+                "kind": "arg",
+                "path": "player_id"
+              },
+              {
+                "kind": "arg",
+                "path": "timestamp"
               }
             ]
           }
@@ -437,8 +441,12 @@
       ],
       "args": [
         {
-          "name": "payout_rate",
-          "type": "u64"
+          "name": "player_id",
+          "type": "string"
+        },
+        {
+          "name": "timestamp",
+          "type": "string"
         }
       ]
     },
@@ -558,7 +566,43 @@
           }
         },
         {
+          "name": "player_stats",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  112,
+                  108,
+                  97,
+                  121,
+                  101,
+                  114,
+                  95,
+                  115,
+                  116,
+                  97,
+                  116,
+                  115
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "config.player_id",
+                "account": "PlayerMintConfig"
+              },
+              {
+                "kind": "account",
+                "path": "config.timestamp",
+                "account": "PlayerMintConfig"
+              }
+            ]
+          }
+        },
+        {
           "name": "config",
+          "writable": true,
           "pda": {
             "seeds": [
               {
@@ -864,6 +908,38 @@
           }
         },
         {
+          "name": "mint_record",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  109,
+                  105,
+                  110,
+                  116,
+                  95,
+                  114,
+                  101,
+                  99,
+                  111,
+                  114,
+                  100
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "config"
+              },
+              {
+                "kind": "account",
+                "path": "payer"
+              }
+            ]
+          }
+        },
+        {
           "name": "system_program",
           "address": "11111111111111111111111111111111"
         },
@@ -1104,29 +1180,8 @@
           }
         },
         {
-          "name": "payout_config",
-          "pda": {
-            "seeds": [
-              {
-                "kind": "const",
-                "value": [
-                  112,
-                  97,
-                  121,
-                  111,
-                  117,
-                  116
-                ]
-              },
-              {
-                "kind": "account",
-                "path": "mint_config"
-              }
-            ]
-          }
-        },
-        {
           "name": "mint_config",
+          "writable": true,
           "pda": {
             "seeds": [
               {
@@ -1154,24 +1209,158 @@
           }
         },
         {
-          "name": "quote_config",
+          "name": "vault",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "account",
+                "path": "mint_config"
+              },
+              {
+                "kind": "const",
+                "value": [
+                  6,
+                  221,
+                  246,
+                  225,
+                  215,
+                  101,
+                  161,
+                  147,
+                  217,
+                  203,
+                  225,
+                  70,
+                  206,
+                  235,
+                  121,
+                  172,
+                  28,
+                  180,
+                  133,
+                  237,
+                  95,
+                  91,
+                  55,
+                  145,
+                  58,
+                  140,
+                  245,
+                  133,
+                  126,
+                  255,
+                  0,
+                  169
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "quote_token_mint"
+              }
+            ],
+            "program": {
+              "kind": "const",
+              "value": [
+                140,
+                151,
+                37,
+                143,
+                78,
+                36,
+                137,
+                241,
+                187,
+                61,
+                16,
+                41,
+                20,
+                142,
+                13,
+                131,
+                11,
+                90,
+                19,
+                153,
+                218,
+                255,
+                16,
+                132,
+                4,
+                142,
+                123,
+                216,
+                219,
+                233,
+                248,
+                89
+              ]
+            }
+          }
+        },
+        {
+          "name": "player_stats",
+          "writable": true,
           "pda": {
             "seeds": [
               {
                 "kind": "const",
                 "value": [
-                  113,
-                  117,
-                  111,
-                  116,
+                  112,
+                  108,
+                  97,
+                  121,
                   101,
-                  67,
-                  111,
-                  110,
-                  102,
-                  105,
-                  103
+                  114,
+                  95,
+                  115,
+                  116,
+                  97,
+                  116,
+                  115
                 ]
+              },
+              {
+                "kind": "account",
+                "path": "mint_config.player_id",
+                "account": "PlayerMintConfig"
+              },
+              {
+                "kind": "account",
+                "path": "mint_config.timestamp",
+                "account": "PlayerMintConfig"
+              }
+            ]
+          }
+        },
+        {
+          "name": "mint_record",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  109,
+                  105,
+                  110,
+                  116,
+                  95,
+                  114,
+                  101,
+                  99,
+                  111,
+                  114,
+                  100
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "mint_config"
+              },
+              {
+                "kind": "account",
+                "path": "payer"
               }
             ]
           }
@@ -1190,20 +1379,108 @@
         }
       ],
       "args": []
+    },
+    {
+      "name": "update_projection_oracle",
+      "discriminator": [
+        214,
+        174,
+        5,
+        108,
+        207,
+        23,
+        183,
+        49
+      ],
+      "accounts": [
+        {
+          "name": "config",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "config.player_id",
+                "account": "PlayerMintConfig"
+              },
+              {
+                "kind": "account",
+                "path": "config.timestamp",
+                "account": "PlayerMintConfig"
+              }
+            ]
+          }
+        },
+        {
+          "name": "player_stats",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  112,
+                  108,
+                  97,
+                  121,
+                  101,
+                  114,
+                  95,
+                  115,
+                  116,
+                  97,
+                  116,
+                  115
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "config.player_id",
+                "account": "PlayerMintConfig"
+              },
+              {
+                "kind": "account",
+                "path": "config.timestamp",
+                "account": "PlayerMintConfig"
+              }
+            ]
+          }
+        },
+        {
+          "name": "authority",
+          "signer": true
+        }
+      ],
+      "args": [
+        {
+          "name": "projected_points",
+          "type": "f64"
+        }
+      ]
     }
   ],
   "accounts": [
     {
-      "name": "PayoutConfig",
+      "name": "MintRecord",
       "discriminator": [
-        16,
+        47,
+        252,
+        142,
+        126,
+        241,
+        162,
         116,
-        250,
-        55,
-        85,
-        214,
-        38,
-        1
+        188
       ]
     },
     {
@@ -1217,6 +1494,19 @@
         187,
         8,
         176
+      ]
+    },
+    {
+      "name": "PlayerStats",
+      "discriminator": [
+        169,
+        146,
+        242,
+        176,
+        102,
+        118,
+        231,
+        172
       ]
     },
     {
@@ -1241,107 +1531,24 @@
     },
     {
       "code": 6001,
-      "name": "OfferExpired",
-      "msg": "Offer expired."
+      "name": "UnauthorizedUpdate",
+      "msg": "Unauthorized update."
     },
     {
       "code": 6002,
-      "name": "PoolLocked",
-      "msg": "This pool is locked."
-    },
-    {
-      "code": 6003,
-      "name": "SlippageExceeded",
-      "msg": "Slippage exceeded."
-    },
-    {
-      "code": 6004,
-      "name": "Overflow",
-      "msg": "Overflow detected."
-    },
-    {
-      "code": 6005,
-      "name": "Underflow",
-      "msg": "Underflow detected."
-    },
-    {
-      "code": 6006,
-      "name": "InvalidToken",
-      "msg": "Invalid token."
-    },
-    {
-      "code": 6007,
-      "name": "LiquidityLessThanMinimum",
-      "msg": "Actual liquidity is less than minimum."
-    },
-    {
-      "code": 6008,
-      "name": "NoLiquidityInPool",
-      "msg": "No liquidity in pool."
-    },
-    {
-      "code": 6009,
-      "name": "BumpError",
-      "msg": "Bump error."
-    },
-    {
-      "code": 6010,
-      "name": "CurveError",
-      "msg": "Curve error."
-    },
-    {
-      "code": 6011,
-      "name": "InvalidFee",
-      "msg": "Fee is greater than 100%. This is not a very good deal."
-    },
-    {
-      "code": 6012,
-      "name": "InvalidAuthority",
-      "msg": "Invalid update authority."
-    },
-    {
-      "code": 6013,
-      "name": "NoAuthoritySet",
-      "msg": "No update authority set."
-    },
-    {
-      "code": 6014,
-      "name": "InvalidAmount",
-      "msg": "Invalid amount."
-    },
-    {
-      "code": 6015,
-      "name": "InvalidPrecision",
-      "msg": "Invalid precision."
-    },
-    {
-      "code": 6016,
-      "name": "InsufficientBalance",
-      "msg": "Insufficient balance."
-    },
-    {
-      "code": 6017,
-      "name": "ZeroBalance",
-      "msg": "Zero balance."
+      "name": "UnauthorizedAuthority",
+      "msg": "Unauthorized authority."
     }
   ],
   "types": [
     {
-      "name": "PayoutConfig",
+      "name": "MintRecord",
       "type": {
         "kind": "struct",
         "fields": [
           {
-            "name": "config_bump",
-            "type": "u8"
-          },
-          {
-            "name": "payout_rate",
+            "name": "deposited_amount",
             "type": "u64"
-          },
-          {
-            "name": "market_key",
-            "type": "pubkey"
           }
         ]
       }
@@ -1356,6 +1563,14 @@
             "type": "u8"
           },
           {
+            "name": "player_token_bump",
+            "type": "u8"
+          },
+          {
+            "name": "total_deposited_amount",
+            "type": "u64"
+          },
+          {
             "name": "quote_token_mint",
             "type": "pubkey"
           },
@@ -1364,20 +1579,32 @@
             "type": "pubkey"
           },
           {
-            "name": "player_token_bump",
-            "type": "u8"
-          },
-          {
-            "name": "cost",
-            "type": "u64"
-          },
-          {
             "name": "timestamp",
             "type": "string"
           },
           {
             "name": "player_id",
             "type": "string"
+          }
+        ]
+      }
+    },
+    {
+      "name": "PlayerStats",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "bump",
+            "type": "u8"
+          },
+          {
+            "name": "projected_points",
+            "type": "f64"
+          },
+          {
+            "name": "last_updated",
+            "type": "i64"
           }
         ]
       }

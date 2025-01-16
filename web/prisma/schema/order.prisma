@@ -1,0 +1,36 @@
+model Order {
+    id        String   @id @default(cuid())
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    status         OrderStatus @default(PENDING)
+    type           OrderType
+    price          Decimal
+    numBaseTokens  Int
+    numQuoteTokens Int
+
+    baseMint   Mint   @relation(fields: [baseMintId], references: [id])
+    baseMintId String
+
+    user     User   @relation(fields: [userId], references: [id])
+    userId   String
+    market   Market @relation(fields: [marketId], references: [id])
+    marketId String
+
+    buyTrade   Trade?  @relation("buyOrder")
+    buyTradeId String?
+
+    sellTrade   Trade?  @relation("sellOrder")
+    sellTradeId String?
+}
+
+enum OrderStatus {
+    PENDING
+    COMPLETED
+    CANCELLED
+}
+
+enum OrderType {
+    BUY
+    SELL
+}

@@ -5,13 +5,13 @@ resolution = true
 skip-lint = false
 
 [programs.devnet]
-tradetalk = "EvNCTSJ988SDRDUrg9KK9Hsy3NAdy6gui63nQ6KNHiNd"
+tradetalk = "7NBgMSauN6xquUkLFpqW6eaipf7vthZvbfCF7cjGwhPZ"
 
 [registry]
 url = "https://api.apr.dev"
 
 [provider]
-cluster = "Localnet"
+cluster = "https://devnet.helius-rpc.com/?api-key=d4943793-a5a1-4d4e-872c-1cdd2a0267f2"
 wallet = "~/.config/solana/id.json"
 
 [scripts]
@@ -24,7 +24,7 @@ upgradeable = false
 
 [test.validator]
 bind_address = "0.0.0.0"
-url = "https://api.devnet.solana.com"
+url = "https://devnet.helius-rpc.com/?api-key=d4943793-a5a1-4d4e-872c-1cdd2a0267f2"
 ledger = ".anchor/test-ledger"
 rpc_port = 8899
 

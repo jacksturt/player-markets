@@ -1,0 +1,17 @@
+model Team {
+    id        String   @id @default(cuid())
+    name      String
+    image     String
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    market   Market? @relation()
+    marketId String?
+
+    players Player[]
+
+    mint   Mint?   @relation()
+    mintId String?
+
+    trades Trade[]
+}

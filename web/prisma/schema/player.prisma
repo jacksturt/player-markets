@@ -1,0 +1,25 @@
+model Player {
+    id       String   @id @default(cuid())
+    name     String
+    position Position
+
+    market   Market? @relation()
+    marketId String?
+
+    mint   Mint?   @relation()
+    mintId String?
+
+    team   Team   @relation(fields: [teamId], references: [id])
+    teamId String
+
+    trades Trade[]
+}
+
+enum Position {
+    QB
+    RB
+    WR
+    TE
+    K
+    DEF
+}

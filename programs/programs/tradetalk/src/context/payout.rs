@@ -48,7 +48,7 @@ pub struct Payout<'info> {
     )]
     pub vault: Box<InterfaceAccount<'info, TokenAccount>>,
     #[account(mut,
-        seeds = [b"player_stats", mint_config.player_id.as_ref()],
+        seeds = [b"player_stats", mint_config.player_id.as_ref(), mint_config.timestamp.as_ref()],
         bump,
     )]
     pub player_stats: Account<'info, PlayerStats>,

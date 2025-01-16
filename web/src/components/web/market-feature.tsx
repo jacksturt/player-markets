@@ -6,9 +6,8 @@ import { AppHero, ellipsify } from "../ui/ui-layout";
 import { ExplorerLink } from "../cluster/cluster-ui";
 import { useMarkets, usePlayerMarket } from "./market-data-access";
 import {
-  InitPlayerMarket,
+  InitPlayerMint,
   MintPlayerTokens,
-  InitPayout,
   Payout,
   CreateMarket,
   DepositBase,
@@ -50,7 +49,8 @@ export default function MarketFeature({
       sender: string;
     }[]
   >([]);
-  const { bids, asks } = usePlayerMarket();
+  const { bids, asks, latestTransaction } = usePlayerMarket();
+  console.log("latestTransaction", latestTransaction);
 
   useEffect(() => {
     async function checkCapsuleSession() {
@@ -214,7 +214,6 @@ export default function MarketFeature({
           <DepositQuote />
           <Trade />
           <WithdrawAll />
-          {isAdmin && <InitPayout />}
           <Payout />
         </div>
       </div>

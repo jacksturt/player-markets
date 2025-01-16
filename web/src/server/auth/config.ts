@@ -70,11 +70,6 @@ export const authConfig = {
         }
         capsuleServer.importSession(credentials.serializedSession as string);
         try {
-          // const isActive = await capsuleServer.isSessionActive();
-          // if (!isActive) {
-          //   throw new Error("Capsule session not active");
-          // }
-
           const user = await db.user.upsert({
             where: { id: credentials.userId as string },
             update: {},

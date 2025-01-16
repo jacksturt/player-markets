@@ -1,0 +1,20 @@
+model Market {
+    id          String @id @default(cuid())
+    name        String
+    description String
+    address     String
+
+    baseMint   Mint   @relation(fields: [baseMintId], references: [id])
+    baseMintId String @unique
+
+    player   Player? @relation(fields: [playerId], references: [id])
+    playerId String? @unique
+
+    team   Team?   @relation(fields: [teamId], references: [id])
+    teamId String? @unique
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+    orders    Order[]
+    trades    Trade[]
+}

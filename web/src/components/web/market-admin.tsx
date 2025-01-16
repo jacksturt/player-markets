@@ -8,7 +8,7 @@ import { useQuoteToken } from "./market-data-access";
 import {
   QuoteTokenCreate,
   QuoteTokenFaucet,
-  InitPlayerMarket,
+  InitPlayerMint,
   MintPlayerTokens,
   CreateMarket,
 } from "./web-ui";
@@ -23,7 +23,7 @@ export default function MarketAdmin() {
         <div className="flex flex-col gap-4">
           <QuoteTokenCreate />
           <QuoteTokenFaucet />
-          <InitPlayerMarket />
+          <InitPlayerMint />
           <MintPlayerTokens />
           <CreateMarket />
         </div>

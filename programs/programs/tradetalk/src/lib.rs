@@ -9,7 +9,7 @@ use crate::constants::*;
 use crate::context::*;
 use crate::errors::*;
 
-declare_id!("EvNCTSJ988SDRDUrg9KK9Hsy3NAdy6gui63nQ6KNHiNd");
+declare_id!("7NBgMSauN6xquUkLFpqW6eaipf7vthZvbfCF7cjGwhPZ");
 
 #[program]
 pub mod tradetalk {
@@ -34,8 +34,16 @@ pub mod tradetalk {
         ctx.accounts
             .initialize_mint(player_id.clone(), timestamp, &ctx.bumps)
             .unwrap();
+        Ok(())
+    }
+
+    pub fn init_projection_oracle(
+        ctx: Context<InitializeProjectionOracle>,
+        player_id: String,
+        timestamp: String,
+    ) -> Result<()> {
         ctx.accounts
-            .initialize_projection_oracle(player_id)
+            .initialize_projection_oracle(&ctx.bumps)
             .unwrap();
         Ok(())
     }

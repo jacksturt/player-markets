@@ -1,0 +1,24 @@
+model Mint {
+    id          String   @id @default(cuid())
+    name        String
+    symbol      String
+    address     String
+    image       String
+    description String
+    decimals    Int
+    createdAt   DateTime @default(now())
+    updatedAt   DateTime @updatedAt
+
+    market   Market? @relation()
+    marketId String
+
+    player   Player? @relation(fields: [playerId], references: [id])
+    playerId String? @unique
+
+    Order Order[]
+
+    team   Team?   @relation(fields: [teamId], references: [id])
+    teamId String? @unique
+
+    trades Trade[]
+}

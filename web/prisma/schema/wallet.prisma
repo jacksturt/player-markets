@@ -1,0 +1,8 @@
+model Wallet {
+    id         String  @id @default(cuid())
+    address    String
+    user       User    @relation(fields: [userId], references: [id])
+    userId     String
+    buyTrades  Trade[] @relation("buyerWallet")
+    sellTrades Trade[] @relation("sellerWallet")
+}

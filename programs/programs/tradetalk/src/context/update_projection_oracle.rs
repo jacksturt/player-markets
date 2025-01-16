@@ -13,7 +13,7 @@ pub struct UpdateProjectionOracle<'info> {
     )]
     pub config: Account<'info, PlayerMintConfig>,
     #[account(mut,
-        seeds = [b"player_stats", config.player_id.as_ref()],
+        seeds = [b"player_stats", config.player_id.as_ref(), config.timestamp.as_ref()],
         bump,
     )]
     pub player_stats: Account<'info, PlayerStats>,

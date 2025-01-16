@@ -30,7 +30,7 @@ export function getTradetalkProgramId(cluster: Cluster) {
     case "devnet":
     case "testnet":
       // This is the program ID for the Web program on devnet and testnet.
-      return new PublicKey("trdtLkaq6ZsAa3XMWQDonaZN8JhurDoAwcVs9C8wYpM");
+      return new PublicKey("7NBgMSauN6xquUkLFpqW6eaipf7vthZvbfCF7cjGwhPZ");
     case "mainnet-beta":
     default:
       return TRADETALK_PROGRAM_ID;

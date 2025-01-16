@@ -1802,7 +1802,7 @@
     "@solana/wallet-standard-core" "^1.1.1"
     "@solana/wallet-standard-wallet-adapter" "^1.1.2"
 
-"@solana/web3.js@^1.32.0", "@solana/web3.js@^1.36.0", "@solana/web3.js@^1.56.2", "@solana/web3.js@^1.68.0", "@solana/web3.js@^1.95.1":
+"@solana/web3.js@^1.32.0", "@solana/web3.js@^1.36.0", "@solana/web3.js@^1.56.2", "@solana/web3.js@^1.68.0", "@solana/web3.js@^1.95.1", "@solana/web3.js@^1.95.8":
   version "1.98.0"
   resolved "https://registry.npmjs.org/@solana/web3.js/-/web3.js-1.98.0.tgz"
   integrity sha512-nz3Q5OeyGFpFCR+erX2f6JPt3sKhzhYcSycBCSPkWjzSVDh/Rr1FqTVMRe58FKO16/ivTUcuJjeS5MyBvpkbzA==
@@ -2260,7 +2260,7 @@
     styled-components "^6.1.8"
     zustand "^4.5.2"
 
-"@usecapsule/server-sdk@^4.17.0":
+"@usecapsule/server-sdk@^2.17.0":
   version "2.17.0"
   resolved "https://registry.yarnpkg.com/@usecapsule/server-sdk/-/server-sdk-2.17.0.tgz#29471fe88a7260e339c48be5460e0f115948379e"
   integrity sha512-3ja4LLObbyt+sHk6rTV7yTmxf9fHrpkRTEnmPIn3wbiPN0y73xs5YCwVu8DS/Hq0Peh//pDkiItkWBv2miZbiQ==
@@ -2269,6 +2269,14 @@
     "@usecapsule/user-management-client" "1.39.0"
     uuid "^9.0.1"
     ws "^8.14.2"
+
+"@usecapsule/solana-web3.js-v1-integration@1.17.0":
+  version "1.17.0"
+  resolved "https://registry.yarnpkg.com/@usecapsule/solana-web3.js-v1-integration/-/solana-web3.js-v1-integration-1.17.0.tgz#d754154038dce03e9b1876e7cb8d815abf109ae5"
+  integrity sha512-oQorThdodId9nGmnjouHrfXb40kaA1AO4V/lYoQaXG0kMJxPWWoW3dotpPRHra5CyWVvpCdIvvfnGsGqXb2WYQ==
+  dependencies:
+    "@solana/web3.js" "^1.95.8"
+    "@usecapsule/core-sdk" "2.17.0"
 
 "@usecapsule/user-management-client@1.39.0":
   version "1.39.0"

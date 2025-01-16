@@ -26,7 +26,7 @@ export function QuoteTokenCreate() {
       onClick={() => initialize.mutateAsync()}
       disabled={initialize.isPending}
     >
-      Create Base Token {initialize.isPending && "..."}
+      Create Quote Token {initialize.isPending && "..."}
     </button>
   );
 }
@@ -46,7 +46,7 @@ export function QuoteTokenFaucet() {
   );
 }
 
-export function InitPlayerMarket() {
+export function InitPlayerMint() {
   const { initialize } = useMarkets();
   const playerId = "LAMAR";
 
@@ -56,7 +56,30 @@ export function InitPlayerMarket() {
       onClick={() => initialize.mutateAsync(playerId)}
       disabled={initialize.isPending}
     >
-      Initialize Player Market ({playerId}) {initialize.isPending && "..."}
+      Initialize Player Mint ({playerId}) {initialize.isPending && "..."}
+    </button>
+  );
+}
+
+export function UpdateProjectionOracle() {
+  const { updateProjectionOracle } = useMarkets();
+  const playerId = "LAMAR";
+  const timestamp = "1735857860574";
+  const projection = 23.54;
+
+  return (
+    <button
+      className="btn btn-xs lg:btn-md btn-primary"
+      onClick={() =>
+        updateProjectionOracle.mutateAsync({
+          playerId,
+          timestamp,
+          projection,
+        })
+      }
+      disabled={updateProjectionOracle.isPending}
+    >
+      Update Projection Oracle {updateProjectionOracle.isPending && "..."}
     </button>
   );
 }
@@ -140,20 +163,6 @@ export function PrintMarket() {
       disabled={printMarket.isPending}
     >
       Print Market {printMarket.isPending && "..."}
-    </button>
-  );
-}
-
-export function InitPayout() {
-  const { initPayout } = usePlayerMarket();
-
-  return (
-    <button
-      className="btn btn-xs lg:btn-md btn-primary"
-      onClick={() => initPayout.mutateAsync()}
-      disabled={initPayout.isPending}
-    >
-      Init Payout {initPayout.isPending && "..."}
     </button>
   );
 }

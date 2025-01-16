@@ -5,6 +5,7 @@ import {
   Keypair,
   LAMPORTS_PER_SOL,
   PublicKey,
+  SendTransactionError,
   SystemProgram,
 } from "@solana/web3.js";
 import {
@@ -25,7 +26,7 @@ import { placeOrder } from "../manifest/tests/placeOrder";
 import { OrderType } from "../manifest/src/manifest";
 import { assert } from "chai";
 
-const LAMAR_ID = "e06a9c07";
+const LAMAR_ID = "LAMAR";
 describe("tradetalk", () => {
   // Configure the client to use the local cluster.
   anchor.setProvider(anchor.AnchorProvider.env());
@@ -46,7 +47,8 @@ describe("tradetalk", () => {
   let makerAtaPlayer: PublicKey;
   let takerAtaQuote: PublicKey;
   let takerAtaPlayer: PublicKey;
-  const timestamp = Date.now().toString();
+  // const timestamp = Date.now().toString();
+  const timestamp = "1737012463491";
   console.log(timestamp.length + LAMAR_ID.length);
   const mintConfig = PublicKey.findProgramAddressSync(
     [Buffer.from("config"), Buffer.from(LAMAR_ID), Buffer.from(timestamp)],
@@ -56,7 +58,12 @@ describe("tradetalk", () => {
     [Buffer.from("mint"), Buffer.from(LAMAR_ID), Buffer.from(timestamp)],
     program.programId
   )[0];
-  let vault: PublicKey;
+  const vault = getAssociatedTokenAddressSync(
+    quote_token_mint,
+    mintConfig,
+    true
+  );
+
   const auth = PublicKey.findProgramAddressSync(
     [Buffer.from("auth")],
     program.programId
@@ -78,7 +85,11 @@ describe("tradetalk", () => {
     program.programId
   )[0];
   const playerStats = PublicKey.findProgramAddressSync(
-    [Buffer.from("player_stats"), Buffer.from(LAMAR_ID)],
+    [
+      Buffer.from("player_stats"),
+      Buffer.from(LAMAR_ID),
+      Buffer.from(timestamp),
+    ],
     program.programId
   )[0];
   const payoutConfig = PublicKey.findProgramAddressSync(
@@ -116,6 +127,10 @@ describe("tradetalk", () => {
     return signature;
   };
 
+  console.log("Account Size:", program.account.playerMintConfig.size);
+  console.log("Account Size:", program.account.playerStats.size);
+  console.log("Account Size:", program.account.mintRecord.size);
+
   const log = async (signature: string, name?: string): Promise<string> => {
     console.log(
       `${name}: Your transaction signature: https://explorer.solana.com/transaction/${signature}?cluster=custom&customUrl=${connection.rpcEndpoint}`
@@ -123,7 +138,7 @@ describe("tradetalk", () => {
     return signature;
   };
 
-  it("Airdrop", async () => {
+  xit("Airdrop", async () => {
     await connection
       .requestAirdrop(maker.publicKey, LAMPORTS_PER_SOL * 10)
       .then(confirm)
@@ -134,24 +149,24 @@ describe("tradetalk", () => {
       .then(log);
   });
 
-  it("Can Init Quote!", async () => {
+  xit("Can Init Quote!", async () => {
     const tx = await program.methods
       .initQuote()
       .accountsStrict({
-        payer: maker.publicKey,
+        payer: provider.publicKey,
         quoteTokenMint: quote_token_mint,
         config: quoteConfig,
         tokenProgram: TOKEN_PROGRAM_ID,
         systemProgram: SystemProgram.programId,
         associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
       })
-      .signers([maker])
+      // .signers([maker])
       .rpc()
       .then(confirm)
       .then(log);
   });
 
-  it("Create mints and mint to", async () => {
+  xit("Create mints and mint to", async () => {
     makerAtaQuote = (
       await getOrCreateAssociatedTokenAccount(
         connection,
@@ -170,87 +185,69 @@ describe("tradetalk", () => {
       )
     ).address;
 
-    makerAtaLp = await getAssociatedTokenAddress(
-      mint_lp,
-      maker.publicKey,
-      false,
-      TOKEN_PROGRAM_ID
-    );
-
     console.log("takerAta", takerAtaQuote.toBase58());
-    vault = getAssociatedTokenAddressSync(quote_token_mint, mintConfig, true);
 
     console.log(`Your mint ata is: ${makerAtaQuote.toBase58()}`);
     // Mint to ATA
-
-    vault_x_ata = await getAssociatedTokenAddress(
-      quote_token_mint,
-      auth,
-      true,
-      TOKEN_PROGRAM_ID
-    );
-    vault_y_ata = await getAssociatedTokenAddress(
-      player_token_mint,
-      auth,
-      true,
-      TOKEN_PROGRAM_ID
-    );
   });
 
-  it("Can Faucet Quote!", async () => {
+  xit("Can Faucet Quote!", async () => {
+    const providerAtaQuote = await getAssociatedTokenAddress(
+      quote_token_mint,
+      provider.publicKey
+    );
     const context = {
-      payer: maker.publicKey,
+      payer: provider.publicKey,
       quoteTokenMint: quote_token_mint,
       config: quoteConfig,
-      destination: makerAtaQuote,
+      destination: providerAtaQuote,
       tokenProgram: TOKEN_PROGRAM_ID,
       systemProgram: SystemProgram.programId,
       associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
     };
 
-    // Object.entries(context).forEach(([key, value]) => {
-    //   console.log(key, value.toBase58());
-    // });
+    Object.entries(context).forEach(([key, value]) => {
+      console.log(key, value.toBase58());
+    });
 
     const tx = await program.methods
       .faucetQuote(new anchor.BN(100000000000))
       .accountsStrict(context)
-      .signers([maker])
+      // .signers([maker])
       .rpc()
       .then(confirm)
       .then(log)
       .then(async () => {
-        const quote = await getAccount(connection, makerAtaQuote);
+        const quote = await getAccount(connection, providerAtaQuote);
         console.log("maker quote amount after", quote.amount);
       });
 
-    const tx2 = await program.methods
-      .faucetQuote(new anchor.BN(100000000000))
-      .accountsStrict({
-        payer: taker.publicKey,
-        quoteTokenMint: quote_token_mint,
-        config: quoteConfig,
-        destination: takerAtaQuote,
-        tokenProgram: TOKEN_PROGRAM_ID,
-        systemProgram: SystemProgram.programId,
-        associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
-      })
-      .signers([taker])
-      .rpc()
-      .then(confirm)
-      .then(log)
-      .then(async () => {
-        const quote = await getAccount(connection, takerAtaQuote);
-        console.log("taker quote amount after", quote.amount);
-      });
+    // const tx2 = await program.methods
+    //   .faucetQuote(new anchor.BN(100000000000))
+    //   .accountsStrict({
+    //     payer: taker.publicKey,
+    //     quoteTokenMint: quote_token_mint,
+    //     config: quoteConfig,
+    //     destination: takerAtaQuote,
+    //     tokenProgram: TOKEN_PROGRAM_ID,
+    //     systemProgram: SystemProgram.programId,
+    //     associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
+    //   })
+    //   .signers([taker])
+    //   .rpc()
+    //   .then(confirm)
+    //   .then(log)
+    //   .then(async () => {
+    //     const quote = await getAccount(connection, takerAtaQuote);
+    //     console.log("taker quote amount after", quote.amount);
+    //   });
   });
 
-  it("Can Init Mint!", async () => {
+  xit("Can Init Mint!", async () => {
     // Add your test here.
     const context = {
       payer: provider.publicKey,
       quoteTokenMint: quote_token_mint,
-      playerStats,
       vault,
       playerTokenMint: player_token_mint,
       config: mintConfig,
@@ -262,14 +259,51 @@ describe("tradetalk", () => {
     Object.entries(context).forEach(([key, value]) => {
       console.log(key, value.toBase58());
     });
+
+    console.log("timestamp", timestamp);
     const tx = await program.methods
       .initMint(LAMAR_ID, timestamp)
       .accountsPartial(context)
-      .rpc();
+      .rpc()
+      .catch(async (e: SendTransactionError) => {
+        console.log("error", e);
+        const logs = await e.getLogs(connection);
+        console.log(logs);
+      });
     console.log("Your transaction signature", tx);
+    await new Promise((resolve) => setTimeout(resolve, 5000));
   });
 
-  it("Can Update Projection Oracle!", async () => {
+  xit("Can Init Projection Oracle!", async () => {
+    // Add your test here.
+    const context = {
+      payer: provider.publicKey,
+      playerStats,
+      config: mintConfig,
+      tokenProgram: TOKEN_PROGRAM_ID,
+      systemProgram: SystemProgram.programId,
+      associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
+    };
+
+    Object.entries(context).forEach(([key, value]) => {
+      console.log(key, value.toBase58());
+    });
+
+    console.log("timestamp", timestamp);
+    const tx = await program.methods
+      .initProjectionOracle(LAMAR_ID, timestamp)
+      .accountsPartial(context)
+      .rpc()
+      .catch(async (e: SendTransactionError) => {
+        console.log("error", e);
+        const logs = await e.getLogs(connection);
+        console.log(logs);
+      });
+    console.log("Your transaction signature", tx);
+    await new Promise((resolve) => setTimeout(resolve, 5000));
+  });
+
+  xit("Can Update Projection Oracle!", async () => {
     let playerStatsAccount = await program.account.playerStats.fetch(
       playerStats
     );
@@ -287,53 +321,70 @@ describe("tradetalk", () => {
     console.log("playerStatsAccount", playerStatsAccount);
   });
 
-  it("Can Mint!", async () => {
+  xit("Can Mint!", async () => {
     // Add your test here.
-    makerAtaPlayer = (
-      await getOrCreateAssociatedTokenAccount(
-        connection,
-        maker,
-        player_token_mint,
-        maker.publicKey
-      )
-    ).address;
+    // makerAtaPlayer = (
+    //   await getOrCreateAssociatedTokenAccount(
+    //     connection,
+    //     maker,
+    //     player_token_mint,
+    //     maker.publicKey
+    //   )
+    // ).address;
+
+    const providerAtaPlayer = await getAssociatedTokenAddress(
+      player_token_mint,
+      provider.publicKey
+    );
+
+    const mintRecordProvider = PublicKey.findProgramAddressSync(
+      [
+        Buffer.from("mint_record"),
+        mintConfig.toBuffer(),
+        provider.publicKey.toBuffer(),
+      ],
+      program.programId
+    )[0];
 
     const tx = await program.methods
       .mintTokens(new anchor.BN(300000000))
       .accountsPartial({
-        payer: maker.publicKey,
+        payer: provider.publicKey,
         quoteTokenMint: quote_token_mint,
         vault,
         playerTokenMint: player_token_mint,
-        destination: makerAtaPlayer,
+        destination: providerAtaPlayer,
         config: mintConfig,
-        mintRecord: mintRecordMaker,
+        mintRecord: mintRecordProvider,
         tokenProgram: TOKEN_PROGRAM_ID,
         systemProgram: SystemProgram.programId,
         associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
       })
-      .signers([maker])
+      // .signers([maker])
       .rpc()
       .then(confirm)
       .then(log)
       .then(async () => {
-        const makerQuote = await getAccount(connection, makerAtaQuote);
-        console.log("maker quote amount after", makerQuote.amount);
+        const providerAtaQuote = await getAssociatedTokenAddress(
+          quote_token_mint,
+          provider.publicKey
+        );
+        const providerQuote = await getAccount(connection, providerAtaQuote);
+        console.log("provider quote amount after", providerQuote.amount);
 
-        const makerPlayer = await getAccount(connection, makerAtaPlayer);
-        console.log("maker player amount after", makerPlayer.amount);
+        const providerPlayer = await getAccount(connection, providerAtaPlayer);
+        console.log("provider player amount after", providerPlayer.amount);
         assert(
-          makerQuote.amount +
-            BigInt(projection1 * Number(makerPlayer.amount) * 2.5) ===
+          providerQuote.amount +
+            BigInt(projection1 * Number(providerPlayer.amount) * 2.5) ===
             BigInt(100000000000)
         );
 
-        const mintRecordMakerAccount = await program.account.mintRecord.fetch(
-          mintRecordMaker
-        );
+        const mintRecordProviderAccount =
+          await program.account.mintRecord.fetch(mintRecordProvider);
         console.log(
-          "mintRecordMakerAccount",
-          mintRecordMakerAccount.depositedAmount.toString()
+          "mintRecordProviderAccount",
+          mintRecordProviderAccount.depositedAmount.toString()
         );
         const mintConfigAccount = await program.account.playerMintConfig.fetch(
           mintConfig
@@ -345,7 +396,7 @@ describe("tradetalk", () => {
       });
   });
 
-  it("Can Update Projection Oracle again!", async () => {
+  xit("Can Update Projection Oracle again!", async () => {
     let playerStatsAccount = await program.account.playerStats.fetch(
       playerStats
     );
@@ -363,7 +414,7 @@ describe("tradetalk", () => {
     console.log("playerStatsAccount", playerStatsAccount);
   });
 
-  it("Can Mint at new projection!", async () => {
+  xit("Can Mint at new projection!", async () => {
     takerAtaPlayer = (
       await getOrCreateAssociatedTokenAccount(
         connection,
@@ -619,7 +670,73 @@ describe("tradetalk", () => {
     // ]);
   });
 
-  it("Payout maker", async () => {
+  it("Payout provider", async () => {
+    const mintRecordProvider = PublicKey.findProgramAddressSync(
+      [
+        Buffer.from("mint_record"),
+        mintConfig.toBuffer(),
+        provider.publicKey.toBuffer(),
+      ],
+      program.programId
+    )[0];
+    const providerAtaQuote = await getAssociatedTokenAddress(
+      quote_token_mint,
+      provider.publicKey
+    );
+    const providerAtaPlayer = await getAssociatedTokenAddress(
+      player_token_mint,
+      provider.publicKey
+    );
+    const mintConfigAccount = await program.account.playerMintConfig.fetch(
+      mintConfig
+    );
+    console.log("mintConfigAccount", mintConfigAccount.totalDepositedAmount);
+    const mintRecordProviderAccount = await program.account.mintRecord.fetch(
+      mintRecordProvider
+    );
+    console.log(
+      "mintRecordProviderAccount",
+      mintRecordProviderAccount.depositedAmount
+    );
+
+    const providerQuoteBefore = await getAccount(connection, providerAtaQuote);
+    console.log("provider quote before", providerQuoteBefore.amount);
+
+    const context = {
+      payer: provider.publicKey,
+      quoteTokenMint: quote_token_mint,
+      payerQuoteTokenAccount: providerAtaQuote,
+      playerTokenMint: player_token_mint,
+      payerPlayerTokenAccount: providerAtaPlayer,
+      mintConfig,
+      playerStats,
+      vault,
+      mintRecord: mintRecordProvider,
+      tokenProgram: TOKEN_PROGRAM_ID,
+      associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
+      systemProgram: SystemProgram.programId,
+    };
+
+    Object.entries(context).forEach(([key, value]) => {
+      console.log(key, value.toBase58());
+    });
+
+    const tx = await program.methods
+      .payout()
+      .accountsStrict(context)
+      // .signers([maker])
+      .rpc()
+      .then(confirm)
+      .then(log)
+      .then(async () => {
+        const providerQuote = await getAccount(connection, providerAtaQuote);
+        console.log("provider quote amount after", providerQuote.amount);
+        const providerPlayer = await getAccount(connection, providerAtaPlayer);
+        console.log("provider player amount after", providerPlayer.amount);
+      });
+  });
+
+  xit("Payout maker", async () => {
     const mintConfigAccount = await program.account.playerMintConfig.fetch(
       mintConfig
     );
@@ -669,7 +786,7 @@ describe("tradetalk", () => {
       });
   });
 
-  it("Payout taker", async () => {
+  xit("Payout taker", async () => {
     const mintConfigAccount = await program.account.playerMintConfig.fetch(
       mintConfig
     );

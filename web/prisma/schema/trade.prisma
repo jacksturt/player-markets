@@ -1,0 +1,36 @@
+model Trade {
+    id String @id @default(cuid())
+
+    marketId String
+    market   Market @relation(fields: [marketId], references: [id])
+
+    baseMintId String
+    baseMint   Mint   @relation(fields: [baseMintId], references: [id])
+
+    playerId String? @unique
+    player   Player? @relation(fields: [playerId], references: [id])
+
+    teamId String? @unique
+    team   Team?   @relation(fields: [teamId], references: [id])
+
+    buyOrderId String? @unique
+    buyOrder   Order?  @relation("buyOrder", fields: [buyOrderId], references: [id])
+
+    buyerId String
+    buyer   User   @relation("buyer", fields: [buyerId], references: [id])
+
+    buyerWalletId String
+    buyerWallet   Wallet @relation("buyerWallet", fields: [buyerWalletId], references: [id])
+
+    sellOrderId String? @unique
+    sellOrder   Order?  @relation("sellOrder", fields: [sellOrderId], references: [id])
+
+    sellerId String
+    seller   User   @relation("seller", fields: [sellerId], references: [id])
+
+    sellerWalletId String
+    sellerWallet   Wallet @relation("sellerWallet", fields: [sellerWalletId], references: [id])
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+}

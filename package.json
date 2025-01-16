@@ -1,6 +1,7 @@
 {
   "dependencies": {
     "@sendbird/chat": "^4.16.1",
+    "@usecapsule/solana-web3.js-v1-integration": "^1.17.0",
     "express": "^4.21.2",
     "ws": "^8.18.0"
   },
