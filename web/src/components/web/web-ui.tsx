@@ -17,6 +17,8 @@ import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 
+const TIMESTAMP = "1737014774362";
+
 export function QuoteTokenCreate() {
   const { initialize } = useQuoteToken();
 
@@ -61,10 +63,30 @@ export function InitPlayerMint() {
   );
 }
 
+export function InitializeProjectionOracle() {
+  const { initializeProjectionOracle } = useMarkets();
+  const playerId = "LAMAR";
+
+  return (
+    <button
+      className="btn btn-xs lg:btn-md btn-primary"
+      onClick={() =>
+        initializeProjectionOracle.mutateAsync({
+          playerId,
+          timestamp: TIMESTAMP,
+        })
+      }
+      disabled={initializeProjectionOracle.isPending}
+    >
+      Initialize Projection Oracle{" "}
+      {initializeProjectionOracle.isPending && "..."}
+    </button>
+  );
+}
+
 export function UpdateProjectionOracle() {
   const { updateProjectionOracle } = useMarkets();
   const playerId = "LAMAR";
-  const timestamp = "1735857860574";
   const projection = 23.54;
 
   return (
@@ -73,7 +95,7 @@ export function UpdateProjectionOracle() {
       onClick={() =>
         updateProjectionOracle.mutateAsync({
           playerId,
-          timestamp,
+          timestamp: TIMESTAMP,
           projection,
         })
       }

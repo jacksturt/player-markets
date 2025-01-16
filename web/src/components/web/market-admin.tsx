@@ -11,6 +11,8 @@ import {
   InitPlayerMint,
   MintPlayerTokens,
   CreateMarket,
+  InitializeProjectionOracle,
+  UpdateProjectionOracle,
 } from "./web-ui";
 import { PublicKey } from "@solana/web3.js";
 
@@ -24,6 +26,8 @@ export default function MarketAdmin() {
           <QuoteTokenCreate />
           <QuoteTokenFaucet />
           <InitPlayerMint />
+          <InitializeProjectionOracle />
+          <UpdateProjectionOracle />
           <MintPlayerTokens />
           <CreateMarket />
         </div>

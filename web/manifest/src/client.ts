@@ -48,7 +48,8 @@ import { genAccDiscriminator } from "./utils/discriminator";
 import { getGlobalAddress, getGlobalVaultAddress } from "./utils/global";
 import { Global } from "./global";
 import { AnchorProvider } from "@coral-xyz/anchor";
-
+import { CapsuleSolanaWeb3Signer } from "@usecapsule/solana-web3.js-v1-integration";
+import { capsule } from "@/lib/capsule";
 export interface SetupData {
   setupNeeded: boolean;
   instructions: TransactionInstruction[];
@@ -179,7 +180,11 @@ export class ManifestClient {
     marketPk: PublicKey
   ): Promise<ManifestClient> {
     const connection = provider.connection;
-    const payer = provider.publicKey;
+    const solanaSigner = new CapsuleSolanaWeb3Signer(
+      capsule,
+      provider.connection
+    );
+    const payer = new PublicKey(solanaSigner.address!);
     const marketObject: Market = await Market.loadFromAddress({
       connection: connection,
       address: marketPk,
@@ -213,7 +218,12 @@ export class ManifestClient {
       connection,
       payer
     );
-    const transaction: Transaction = new Transaction();
+    const blockhash = await provider.connection.getLatestBlockhash();
+    const transaction: Transaction = new Transaction({
+      feePayer: payer,
+      blockhash: blockhash.blockhash,
+      lastValidBlockHeight: blockhash.lastValidBlockHeight,
+    });
     if (!userWrapper) {
       const wrapperKeypair: Keypair = Keypair.generate();
       const createAccountIx: TransactionInstruction =
@@ -240,7 +250,9 @@ export class ManifestClient {
       transaction.add(createAccountIx);
       transaction.add(createWrapperIx);
       transaction.add(claimSeatIx);
-      await provider.sendAndConfirm(transaction, [wrapperKeypair]);
+      await transaction.sign(wrapperKeypair);
+      const signed = await solanaSigner.signTransaction(transaction);
+      await provider.connection.sendRawTransaction(signed.serialize());
       const wrapper = await Wrapper.loadFromAddress({
         connection,
         address: wrapperKeypair.publicKey,
@@ -290,7 +302,8 @@ export class ManifestClient {
       wrapperState: userWrapper.pubkey,
     });
     transaction.add(claimSeatIx);
-    await provider.sendAndConfirm(transaction);
+    const signed = await solanaSigner.signTransaction(transaction);
+    await provider.connection.sendRawTransaction(signed.serialize());
     const wrapper = await Wrapper.loadFromAddress({
       connection,
       address: userWrapper.pubkey,
