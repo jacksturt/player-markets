@@ -19,8 +19,8 @@ interface PlayerData {
 export default function PlayerCard({ playerData }: { playerData: PlayerData }) {
   const { bookmarkedPlayers, setBookmarkedPlayers } = useFiltersStore();
   return (
-    <Link href={`/home/${playerData.name}`}>
-      <div className="w-[350px] mx-auto h-full flex flex-col gap-2">
+    <div className="w-[350px] mx-auto h-full flex flex-col gap-2">
+      <Link href={`/home/${playerData.name}`}>
         <div className="w-full h-[500px] rounded-xl relative overflow-hidden">
           <div
             className="absolute inset-0"
@@ -74,42 +74,40 @@ export default function PlayerCard({ playerData }: { playerData: PlayerData }) {
             </div>
           </div>
         </div>
-        <div className="w-full flex items-center justify-between px-3">
-          <div className="flex items-center gap-5">
-            <div className="flex items-center gap-1">
-              <Comments size={20} />
-              <p className="text-xs">{playerData.numComments}</p>
-            </div>
-            <div className="flex items-center gap-1">
-              <Volume size={20} />
-              <p className="text-xs">{playerData.volume}</p>
-            </div>
+      </Link>
+      <div className="w-full flex items-center justify-between px-3">
+        <div className="flex items-center gap-5">
+          <div className="flex items-center gap-1">
+            <Comments size={20} />
+            <p className="text-xs">{playerData.numComments}</p>
           </div>
-          <button
-            onClick={() => {
-              if (bookmarkedPlayers.includes(playerData.name)) {
-                setBookmarkedPlayers(
-                  bookmarkedPlayers.filter(
-                    (player) => player !== playerData.name
-                  )
-                );
-              } else {
-                setBookmarkedPlayers([...bookmarkedPlayers, playerData.name]);
-              }
-            }}
-          >
-            <Bookmark
-              size={20}
-              strokeWidth={1.5}
-              fill={
-                bookmarkedPlayers.includes(playerData.name)
-                  ? "#000"
-                  : "transparent"
-              }
-            />
-          </button>
+          <div className="flex items-center gap-1">
+            <Volume size={20} />
+            <p className="text-xs">{playerData.volume}</p>
+          </div>
         </div>
+        <button
+          onClick={() => {
+            if (bookmarkedPlayers.includes(playerData.name)) {
+              setBookmarkedPlayers(
+                bookmarkedPlayers.filter((player) => player !== playerData.name)
+              );
+            } else {
+              setBookmarkedPlayers([...bookmarkedPlayers, playerData.name]);
+            }
+          }}
+        >
+          <Bookmark
+            size={20}
+            strokeWidth={1.5}
+            fill={
+              bookmarkedPlayers.includes(playerData.name)
+                ? "#000"
+                : "transparent"
+            }
+          />
+        </button>
       </div>
-    </Link>
+    </div>
   );
 }
