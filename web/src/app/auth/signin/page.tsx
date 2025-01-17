@@ -18,7 +18,6 @@ export default function SignIn() {
   const { data: session } = useSession();
 
   useEffect(() => {
-    console.log("session", session);
     if (session) {
       router.push("/");
       return;
@@ -48,9 +47,11 @@ export default function SignIn() {
 
       const serializedSession = await capsule.exportSession();
       const email = capsule.getEmail();
+      const publicKey = capsule.getAddress();
       const result = await signIn("capsule", {
         userId: (data as any).userId,
         email,
+        publicKey,
         serializedSession,
         redirect: false,
       });

@@ -1,5 +1,7 @@
 // import { counterRouter } from "@/server/api/routers/counter";
 import { createCallerFactory, createTRPCRouter } from "@/server/api/trpc";
+import { marketRouter } from "./routers/market";
+import { mintRouter } from "./routers/mint";
 
 /**
  * This is the primary router for your server.
@@ -7,6 +9,8 @@ import { createCallerFactory, createTRPCRouter } from "@/server/api/trpc";
  * All routers added in /api/routers should be manually added here.
  */
 export const appRouter = createTRPCRouter({
+  market: marketRouter,
+  mint: mintRouter,
   // counter: counterRouter,
 });
 

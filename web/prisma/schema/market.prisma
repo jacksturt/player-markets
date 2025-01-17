@@ -1,8 +1,9 @@
 model Market {
-    id          String @id @default(cuid())
-    name        String
-    description String
-    address     String
+    id             String  @id @default(cuid())
+    name           String
+    description    String
+    address        String  @unique
+    lastTradePrice Decimal @default(0)
 
     baseMint   Mint   @relation(fields: [baseMintId], references: [id])
     baseMintId String @unique

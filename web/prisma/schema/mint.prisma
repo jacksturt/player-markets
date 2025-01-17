@@ -1,8 +1,10 @@
 model Mint {
     id          String   @id @default(cuid())
+    timestamp   String
+    mintSlug    String
     name        String
     symbol      String
-    address     String
+    address     String   @unique
     image       String
     description String
     decimals    Int
@@ -10,7 +12,7 @@ model Mint {
     updatedAt   DateTime @updatedAt
 
     market   Market? @relation()
-    marketId String
+    marketId String?
 
     player   Player? @relation(fields: [playerId], references: [id])
     playerId String? @unique

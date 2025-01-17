@@ -4,7 +4,7 @@ import { ClusterProvider } from "@/components/cluster/cluster-data-access";
 import { SolanaProvider } from "@/components/solana/solana-provider";
 import { UiLayout } from "@/components/ui/ui-layout";
 import { ReactQueryProvider } from "./react-query-provider";
-
+import { TRPCReactProvider } from "@/trpc/react";
 import { SessionProvider } from "next-auth/react";
 
 const links: { label: string; path: string }[] = [
@@ -25,7 +25,9 @@ export default function RootLayout({
           <ReactQueryProvider>
             <ClusterProvider>
               <SolanaProvider>
-                <UiLayout links={links}>{children}</UiLayout>
+                <TRPCReactProvider>
+                  <UiLayout links={links}>{children}</UiLayout>
+                </TRPCReactProvider>
               </SolanaProvider>
             </ClusterProvider>
           </ReactQueryProvider>

@@ -62,22 +62,49 @@ export const authConfig = {
       credentials: {
         email: { label: "Email", type: "text" },
         userId: { label: "User ID", type: "text" },
+        publicKey: { label: "Public Key", type: "text" },
         serializedSession: { label: "Serialized Session", type: "text" },
       },
       async authorize(credentials) {
         if (!credentials?.userId) {
           throw new Error("No user ID provided");
         }
+        console.log("importing session", credentials.serializedSession);
         capsuleServer.importSession(credentials.serializedSession as string);
+        const users = await db.user.findMany();
+        console.log("users", users.length);
+        users.forEach((user) => {
+          console.log("user", user.email);
+        });
         try {
           const user = await db.user.upsert({
             where: { id: credentials.userId as string },
-            update: {},
+            update: {
+              email: credentials.email as string,
+            },
             create: {
               id: credentials.userId as string,
               email: credentials.email as string,
             },
           });
+
+          const wallets = await db.wallet.findMany({
+            where: {
+              userId: user.id,
+            },
+          });
+          const walletAddresses = wallets.map((wallet) => wallet.address);
+          if (
+            walletAddresses.length === 0 ||
+            !walletAddresses.includes(credentials.publicKey as string)
+          ) {
+            await db.wallet.create({
+              data: {
+                address: credentials.publicKey as string,
+                userId: user.id,
+              },
+            });
+          }
 
           return user;
         } catch (error) {

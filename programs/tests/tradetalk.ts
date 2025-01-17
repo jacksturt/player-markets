@@ -92,10 +92,6 @@ describe("tradetalk", () => {
     ],
     program.programId
   )[0];
-  const payoutConfig = PublicKey.findProgramAddressSync(
-    [Buffer.from("payout"), mintConfig.toBuffer()],
-    program.programId
-  )[0];
 
   const seed = new BN(randomBytes(8));
   const quoteConfig = PublicKey.findProgramAddressSync(

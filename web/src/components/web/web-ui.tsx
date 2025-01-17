@@ -63,27 +63,6 @@ export function InitPlayerMint() {
   );
 }
 
-export function InitializeProjectionOracle() {
-  const { initializeProjectionOracle } = useMarkets();
-  const playerId = "LAMAR";
-
-  return (
-    <button
-      className="btn btn-xs lg:btn-md btn-primary"
-      onClick={() =>
-        initializeProjectionOracle.mutateAsync({
-          playerId,
-          timestamp: TIMESTAMP,
-        })
-      }
-      disabled={initializeProjectionOracle.isPending}
-    >
-      Initialize Projection Oracle{" "}
-      {initializeProjectionOracle.isPending && "..."}
-    </button>
-  );
-}
-
 export function UpdateProjectionOracle() {
   const { updateProjectionOracle } = useMarkets();
   const playerId = "LAMAR";
@@ -120,20 +99,6 @@ export function MintPlayerTokens() {
   );
 }
 
-export function CreateMarket() {
-  const { createMarket } = usePlayerMarket();
-
-  return (
-    <button
-      className="btn btn-xs lg:btn-md btn-primary"
-      onClick={() => createMarket.mutateAsync()}
-      disabled={createMarket.isPending}
-    >
-      Create Market {createMarket.isPending && "..."}
-    </button>
-  );
-}
-
 export function DepositBase() {
   const { depositBase } = usePlayerMarket();
 
@@ -143,7 +108,7 @@ export function DepositBase() {
       onClick={() => depositBase.mutateAsync(10000)}
       disabled={depositBase.isPending}
     >
-      Deposit Base {depositBase.isPending && "..."}
+      Deposit Player Tokens {depositBase.isPending && "..."}
     </button>
   );
 }
@@ -157,7 +122,7 @@ export function DepositQuote() {
       onClick={() => depositQuote.mutateAsync(5000)}
       disabled={depositQuote.isPending}
     >
-      Deposit Quote {depositQuote.isPending && "..."}
+      Deposit Quote Tokens {depositQuote.isPending && "..."}
     </button>
   );
 }

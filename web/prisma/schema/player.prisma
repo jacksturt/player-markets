@@ -2,6 +2,7 @@ model Player {
     id       String   @id @default(cuid())
     name     String
     position Position
+    image    String?
 
     market   Market? @relation()
     marketId String?

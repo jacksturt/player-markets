@@ -5,9 +5,11 @@ model Order {
 
     status         OrderStatus @default(PENDING)
     type           OrderType
+    isBid          Boolean
     price          Decimal
     numBaseTokens  Int
     numQuoteTokens Int
+    sequenceNumber Int
 
     baseMint   Mint   @relation(fields: [baseMintId], references: [id])
     baseMintId String
@@ -22,6 +24,8 @@ model Order {
 
     sellTrade   Trade?  @relation("sellOrder")
     sellTradeId String?
+
+    @@unique([marketId, sequenceNumber, userId, price, type, isBid, numBaseTokens, numQuoteTokens])
 }
 
 enum OrderStatus {
@@ -31,6 +35,8 @@ enum OrderStatus {
 }
 
 enum OrderType {
-    BUY
-    SELL
+    LIMIT
+    IOC
+    POST_ONLY
+    GLOBAL
 }

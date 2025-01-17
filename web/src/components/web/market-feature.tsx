@@ -4,12 +4,15 @@ import { useWallet } from "@solana/wallet-adapter-react";
 import { WalletButton } from "../solana/solana-provider";
 import { AppHero, ellipsify } from "../ui/ui-layout";
 import { ExplorerLink } from "../cluster/cluster-ui";
-import { useMarkets, usePlayerMarket } from "./market-data-access";
+import {
+  useMarkets,
+  usePlayerMarket,
+  useQuoteToken,
+} from "./market-data-access";
 import {
   InitPlayerMint,
   MintPlayerTokens,
   Payout,
-  CreateMarket,
   DepositBase,
   DepositQuote,
   Trade,
@@ -35,13 +38,10 @@ const sb = SendbirdChat.init({
 }) as SendbirdOpenChat;
 
 export default function MarketFeature({
-  params,
+  marketAddress,
 }: {
-  params: { marketAddress: string };
+  marketAddress: string;
 }) {
-  const { publicKey } = useWallet();
-  const session = useSession();
-  console.log("session", session);
   const [username, setUsername] = useState<string>("");
   const [messages, setMessages] = useState<
     {
@@ -49,8 +49,9 @@ export default function MarketFeature({
       sender: string;
     }[]
   >([]);
-  const { bids, asks, latestTransaction } = usePlayerMarket();
-  console.log("latestTransaction", latestTransaction);
+  console.log("marketAddress", marketAddress);
+  const { bids, asks, balances, playerTokenBalance } = usePlayerMarket();
+  const { quoteTokenBalance } = useQuoteToken();
 
   useEffect(() => {
     async function checkCapsuleSession() {
@@ -80,13 +81,13 @@ export default function MarketFeature({
       console.log("message received", message);
       const fill: FillLogResult = JSON.parse(message.data);
       console.log("message received");
-      if (fill.market !== params.marketAddress) {
+      if (fill.market !== marketAddress) {
         console.log("market not match");
         return;
       }
       console.log("market match");
     };
-  }, [params.marketAddress]);
+  }, [marketAddress]);
 
   const connectToChat = async () => {
     const user = await sb.connect(username);
@@ -141,11 +142,43 @@ export default function MarketFeature({
   };
 
   const isAdmin = true;
-
-  return publicKey ? (
+  return (
     <div className="w-screen px-[10%] flex items-center justify-center">
       <div className="w-full grid grid-cols-2 gap-4 mt-20">
         <div>
+          <h1>Your Balances</h1>
+          <div className="flex flex-col gap-2">
+            <div className="flex flex-row gap-4 items-center">
+              <div>Quote Token</div>
+              <div>{quoteTokenBalance.data?.toString()}</div>
+            </div>
+            <div className="flex flex-row gap-4 items-center">
+              <div>Quote Token Withdrawable</div>
+              <div>
+                {balances.data?.quoteWithdrawableBalanceTokens.toString()}
+              </div>
+            </div>
+            <div className="flex flex-row gap-4 items-center">
+              <div>Quote Token On Open Orders</div>
+              <div>
+                {balances.data?.quoteOpenOrdersBalanceTokens.toString()}
+              </div>
+            </div>
+            <div className="flex flex-row gap-4 items-center">
+              <div>Player Token</div>
+              <div>{playerTokenBalance.data?.toString()}</div>
+            </div>
+            <div className="flex flex-row gap-4 items-center">
+              <div>Player Token Withdrawable</div>
+              <div>
+                {balances.data?.baseWithdrawableBalanceTokens.toString()}
+              </div>
+            </div>
+            <div className="flex flex-row gap-4 items-center">
+              <div>Player Token On Open Orders</div>
+              <div>{balances.data?.baseOpenOrdersBalanceTokens.toString()}</div>
+            </div>
+          </div>
           <h1 className="text-2xl font-bold">Trades</h1>
           <h2 className="text-lg font-bold">Bids</h2>
           <div className="grid grid-cols-3 gap-4 mb-4">
@@ -210,19 +243,12 @@ export default function MarketFeature({
           </div>
         </div>
         <div className="flex flex-col gap-4">
+          <MintPlayerTokens />
           <DepositBase />
           <DepositQuote />
           <Trade />
           <WithdrawAll />
           <Payout />
-        </div>
-      </div>
-    </div>
-  ) : (
-    <div className="max-w-4xl mx-auto">
-      <div className="hero py-[64px]">
-        <div className="hero-content text-center">
-          <WalletButton />
         </div>
       </div>
     </div>

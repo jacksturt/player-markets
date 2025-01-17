@@ -31,7 +31,9 @@ import { CapsuleSolanaWeb3Signer } from "@usecapsule/solana-web3.js-v1-integrati
 import { capsule } from "@/lib/capsule";
 import { OrderType } from "manifest/src/manifest";
 import { Market } from "manifest/src";
-
+import { api } from "@/trpc/react";
+import { Position } from "@prisma/client";
+import { useParams } from "next/navigation";
 export function useQuoteToken() {
   const { connection } = useConnection();
   const { cluster } = useCluster();
@@ -180,7 +182,11 @@ export function useMarkets() {
   const transactionToast = useTransactionToast();
   const { program, accounts, quoteToken } = useQuoteToken();
   const provider = useAnchorProvider();
-
+  const [playerId, setPlayerId] = useState<string>("");
+  const [timestamp, setTimestamp] = useState<string>("");
+  const [playerTokenMint, setPlayerTokenMint] = useState<string>("");
+  const createMint = api.mint.create.useMutation();
+  const createMarketAPI = api.market.create.useMutation();
   const markets = useQuery({
     queryKey: ["markets", "fetch", { cluster }],
     queryFn: async () => {
@@ -192,7 +198,7 @@ export function useMarkets() {
 
   const initializeMint = useMutation({
     mutationKey: ["markets", "initialize", { cluster }],
-    mutationFn: (playerId: string) => {
+    mutationFn: async (playerId: string) => {
       const timestamp = Date.now().toString();
       console.log("timestamp", timestamp);
       const player_token_mint = PublicKey.findProgramAddressSync(
@@ -205,7 +211,7 @@ export function useMarkets() {
       )[0];
       console.log("mintConfig", mintConfig.toBase58());
       const vault = getAssociatedTokenAddressSync(quoteToken, mintConfig, true);
-      return program.methods
+      const signature = await program.methods
         .initMint(playerId, timestamp)
         .accountsStrict({
           payer: provider.publicKey,
@@ -218,61 +224,85 @@ export function useMarkets() {
           associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
         })
         .rpc();
+      setPlayerId(playerId);
+      setTimestamp(timestamp);
+      console.log("player_token_mint", player_token_mint.toBase58());
+      setPlayerTokenMint(player_token_mint.toBase58());
+      return { signature, playerId, timestamp, player_token_mint, mintConfig };
     },
-    onSuccess: (signature) => {
-      transactionToast(signature);
-      return accounts.refetch();
-    },
-    onError: async (error: SendTransactionError) => {
-      toast.error(error.message);
-      const logs = await error.getLogs(provider.connection);
-      console.log("logs", logs);
-    },
-  });
+    onSuccess: async (data) => {
+      transactionToast(data.signature);
+      await createMint.mutateAsync(
+        {
+          mintName: "Lamar Jackson",
+          mintSymbol: "LAMAR",
+          mintImage:
+            "https://www.google.com/images/branding/googlelogo/1x/googlelogo_color_272x92dp.png",
+          mintSlug: data.playerId,
+          timestamp: data.timestamp,
+          description: "Lamar Jackson",
+          baseMint: data.player_token_mint.toBase58(),
+          teamId: "cm5zu89es0001rca24651nt9v",
+          position: "QB",
+          playerName: "Lamar Jackson",
+          playerImage:
+            "https://www.google.com/images/branding/googlelogo/1x/googlelogo_color_272x92dp.png",
+        },
+        {
+          onSuccess: async () => {
+            toast.success("Mint created");
+            const keyPair = await createMarketTX(
+              provider.connection,
+              provider,
+              quoteToken,
+              data.player_token_mint
+            );
 
-  const initializeProjectionOracle = useMutation({
-    mutationKey: ["markets", "initialize-projection-oracle", { cluster }],
-    mutationFn: ({
-      playerId,
-      timestamp,
-    }: {
-      playerId: string;
-      timestamp: string;
-    }) => {
-      console.log("playerId", playerId);
-      console.log("timestamp", timestamp);
-      const mintConfig = PublicKey.findProgramAddressSync(
-        [Buffer.from("config"), Buffer.from(playerId), Buffer.from(timestamp)],
-        program.programId
-      )[0];
-      console.log("mintConfig", mintConfig.toBase58());
-      const playerStats = PublicKey.findProgramAddressSync(
-        [
-          Buffer.from("player_stats"),
-          Buffer.from(playerId),
-          Buffer.from(timestamp),
-        ],
-        program.programId
-      )[0];
-      return program.methods
-        .initProjectionOracle(playerId, timestamp)
-        .accountsStrict({
-          payer: provider.publicKey,
-          config: mintConfig,
-          playerStats,
-          tokenProgram: TOKEN_PROGRAM_ID,
-          systemProgram: SystemProgram.programId,
-          associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
-        })
-        .rpc();
-    },
-    onSuccess: (signature) => {
-      transactionToast(signature);
-      return accounts.refetch();
+            createMarketAPI.mutateAsync(
+              {
+                marketName: "Lamar Jackson",
+                description: "Lamar Jackson",
+                address: keyPair.toBase58(),
+                mintAddress: data.player_token_mint.toBase58(),
+              },
+              {
+                onSuccess: async () => {
+                  const playerStats = PublicKey.findProgramAddressSync(
+                    [
+                      Buffer.from("player_stats"),
+                      Buffer.from(data.playerId),
+                      Buffer.from(data.timestamp),
+                    ],
+                    program.programId
+                  )[0];
+                  return program.methods
+                    .initProjectionOracle(data.playerId, data.timestamp)
+                    .accountsStrict({
+                      payer: provider.publicKey,
+                      config: data.mintConfig,
+                      playerStats,
+                      tokenProgram: TOKEN_PROGRAM_ID,
+                      systemProgram: SystemProgram.programId,
+                      associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
+                    })
+                    .rpc()
+                    .then((signature) => {
+                      transactionToast(signature);
+                    });
+                },
+                onError: async (error) => {
+                  toast.error(error.message);
+                },
+              }
+            );
+
+            return accounts.refetch();
+          },
+        }
+      );
     },
     onError: async (error: SendTransactionError) => {
       toast.error(error.message);
-      console.log("error", error);
       const logs = await error.getLogs(provider.connection);
       console.log("logs", logs);
     },
@@ -319,7 +349,6 @@ export function useMarkets() {
   return {
     markets,
     initialize: initializeMint,
-    initializeProjectionOracle,
     updateProjectionOracle,
   };
 }
@@ -330,17 +359,55 @@ export function usePlayerMarket() {
   const { program, accounts, quoteToken } = useQuoteToken();
   const provider = useAnchorProvider();
   const queryClient = useQueryClient();
+  const { marketAddress: marketAddressParam } = useParams();
+  const marketAddress =
+    typeof marketAddressParam === "string"
+      ? marketAddressParam
+      : marketAddressParam[0];
 
-  const [marketPK, setMarketPK] = useState<null | PublicKey>(
-    new PublicKey("CnZ3BSx9WRW7XA5nbvzf52gCGaqDGmZYmBt4tKZZic7P")
+  const market = api.market.read.useQuery(
+    {
+      marketAddress: marketAddress,
+    },
+    {
+      enabled: !!marketAddress,
+    }
   );
-  const [timestamp, setTimestamp] = useState<string>("1737014774362");
-  const [playerId, setPlayerId] = useState<string>("LAMAR");
+  console.log("market", market);
 
+  const marketPK = useQuery({
+    queryKey: ["market-pk", { marketAddress }],
+    queryFn: () => new PublicKey(marketAddress),
+  });
+
+  const timestamp = useQuery({
+    queryKey: ["timestamp", { marketAddress }],
+    queryFn: () => market.data?.baseMint.timestamp ?? "",
+    enabled: !!market.data,
+  });
+
+  const playerId = useQuery({
+    queryKey: ["playerId", { marketAddress }],
+    queryFn: () => market.data?.baseMint.mintSlug ?? "",
+    enabled: !!market.data,
+  });
+  console.log("timestamp", timestamp);
+  console.log("playerId", playerId);
+  console.log("playerId", playerId);
+  const player_token_mint = PublicKey.findProgramAddressSync(
+    [
+      Buffer.from("mint"),
+      Buffer.from(playerId.data ?? ""),
+      Buffer.from(timestamp.data ?? ""),
+    ],
+    program.programId
+  )[0];
+  console.log("player_token_mint", player_token_mint.toBase58());
   const capsulePubkey = useQuery({
     queryKey: ["capsule-pubkey", { cluster }],
     queryFn: () => new PublicKey(capsule.getAddress()!),
   });
+  console.log("capsulePubkey", capsulePubkey.data);
 
   const quoteTokenAccount = useQuery({
     queryKey: ["quote-token-account", { cluster }],
@@ -354,18 +421,6 @@ export function usePlayerMarket() {
     enabled: !!capsulePubkey.data,
   });
 
-  const setPlayerMarket = async (mintAddress: PublicKey) => {
-    const market = await program.account.playerMintConfig.fetch(mintAddress);
-    setPlayerId(market.playerId);
-    setTimestamp(market.timestamp);
-    console.log("market", market);
-    console.log("playerMintPK", market.playerTokenMint.toBase58());
-    setMarketPK(new PublicKey(market.playerTokenMint));
-    queryClient.invalidateQueries({
-      queryKey: ["market", { playerMintPK: marketPK }],
-    });
-  };
-
   const latestTransaction = useQuery({
     queryKey: ["latest-transaction", { playerMintPK: marketPK }],
     queryFn: async () => {
@@ -376,18 +431,42 @@ export function usePlayerMarket() {
           "finalized"
         )
       )[0];
-      console.log("lastSignatureStatus", lastSignatureStatus);
       return lastSignatureStatus;
     },
+  });
+
+  const playerTokenAccount = useQuery({
+    queryKey: ["player-token-account", { cluster }],
+    queryFn: async () => {
+      const playerTokenAccount = getAssociatedTokenAddressSync(
+        player_token_mint,
+        capsulePubkey.data!,
+        true
+      );
+      return playerTokenAccount;
+    },
+    enabled: !!capsulePubkey.data,
+  });
+
+  const playerTokenBalance = useQuery({
+    queryKey: ["market", "player-token-balance", { playerMintPK: marketPK }],
+    queryFn: async () => {
+      if (!playerTokenAccount.data) return "loading...";
+      const account = await getAccount(
+        provider.connection,
+        playerTokenAccount.data
+      );
+      return account.amount.toString();
+    },
+    enabled: !!playerTokenAccount.data,
   });
 
   const bids = useQuery({
     queryKey: ["market", "bids", { playerMintPK: marketPK }],
     queryFn: async () => {
-      // console.log("bids", playerMintPK?.toBase58());
       const market = await Market.loadFromAddress({
         connection: provider.connection,
-        address: marketPK!,
+        address: marketPK.data!,
       });
       const bids = await market.bids();
       return bids;
@@ -399,30 +478,38 @@ export function usePlayerMarket() {
     queryFn: async () => {
       const market = await Market.loadFromAddress({
         connection: provider.connection,
-        address: marketPK!,
+        address: marketPK.data!,
       });
       const asks = await market.asks();
       return asks;
     },
   });
 
+  const balances = useQuery({
+    queryKey: ["market", "balances", { playerMintPK: marketPK }],
+    queryFn: async () => {
+      const client = await ManifestClient.getClientForMarket(
+        provider,
+        marketPK.data!
+      );
+      const balances = await client.market.getBalances(capsulePubkey.data!);
+      return balances;
+    },
+  });
+
   const mint = useMutation({
     mutationKey: ["market", "mint", { playerMintPK: marketPK }],
     mutationFn: async () => {
-      const player_token_mint = PublicKey.findProgramAddressSync(
-        [Buffer.from("mint"), Buffer.from(playerId), Buffer.from(timestamp)],
-        program.programId
-      )[0];
       const mintConfig = PublicKey.findProgramAddressSync(
-        [Buffer.from("config"), Buffer.from(playerId), Buffer.from(timestamp)],
+        [
+          Buffer.from("config"),
+          Buffer.from(playerId.data ?? ""),
+          Buffer.from(timestamp.data ?? ""),
+        ],
         program.programId
       )[0];
       const vault = getAssociatedTokenAddressSync(quoteToken, mintConfig, true);
-      const destination = getAssociatedTokenAddressSync(
-        player_token_mint,
-        capsulePubkey.data!,
-        true
-      );
+
       const mintRecord = PublicKey.findProgramAddressSync(
         [
           Buffer.from("mint_record"),
@@ -435,11 +522,13 @@ export function usePlayerMarket() {
       const playerStats = PublicKey.findProgramAddressSync(
         [
           Buffer.from("player_stats"),
-          Buffer.from(playerId),
-          Buffer.from(timestamp),
+          Buffer.from(playerId.data ?? ""),
+          Buffer.from(timestamp.data ?? ""),
         ],
         program.programId
       )[0];
+
+      console.log(player_token_mint.toBase58());
 
       const ix = await program.methods
         .mintTokens(new BN(30000000000))
@@ -448,7 +537,7 @@ export function usePlayerMarket() {
           quoteTokenMint: quoteToken,
           vault,
           playerTokenMint: player_token_mint,
-          destination,
+          destination: playerTokenAccount.data!,
           config: mintConfig,
           tokenProgram: TOKEN_PROGRAM_ID,
           systemProgram: SystemProgram.programId,
@@ -476,30 +565,10 @@ export function usePlayerMarket() {
     },
     onSuccess: (signature) => {
       transactionToast(signature);
+      playerTokenBalance.refetch();
       return accounts.refetch();
     },
     onError: () => toast.error("Failed to mint tokens"),
-  });
-
-  const createMarket = useMutation({
-    mutationKey: ["market", "create", { playerMintPK: marketPK }],
-    mutationFn: () => {
-      const player_token_mint = PublicKey.findProgramAddressSync(
-        [Buffer.from("mint"), Buffer.from(playerId), Buffer.from(timestamp)],
-        program.programId
-      )[0];
-      return createMarketTX(
-        provider.connection,
-        provider,
-        quoteToken,
-        player_token_mint
-      );
-    },
-    onSuccess: (signature) => {
-      transactionToast(`Market created: ${signature.toBase58()}`);
-      return accounts.refetch();
-    },
-    onError: () => toast.error("Failed to create market"),
   });
 
   const depositQuote = useMutation({
@@ -507,7 +576,7 @@ export function usePlayerMarket() {
     mutationFn: async (amount: number) => {
       const client = await ManifestClient.getClientForMarket(
         provider,
-        marketPK!
+        marketPK.data!
       );
       const depositIx = client.depositIx(
         capsulePubkey.data!,
@@ -542,10 +611,14 @@ export function usePlayerMarket() {
     mutationFn: async (amount: number) => {
       const client = await ManifestClient.getClientForMarket(
         provider,
-        marketPK!
+        marketPK.data!
       );
       const player_token_mint = PublicKey.findProgramAddressSync(
-        [Buffer.from("mint"), Buffer.from(playerId), Buffer.from(timestamp)],
+        [
+          Buffer.from("mint"),
+          Buffer.from(playerId.data ?? ""),
+          Buffer.from(timestamp.data ?? ""),
+        ],
         program.programId
       )[0];
       const depositIx = client.depositIx(
@@ -587,8 +660,15 @@ export function usePlayerMarket() {
     }) => {
       const client = await ManifestClient.getClientForMarket(
         provider,
-        marketPK!
+        marketPK.data!
       );
+      const market = await Market.loadFromAddress({
+        connection: provider.connection,
+        address: marketPK.data!,
+      });
+      // const sequenceNumber = await market.
+      console.log("numBaseTokens", numBaseTokens);
+      console.log("tokenPrice", tokenPrice);
       const orderIx = client.placeOrderIx({
         numBaseTokens: numBaseTokens,
         tokenPrice: tokenPrice,
@@ -612,9 +692,9 @@ export function usePlayerMarket() {
       const signature = await provider.connection.sendRawTransaction(
         signed.serialize()
       );
-      return signature;
+      return { signature, tokenPrice, numBaseTokens };
     },
-    onSuccess: (signature) => {
+    onSuccess: async ({ signature, tokenPrice, numBaseTokens }) => {
       transactionToast(`Deposited quote: ${signature}`);
       queryClient.invalidateQueries({
         queryKey: ["market", "bids", { playerMintPK: marketPK }],
@@ -622,7 +702,21 @@ export function usePlayerMarket() {
       queryClient.invalidateQueries({
         queryKey: ["market", "asks", { playerMintPK: marketPK }],
       });
-      return accounts.refetch();
+      accounts.refetch();
+
+      const market: Market = await Market.loadFromAddress({
+        connection: provider.connection,
+        address: marketPK.data!,
+      });
+      const bids = await market.bids();
+      console.log("bids", bids);
+      const thisBid = bids.find(
+        (bid) =>
+          bid.trader.toBase58() === capsulePubkey.data!.toBase58() &&
+          bid.tokenPrice === tokenPrice &&
+          bid.numBaseTokens === numBaseTokens
+      );
+      console.log("thisBid", thisBid);
     },
     onError: () => toast.error("Failed to deposit quote"),
   });
@@ -638,7 +732,7 @@ export function usePlayerMarket() {
     }) => {
       const client = await ManifestClient.getClientForMarket(
         provider,
-        marketPK!
+        marketPK.data!
       );
       const orderIx = client.placeOrderIx({
         numBaseTokens: numBaseTokens,
@@ -677,7 +771,7 @@ export function usePlayerMarket() {
     mutationFn: async () => {
       const client = await ManifestClient.getClientForMarket(
         provider,
-        marketPK!
+        marketPK.data!
       );
       const withdrawIx = await client.withdrawAllIx();
       const blockhash = await provider.connection.getLatestBlockhash();
@@ -714,7 +808,7 @@ export function usePlayerMarket() {
     mutationFn: async () => {
       const market: Market = await Market.loadFromAddress({
         connection: provider.connection,
-        address: marketPK!,
+        address: marketPK.data!,
       });
       market.prettyPrint();
     },
@@ -729,11 +823,19 @@ export function usePlayerMarket() {
     mutationKey: ["market", "init-payout", { playerMintPK: marketPK }],
     mutationFn: async () => {
       const mintConfig = PublicKey.findProgramAddressSync(
-        [Buffer.from("config"), Buffer.from(playerId), Buffer.from(timestamp)],
+        [
+          Buffer.from("config"),
+          Buffer.from(playerId.data ?? ""),
+          Buffer.from(timestamp.data ?? ""),
+        ],
         program.programId
       )[0];
       const player_token_mint = PublicKey.findProgramAddressSync(
-        [Buffer.from("mint"), Buffer.from(playerId), Buffer.from(timestamp)],
+        [
+          Buffer.from("mint"),
+          Buffer.from(playerId.data ?? ""),
+          Buffer.from(timestamp.data ?? ""),
+        ],
         program.programId
       )[0];
       const playerTokenAccount = getAssociatedTokenAddressSync(
@@ -748,8 +850,8 @@ export function usePlayerMarket() {
       const playerStats = PublicKey.findProgramAddressSync(
         [
           Buffer.from("player_stats"),
-          Buffer.from(playerId),
-          Buffer.from(timestamp),
+          Buffer.from(playerId.data ?? ""),
+          Buffer.from(timestamp.data ?? ""),
         ],
         program.programId
       )[0];
@@ -811,7 +913,6 @@ export function usePlayerMarket() {
 
   return {
     mint,
-    createMarket,
     depositBase,
     depositQuote,
     buy,
@@ -821,7 +922,9 @@ export function usePlayerMarket() {
     payout,
     bids,
     asks,
-    setPlayerMarket,
+    balances,
     latestTransaction,
+    playerTokenAccount,
+    playerTokenBalance,
   };
 }
