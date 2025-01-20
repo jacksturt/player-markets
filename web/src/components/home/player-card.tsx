@@ -1,10 +1,10 @@
-import React from "react";
-import { TrendingUp, TrendingDown, Bookmark } from "lucide-react";
+import { useFiltersStore } from "@/lib/zustand";
+import Link from "next/link";
+import { Bookmark } from "lucide-react";
 import Comments from "../icons/comments";
 import Volume from "../icons/volume";
 import { NFL_POSITIONS } from "@/lib/constants";
-import { useFiltersStore } from "@/lib/zustand";
-import Link from "next/link";
+import PriceTrend from "../charts/price-trend";
 
 interface PlayerData {
   imageUrl: string;
@@ -51,26 +51,7 @@ export default function PlayerCard({ playerData }: { playerData: PlayerData }) {
                   {playerData.projectedTotal} pts
                 </p>
               </div>
-              <div
-                className={`flex items-center gap-1 py-1 px-2 rounded-xl ${
-                  playerData.pctChange > 0 ? "bg-accent" : "bg-destructive"
-                }`}
-              >
-                {playerData.pctChange > 0 ? (
-                  <TrendingUp className="w-4 h-4 text-accent-foreground" />
-                ) : (
-                  <TrendingDown className="w-4 h-4 text-destructive-foreground" />
-                )}
-                <p
-                  className={`text-sm ${
-                    playerData.pctChange > 0
-                      ? "text-accent-foreground"
-                      : "text-destructive-foreground"
-                  }`}
-                >
-                  {playerData.pctChange.toFixed(1)}%
-                </p>
-              </div>
+              <PriceTrend playerData={playerData} />
             </div>
           </div>
         </div>
