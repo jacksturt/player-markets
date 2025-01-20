@@ -4,7 +4,7 @@ import { Bookmark } from "lucide-react";
 import Comments from "../icons/comments";
 import Volume from "../icons/volume";
 import { NFL_POSITIONS } from "@/lib/constants";
-import PriceTrend from "../charts/price-trend";
+import PriceTrend from "../player-data/price-trend";
 
 interface PlayerData {
   imageUrl: string;

@@ -20,12 +20,16 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" className="bg-background">
-      <body>
+      <body className="bg-zinc-900">
         <SessionProvider>
           <ReactQueryProvider>
             <ClusterProvider>
               <SolanaProvider>
-                <TRPCReactProvider>{children}</TRPCReactProvider>
+                <TRPCReactProvider>
+                  <main className="mx-auto max-w-[430px] min-h-screen bg-background">
+                    {children}
+                  </main>
+                </TRPCReactProvider>
               </SolanaProvider>
             </ClusterProvider>
           </ReactQueryProvider>
