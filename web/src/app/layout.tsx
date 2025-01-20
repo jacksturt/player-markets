@@ -1,11 +1,12 @@
 "use client";
+
 import "./globals.css";
 import { ClusterProvider } from "@/components/cluster/cluster-data-access";
 import { SolanaProvider } from "@/components/solana/solana-provider";
-import { UiLayout } from "@/components/ui/ui-layout";
 import { ReactQueryProvider } from "./react-query-provider";
 import { TRPCReactProvider } from "@/trpc/react";
 import { SessionProvider } from "next-auth/react";
+import Footer from "@/components/ui/footer";
 
 const links: { label: string; path: string }[] = [
   { label: "Account", path: "/account" },
@@ -19,15 +20,16 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className="bg-background">
+    <html lang="en" className="bg-background overflow-x-hidden">
       <body className="bg-zinc-900">
         <SessionProvider>
           <ReactQueryProvider>
             <ClusterProvider>
               <SolanaProvider>
                 <TRPCReactProvider>
-                  <main className="mx-auto max-w-[430px] min-h-screen bg-background">
+                  <main className="relative mx-auto max-w-[430px] min-h-screen bg-background">
                     {children}
+                    <Footer />
                   </main>
                 </TRPCReactProvider>
               </SolanaProvider>

@@ -26,7 +26,7 @@ export default function PlayerDetailsPage() {
       <ChartComponent />
       {/* info categories / tabs */}
       <DataTables />
-      <div className="mt-auto flex items-center justify-between gap-5 px-5 pb-5">
+      <div className="mt-auto mb-16 flex items-center justify-between gap-5 px-5 pb-5">
         <button className="bg-[#74FA8F] text-black border-2 border-black w-full py-4 rounded-xl shadow-[6px_6px_0px_0px_rgba(0,0,0,1)]">
           <p>Long</p>
         </button>
