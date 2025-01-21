@@ -18,7 +18,9 @@ export const createMint = protectedProcedure
       position: z.optional(z.nativeEnum(Position)),
       teamId: z.optional(z.string()),
       playerName: z.optional(z.string()),
+      playerSportsdataId: z.optional(z.number()),
       teamName: z.optional(z.string()),
+      teamSportsdataId: z.optional(z.string()),
     })
   )
   .mutation(async ({ input }) => {
@@ -42,6 +44,7 @@ export const createMint = protectedProcedure
           teamId: input.teamId,
           position: input.position!,
           image: input.playerImage!,
+          sportsDataId: input.playerSportsdataId!,
           mint: {
             connect: {
               id: mint.id,
@@ -54,6 +57,7 @@ export const createMint = protectedProcedure
         data: {
           name: input.teamName!,
           image: input.teamImage!,
+          sportsDataId: input.teamSportsdataId!,
           mint: {
             connect: {
               id: mint.id,

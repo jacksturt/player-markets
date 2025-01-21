@@ -5,13 +5,13 @@ model Market {
     address        String  @unique
     lastTradePrice Decimal @default(0)
 
-    baseMint   Mint   @relation(fields: [baseMintId], references: [id])
+    baseMint   Mint   @relation(fields: [baseMintId], references: [id], onDelete: Cascade)
     baseMintId String @unique
 
-    player   Player? @relation(fields: [playerId], references: [id])
+    player   Player? @relation(fields: [playerId], references: [id], onDelete: Cascade)
     playerId String? @unique
 
-    team   Team?   @relation(fields: [teamId], references: [id])
+    team   Team?   @relation(fields: [teamId], references: [id], onDelete: Cascade)
     teamId String? @unique
 
     createdAt DateTime @default(now())

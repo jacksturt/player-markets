@@ -40,6 +40,22 @@ export const createMarket = protectedProcedure
           },
         },
       });
+      await db.mint.update({
+        where: {
+          id: mint.id,
+        },
+        data: {
+          marketId: market.id,
+        },
+      });
+      await db.player.update({
+        where: {
+          id: mint.playerId,
+        },
+        data: {
+          marketId: market.id,
+        },
+      });
     } else if (mint?.teamId) {
       market = await db.market.create({
         data: {
@@ -56,6 +72,22 @@ export const createMarket = protectedProcedure
               id: mint.teamId,
             },
           },
+        },
+      });
+      await db.mint.update({
+        where: {
+          id: mint.id,
+        },
+        data: {
+          marketId: market.id,
+        },
+      });
+      await db.team.update({
+        where: {
+          id: mint.teamId,
+        },
+        data: {
+          marketId: market.id,
         },
       });
     }
