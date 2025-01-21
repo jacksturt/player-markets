@@ -1,7 +1,15 @@
 import { NextResponse } from "next/server";
 import { db } from "@/server/db";
 
-export async function GET() {
+export async function GET(request: Request) {
+  if (
+    request.headers.get("Authorization") !== `Bearer ${process.env.CRON_SECRET}`
+  ) {
+    return NextResponse.json(
+      { success: false, error: "Unauthorized" },
+      { status: 401 }
+    );
+  }
   try {
     const players = await db.player.findMany({
       include: {

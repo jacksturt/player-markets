@@ -1,5 +1,5 @@
 import { PrismaAdapter } from "@auth/prisma-adapter";
-import { type DefaultSession, type NextAuthConfig } from "next-auth";
+import { type DefaultSession, type NextAuthOptions } from "next-auth";
 
 import CredentialsProvider from "next-auth/providers/credentials";
 import { db } from "@/server/db";
@@ -33,13 +33,13 @@ declare module "next-auth" {
  */
 export const authConfig = {
   callbacks: {
-    async jwt({ token, user }) {
+    async jwt({ token, user }: { token: any; user: any }) {
       if (user) {
         token.userId = user.id;
       }
       return token;
     },
-    async session({ session, token }) {
+    async session({ session, token }: { session: any; token: any }) {
       const dbuser = await db.user.findUnique({
         where: { id: token.userId as string },
       });
@@ -50,7 +50,7 @@ export const authConfig = {
       }
       return session;
     },
-    signIn: async ({ user }) => {
+    signIn: async ({ user }: { user: any }) => {
       return true;
     },
   },
@@ -115,4 +115,4 @@ export const authConfig = {
   session: {
     strategy: "jwt", // Use JWT strategy for sessions
   },
-} satisfies NextAuthConfig;
+} satisfies NextAuthOptions;
