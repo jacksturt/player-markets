@@ -1,12 +1,12 @@
 {
     "build": {
-        "builder": "NIXPACKS",
-        "buildCommand": "cd your-subfolder-name && yarn install",
-        "nixpacksConfigPath": "nixpacks.toml"
+    "builder": "NIXPACKS",
+    "buildCommand": "cd fillFeed && yarn install",
+    "nixpacksConfigPath": "nixpacks.toml"
     },
-    "deploy": {
-        "startCommand": "cd your-subfolder-name && yarn start",
-        "healthcheckPath": "/metrics",
-        "healthcheckTimeout": 100
-    }
+  "deploy": {
+    "startCommand": "cd fillFeed && yarn start:feed",
+    "healthcheckPath": "/metrics",
+    "healthcheckTimeout": 100
+  }
 }
