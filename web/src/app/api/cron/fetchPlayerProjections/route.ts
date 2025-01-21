@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { db } from "@/server/db";
+import { headers } from "next/headers";
 
 export async function GET(request: Request) {
   if (
@@ -17,7 +18,12 @@ export async function GET(request: Request) {
       },
     });
     for (const player of players) {
-      fetch(`http://localhost:3000/api/projections/updatePlayerProjections`, {
+      const headersList = headers();
+      const host = headersList.get("host");
+      const protocol =
+        process.env.NODE_ENV === "development" ? "http" : "https";
+      const baseUrl = `${protocol}://${host}`;
+      fetch(`${baseUrl}/api/projections/updatePlayerProjections`, {
         method: "POST",
         body: JSON.stringify({
           sportsDataId: player.sportsDataId,
