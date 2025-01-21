@@ -1,7 +1,9 @@
 import { NextResponse } from "next/server";
 import { db } from "@/server/db";
 import { headers } from "next/headers";
-
+const baseUrl = process.env.VERCEL_URL
+  ? `https://${process.env.VERCEL_URL}`
+  : process.env.URL || "http://localhost:3000";
 export async function GET(request: Request) {
   // if (
   //   request.headers.get("Authorization") !== `Bearer ${process.env.CRON_SECRET}`
@@ -19,12 +21,6 @@ export async function GET(request: Request) {
     });
     console.log("players", players);
     for (const player of players) {
-      const headersList = headers();
-      const host = headersList.get("host");
-      const protocol =
-        process.env.NODE_ENV === "development" ? "http" : "https";
-      const baseUrl = `${protocol}://${host}`;
-      console.log("baseUrl", baseUrl);
       fetch(`${baseUrl}/api/projections/updatePlayerProjections`, {
         method: "POST",
         body: JSON.stringify({
