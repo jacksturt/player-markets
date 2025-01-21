@@ -9,6 +9,14 @@ import { EnvWallet } from "@/lib/envWallet";
 
 export async function POST(request: Request) {
   const { sportsDataId, position, team, week, season } = await request.json();
+  console.log(
+    "updating player projections",
+    sportsDataId,
+    position,
+    team,
+    week,
+    season
+  );
   try {
     const response = await fetch(
       `https://baker-api.sportsdata.io/baker/v2/nfl/projections/players/${season}/${week}/team/${team}/avg?key=${process.env.SPORTSDATA_API_KEY}&position=${position}`,
@@ -18,6 +26,7 @@ export async function POST(request: Request) {
         },
       }
     );
+    console.log("response", response);
     const data: PlayerProjection[] = await response.json();
     const player = await db.player.findUnique({
       where: {
@@ -44,6 +53,7 @@ export async function POST(request: Request) {
     }
     const camelCaseData =
       convertPlayerProjectionToCamelCase(playerProjectionData);
+    console.log("updating in db");
     await db.playerProjection.upsert({
       where: {
         playerId: player.id,
@@ -56,11 +66,13 @@ export async function POST(request: Request) {
         ...camelCaseData,
       },
     });
+    console.log("updating in oracle");
     await updateProjectionOracle(
       player.sportsDataId.toString(),
       player.mint!.timestamp,
       playerProjectionData.fantasy_points_ppr
     );
+    console.log("updated in oracle");
     return NextResponse.json({ success: true, data });
   } catch (error: any) {
     console.error(error);
