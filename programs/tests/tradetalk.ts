@@ -26,7 +26,7 @@ import { placeOrder } from "../manifest/tests/placeOrder";
 import { OrderType } from "../manifest/src/manifest";
 import { assert } from "chai";
 
-const LAMAR_ID = "LAMAR";
+const LAMAR_ID = "19781";
 describe("tradetalk", () => {
   // Configure the client to use the local cluster.
   anchor.setProvider(anchor.AnchorProvider.env());

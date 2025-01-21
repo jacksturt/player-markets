@@ -5,4 +5,5 @@ pub const BOOL_L: usize = 1;
 pub const OPTION_L: usize = 1;
 pub const U8_L: usize = 1;
 pub const ADMIN_PUBKEY: &str = "BuxU7uwwkoobF8p4Py7nRoTgxWRJfni8fc4U3YKGEXKs";
+pub const UPDATE_PLAYER_PROJECTIONS_PUBKEY: &str = "ADMNrkQz5bWB5P5DsEcSTWfCu2gdWLEPrETTJ9fxGNKo";
 pub const MINTER_COLLATERAL_RATE: f64 = 2.5;

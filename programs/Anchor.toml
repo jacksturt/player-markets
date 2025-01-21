@@ -5,7 +5,7 @@ resolution = true
 skip-lint = false
 
 [programs.devnet]
-tradetalk = "7NBgMSauN6xquUkLFpqW6eaipf7vthZvbfCF7cjGwhPZ"
+tradetalk = "BuxU7uwwkoobF8p4Py7nRoTgxWRJfni8fc4U3YKGEXKs"
 
 [registry]
 url = "https://api.apr.dev"
