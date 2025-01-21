@@ -1,0 +1,8 @@
+[phases.setup]
+nixPkgs = ['nodejs', 'yarn']
+
+[phases.install]
+cmds = ['cd your-subfolder-name && yarn install']
+
+[start]
+cmd = 'cd your-subfolder-name && yarn start'
