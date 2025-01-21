@@ -1,0 +1,11 @@
+{
+  "build": {
+    "builder": "NIXPACKS",
+    "buildCommand": "cd fillFeed && yarn install"
+  },
+  "deploy": {
+    "startCommand": "cd fillFeed && yarn start:feed",
+    "healthcheckPath": "/metrics",
+    "healthcheckTimeout": 100
+  }
+}
