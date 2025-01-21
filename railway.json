@@ -1,10 +1,10 @@
 {
   "build": {
     "builder": "NIXPACKS",
-    "buildCommand": "cd fillFeed && yarn install"
+    "buildCommand": "cd fillFeed && npm install"
   },
   "deploy": {
-    "startCommand": "cd fillFeed && yarn start:feed",
+    "startCommand": "cd fillFeed && npm run start:feed",
     "healthcheckPath": "/metrics",
     "healthcheckTimeout": 100
   }
