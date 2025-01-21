@@ -558,7 +558,11 @@ export function usePlayerMarket() {
       playerTokenBalance.refetch();
       return accounts.refetch();
     },
-    onError: () => toast.error("Failed to mint tokens"),
+    onError: async (error: SendTransactionError) => {
+      toast.error("Failed to mint tokens");
+      const logs = await error.getLogs(provider.connection);
+      console.log("logs", logs);
+    },
   });
 
   const depositQuote = useMutation({

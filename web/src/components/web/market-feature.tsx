@@ -76,14 +76,12 @@ export default function MarketFeature({
     };
 
     ws.onmessage = async (message): Promise<void> => {
-      console.log("message received", message);
       const fill: FillLogResult = JSON.parse(message.data);
-      console.log("message received");
       if (fill.market !== marketAddress) {
         console.log("market not match");
         return;
       }
-      console.log("market match");
+      console.log("market match", fill);
     };
   }, [marketAddress]);
 
