@@ -10,14 +10,14 @@ const baseUrl = process.env.VERCEL_URL
   ? `https://${process.env.VERCEL_URL}`
   : process.env.URL || "http://localhost:3000";
 export async function GET(request: Request) {
-  // if (
-  //   request.headers.get("Authorization") !== `Bearer ${process.env.CRON_SECRET}`
-  // ) {
-  //   return NextResponse.json(
-  //     { success: false, error: "Unauthorized" },
-  //     { status: 401 }
-  //   );
-  // }
+  if (
+    request.headers.get("Authorization") !== `Bearer ${process.env.CRON_SECRET}`
+  ) {
+    return NextResponse.json(
+      { success: false, error: "Unauthorized" },
+      { status: 401 }
+    );
+  }
 
   const { searchParams } = new URL(request.url);
   const team = searchParams.get("team");
@@ -52,7 +52,6 @@ export async function GET(request: Request) {
         }
       );
       for (const player of players) {
-        console.log("response", response);
         const data: PlayerProjection[] = await response.json();
 
         const playerProjectionData = data.find(
@@ -66,7 +65,6 @@ export async function GET(request: Request) {
         }
         const camelCaseData =
           convertPlayerProjectionToCamelCase(playerProjectionData);
-        console.log("updating in db");
         await db.playerProjection.upsert({
           where: {
             playerId: player.id,
@@ -79,13 +77,11 @@ export async function GET(request: Request) {
             ...camelCaseData,
           },
         });
-        console.log("updating in oracle");
         await updateProjectionOracle(
           player.sportsDataId.toString(),
           player.mint!.timestamp,
           playerProjectionData.fantasy_points_ppr
         );
-        console.log("updated in oracle");
       }
 
       return NextResponse.json({ success: true });
