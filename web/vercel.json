@@ -2,5 +2,8 @@
     "crons": [{
       "path": "/api/cron/fetchPlayerProjections",
       "schedule": "*/10 * * * *"
-    }]
+    }],
+    "rewrites":  [
+    {"source": "/(.*)", "destination": "/"}
+  ]
   }
