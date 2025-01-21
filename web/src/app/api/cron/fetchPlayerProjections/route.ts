@@ -17,12 +17,14 @@ export async function GET(request: Request) {
         team: true,
       },
     });
+    console.log("players", players);
     for (const player of players) {
       const headersList = headers();
       const host = headersList.get("host");
       const protocol =
         process.env.NODE_ENV === "development" ? "http" : "https";
       const baseUrl = `${protocol}://${host}`;
+      console.log("baseUrl", baseUrl);
       fetch(`${baseUrl}/api/projections/updatePlayerProjections`, {
         method: "POST",
         body: JSON.stringify({
@@ -32,7 +34,9 @@ export async function GET(request: Request) {
           week: 1,
           season: "2024POST",
         }),
-      });
+      })
+        .then((res) => res.json())
+        .catch((err) => console.error(err));
     }
     return NextResponse.json({ success: true, data: players });
   } catch (error: any) {
