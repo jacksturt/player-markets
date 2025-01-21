@@ -378,27 +378,36 @@ export function usePlayerMarket() {
 
   const timestamp = useQuery({
     queryKey: ["timestamp", { marketAddress }],
-    queryFn: () => market.data?.baseMint.timestamp ?? "",
+    queryFn: () => market.data?.baseMint.timestamp,
     enabled: !!market.data,
   });
 
   const playerId = useQuery({
     queryKey: ["playerId", { marketAddress }],
-    queryFn: () => market.data?.baseMint.mintSlug ?? "",
+    queryFn: () => market.data?.baseMint.mintSlug,
     enabled: !!market.data,
   });
 
-  const player_token_mint = PublicKey.findProgramAddressSync(
-    [
-      Buffer.from("mint"),
-      Buffer.from(playerId.data ?? ""),
-      Buffer.from(timestamp.data ?? ""),
-    ],
-    program.programId
-  )[0];
   const capsulePubkey = useQuery({
     queryKey: ["capsule-pubkey", { cluster }],
     queryFn: () => new PublicKey(capsule.getAddress()!),
+  });
+
+  const playerTokenMint = useQuery({
+    queryKey: ["player-token-mint", { cluster }],
+    queryFn: () => {
+      if (!playerId.data || !timestamp.data) return;
+      const player_token_mint = PublicKey.findProgramAddressSync(
+        [
+          Buffer.from("mint"),
+          Buffer.from(playerId.data),
+          Buffer.from(timestamp.data),
+        ],
+        program.programId
+      )[0];
+      return player_token_mint;
+    },
+    enabled: !!playerId.data && !!timestamp.data,
   });
 
   const quoteTokenAccount = useQuery({
@@ -430,11 +439,17 @@ export function usePlayerMarket() {
   const playerTokenAccount = useQuery({
     queryKey: ["player-token-account", { cluster }],
     queryFn: async () => {
+      console.log(
+        "getting player token account",
+        playerTokenMint.data?.toBase58(),
+        capsulePubkey.data?.toBase58()
+      );
       const playerTokenAccount = getAssociatedTokenAddressSync(
-        player_token_mint,
+        playerTokenMint.data!,
         capsulePubkey.data!,
         true
       );
+      console.log(playerTokenAccount.toBase58());
       return playerTokenAccount;
     },
     enabled: !!capsulePubkey.data,
@@ -443,6 +458,10 @@ export function usePlayerMarket() {
   const playerTokenBalance = useQuery({
     queryKey: ["market", "player-token-balance", { playerMintPK: marketPK }],
     queryFn: async () => {
+      console.log(
+        "getting player token balance",
+        playerTokenAccount.data?.toBase58
+      );
       if (!playerTokenAccount.data) return "loading...";
       const account = await getAccount(
         provider.connection,
@@ -492,11 +511,27 @@ export function usePlayerMarket() {
   const mint = useMutation({
     mutationKey: ["market", "mint", { playerMintPK: marketPK }],
     mutationFn: async () => {
+      if (
+        !playerId.data ||
+        !timestamp.data ||
+        !capsulePubkey.data ||
+        !playerTokenAccount.data
+      ) {
+        throw new Error("Player ID or timestamp not found");
+      }
+      console.log(
+        "minting tokens",
+        playerId.data,
+        timestamp.data,
+        capsulePubkey.data.toBase58(),
+        playerTokenAccount.data.toBase58()
+      );
+
       const mintConfig = PublicKey.findProgramAddressSync(
         [
           Buffer.from("config"),
-          Buffer.from(playerId.data ?? ""),
-          Buffer.from(timestamp.data ?? ""),
+          Buffer.from(playerId.data),
+          Buffer.from(timestamp.data),
         ],
         program.programId
       )[0];
@@ -526,7 +561,7 @@ export function usePlayerMarket() {
           payer: capsulePubkey.data!,
           quoteTokenMint: quoteToken,
           vault,
-          playerTokenMint: player_token_mint,
+          playerTokenMint: playerTokenMint.data!,
           destination: playerTokenAccount.data!,
           config: mintConfig,
           tokenProgram: TOKEN_PROGRAM_ID,
