@@ -26,10 +26,8 @@ export default function SignIn() {
     let isMounted = true;
 
     const checkCapsuleSession = async () => {
-      console.log("checking capsule session");
       try {
         const isActive = await capsule.isSessionActive();
-        console.log("isActive", isActive, isMounted);
         if (isActive && isMounted) {
           await handleCapsuleSetup();
         }

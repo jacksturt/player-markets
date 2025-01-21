@@ -36,7 +36,6 @@ export const createMint = protectedProcedure
         mintSlug: input.mintSlug,
       },
     });
-
     if (input.teamId) {
       const player = await db.player.create({
         data: {

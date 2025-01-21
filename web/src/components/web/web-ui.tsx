@@ -50,7 +50,7 @@ export function QuoteTokenFaucet() {
 
 export function InitPlayerMint() {
   const { initialize } = useMarkets();
-  const playerId = "LAMAR";
+  const playerId = "19781";
 
   return (
     <button
@@ -65,7 +65,7 @@ export function InitPlayerMint() {
 
 export function UpdateProjectionOracle() {
   const { updateProjectionOracle } = useMarkets();
-  const playerId = "LAMAR";
+  const playerId = "19781";
   const projection = 23.54;
 
   return (

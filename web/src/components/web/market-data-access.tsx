@@ -191,7 +191,6 @@ export function useMarkets() {
     queryKey: ["markets", "fetch", { cluster }],
     queryFn: async () => {
       const markets = await program.account.playerMintConfig.all();
-      console.log("markets", markets);
       return markets;
     },
   });
@@ -200,7 +199,6 @@ export function useMarkets() {
     mutationKey: ["markets", "initialize", { cluster }],
     mutationFn: async (playerId: string) => {
       const timestamp = Date.now().toString();
-      console.log("timestamp", timestamp);
       const player_token_mint = PublicKey.findProgramAddressSync(
         [Buffer.from("mint"), Buffer.from(playerId), Buffer.from(timestamp)],
         program.programId
@@ -209,7 +207,6 @@ export function useMarkets() {
         [Buffer.from("config"), Buffer.from(playerId), Buffer.from(timestamp)],
         program.programId
       )[0];
-      console.log("mintConfig", mintConfig.toBase58());
       const vault = getAssociatedTokenAddressSync(quoteToken, mintConfig, true);
       const signature = await program.methods
         .initMint(playerId, timestamp)
@@ -226,7 +223,6 @@ export function useMarkets() {
         .rpc();
       setPlayerId(playerId);
       setTimestamp(timestamp);
-      console.log("player_token_mint", player_token_mint.toBase58());
       setPlayerTokenMint(player_token_mint.toBase58());
       return { signature, playerId, timestamp, player_token_mint, mintConfig };
     },
@@ -245,6 +241,7 @@ export function useMarkets() {
           teamId: "cm5zu89es0001rca24651nt9v",
           position: "QB",
           playerName: "Lamar Jackson",
+          playerSportsdataId: parseInt(data.playerId),
           playerImage:
             "https://www.google.com/images/branding/googlelogo/1x/googlelogo_color_272x92dp.png",
         },
@@ -373,7 +370,6 @@ export function usePlayerMarket() {
       enabled: !!marketAddress,
     }
   );
-  console.log("market", market);
 
   const marketPK = useQuery({
     queryKey: ["market-pk", { marketAddress }],
@@ -391,9 +387,7 @@ export function usePlayerMarket() {
     queryFn: () => market.data?.baseMint.mintSlug ?? "",
     enabled: !!market.data,
   });
-  console.log("timestamp", timestamp);
-  console.log("playerId", playerId);
-  console.log("playerId", playerId);
+
   const player_token_mint = PublicKey.findProgramAddressSync(
     [
       Buffer.from("mint"),
@@ -402,12 +396,10 @@ export function usePlayerMarket() {
     ],
     program.programId
   )[0];
-  console.log("player_token_mint", player_token_mint.toBase58());
   const capsulePubkey = useQuery({
     queryKey: ["capsule-pubkey", { cluster }],
     queryFn: () => new PublicKey(capsule.getAddress()!),
   });
-  console.log("capsulePubkey", capsulePubkey.data);
 
   const quoteTokenAccount = useQuery({
     queryKey: ["quote-token-account", { cluster }],
@@ -527,8 +519,6 @@ export function usePlayerMarket() {
         ],
         program.programId
       )[0];
-
-      console.log(player_token_mint.toBase58());
 
       const ix = await program.methods
         .mintTokens(new BN(30000000000))
@@ -667,8 +657,6 @@ export function usePlayerMarket() {
         address: marketPK.data!,
       });
       // const sequenceNumber = await market.
-      console.log("numBaseTokens", numBaseTokens);
-      console.log("tokenPrice", tokenPrice);
       const orderIx = client.placeOrderIx({
         numBaseTokens: numBaseTokens,
         tokenPrice: tokenPrice,
@@ -709,14 +697,12 @@ export function usePlayerMarket() {
         address: marketPK.data!,
       });
       const bids = await market.bids();
-      console.log("bids", bids);
       const thisBid = bids.find(
         (bid) =>
           bid.trader.toBase58() === capsulePubkey.data!.toBase58() &&
           bid.tokenPrice === tokenPrice &&
           bid.numBaseTokens === numBaseTokens
       );
-      console.log("thisBid", thisBid);
     },
     onError: () => toast.error("Failed to deposit quote"),
   });
@@ -881,9 +867,6 @@ export function usePlayerMarket() {
         systemProgram: SystemProgram.programId,
       };
 
-      Object.entries(context).forEach(([key, value]) => {
-        console.log(key, value.toBase58());
-      });
       const ix = await program.methods
         .payout()
         .accountsStrict(context)

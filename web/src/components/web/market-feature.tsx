@@ -49,14 +49,12 @@ export default function MarketFeature({
       sender: string;
     }[]
   >([]);
-  console.log("marketAddress", marketAddress);
   const { bids, asks, balances, playerTokenBalance } = usePlayerMarket();
   const { quoteTokenBalance } = useQuoteToken();
 
   useEffect(() => {
     async function checkCapsuleSession() {
       const isActive = await capsule.isSessionActive();
-      console.log("isActive", isActive);
     }
     checkCapsuleSession();
   }, []);
@@ -111,13 +109,11 @@ export default function MarketFeature({
       setMessages(
         messages.map((message) => {
           const sender = message.isUserMessage() ? message.sender : null;
-          console.log(sender);
           const senderName = sender
             ? sender.nickname !== ""
               ? sender.nickname
               : sender.userId
             : null;
-          console.log(senderName);
           return {
             message: message.message,
             sender: senderName ?? "Market",

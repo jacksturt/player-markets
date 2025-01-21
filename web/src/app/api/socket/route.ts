@@ -20,7 +20,6 @@ export async function GET() {
     const sendData = async (data: any) => {
       try {
         // Forward the data to your database handler route
-        console.log("sending data", data);
         await fetch(`${baseUrl}/api/db/handlers`, {
           method: "POST",
           body: JSON.stringify(data),

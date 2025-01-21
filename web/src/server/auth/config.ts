@@ -69,13 +69,7 @@ export const authConfig = {
         if (!credentials?.userId) {
           throw new Error("No user ID provided");
         }
-        console.log("importing session", credentials.serializedSession);
         capsuleServer.importSession(credentials.serializedSession as string);
-        const users = await db.user.findMany();
-        console.log("users", users.length);
-        users.forEach((user) => {
-          console.log("user", user.email);
-        });
         try {
           const user = await db.user.upsert({
             where: { id: credentials.userId as string },

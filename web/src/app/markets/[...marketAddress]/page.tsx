@@ -10,7 +10,6 @@ export default function Page({
     typeof params.marketAddress === "string"
       ? params.marketAddress
       : params.marketAddress[0];
-  console.log(marketAddress);
   if (!marketAddress || marketAddress === "index.iife.min.js.map") {
     return <div>No market address</div>;
   }
