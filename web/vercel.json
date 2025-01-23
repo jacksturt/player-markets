@@ -2,15 +2,5 @@
     "crons": [{
       "path": "/api/cron/fetchPlayerProjections?team=BAL",
       "schedule": "*/10 * * * *"
-    }],
-    "rewrites": [
-      {
-        "source": "/api/:path*",
-        "destination": "/api/:path*"
-      },
-      {
-        "source": "/(.*)",
-        "destination": "/"
-      }
-    ]
+    }]
   }
