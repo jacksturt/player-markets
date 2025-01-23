@@ -32,6 +32,7 @@ declare module "next-auth" {
  * @see https://next-auth.js.org/configuration/options
  */
 export const authConfig = {
+  debug: true,
   callbacks: {
     async jwt({ token, user }: { token: any; user: any }) {
       if (user) {
