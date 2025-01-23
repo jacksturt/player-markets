@@ -67,11 +67,11 @@ export const authConfig = {
         serializedSession: { label: "Serialized Session", type: "text" },
       },
       async authorize(credentials) {
-        if (!credentials?.userId) {
-          throw new Error("No user ID provided");
-        }
-        capsuleServer.importSession(credentials.serializedSession as string);
         try {
+          if (!credentials?.userId) {
+            throw new Error("No user ID provided");
+          }
+          // capsuleServer.importSession(credentials.serializedSession as string);
           const user = await db.user.upsert({
             where: { id: credentials.userId as string },
             update: {
