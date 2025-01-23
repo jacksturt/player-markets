@@ -35,12 +35,14 @@ export const authConfig = {
   debug: true,
   callbacks: {
     async jwt({ token, user }: { token: any; user: any }) {
+      console.log("jwt", token, user);
       if (user) {
         token.userId = user.id;
       }
       return token;
     },
     async session({ session, token }: { session: any; token: any }) {
+      console.log("session", session, token);
       const dbuser = await db.user.findUnique({
         where: { id: token.userId as string },
       });
@@ -51,7 +53,8 @@ export const authConfig = {
       }
       return session;
     },
-    signIn: async ({ user }: { user: any }) => {
+    signIn: async (params) => {
+      console.log("signIn", params);
       return true;
     },
   },
@@ -67,6 +70,7 @@ export const authConfig = {
         serializedSession: { label: "Serialized Session", type: "text" },
       },
       async authorize(credentials) {
+        console.log("authorize", credentials);
         try {
           if (!credentials?.userId) {
             throw new Error("No user ID provided");
