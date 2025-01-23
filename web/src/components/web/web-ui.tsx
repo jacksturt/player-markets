@@ -12,8 +12,6 @@ import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 
-const TIMESTAMP = "1737014774362";
-
 export function QuoteTokenCreate() {
   const { initialize } = useQuoteToken();
 
@@ -43,9 +41,28 @@ export function QuoteTokenFaucet() {
   );
 }
 
+export function CreateTeam() {
+  const { createTeam } = useMarkets();
+  return (
+    <button
+      className="btn btn-xs lg:btn-md btn-primary"
+      onClick={() =>
+        createTeam.mutateAsync({
+          teamName: "Washington Commanders",
+          teamImage:
+            "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a2/Washington_Commanders_logo.svg/1200px-Washington_Commanders_logo.svg.png",
+          teamSportsdataId: "WAS",
+        })
+      }
+    >
+      Create Team
+    </button>
+  );
+}
+
 export function InitPlayerMint() {
   const { initialize } = useMarkets();
-  const playerId = "19781";
+  const playerId = "23235";
 
   return (
     <button
@@ -60,8 +77,9 @@ export function InitPlayerMint() {
 
 export function UpdateProjectionOracle() {
   const { updateProjectionOracle } = useMarkets();
-  const playerId = "19781";
-  const projection = 23.54;
+  const playerId = "23235";
+  const projection = 13.371;
+  const timestamp = "1737625327577";
 
   return (
     <button
@@ -69,7 +87,7 @@ export function UpdateProjectionOracle() {
       onClick={() =>
         updateProjectionOracle.mutateAsync({
           playerId,
-          timestamp: TIMESTAMP,
+          timestamp,
           projection,
         })
       }

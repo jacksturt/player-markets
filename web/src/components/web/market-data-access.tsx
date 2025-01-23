@@ -187,11 +187,34 @@ export function useMarkets() {
   const [playerTokenMint, setPlayerTokenMint] = useState<string>("");
   const createMint = api.mint.create.useMutation();
   const createMarketAPI = api.market.create.useMutation();
+  const createTeamAPI = api.team.create.useMutation();
   const markets = useQuery({
     queryKey: ["markets", "fetch", { cluster }],
     queryFn: async () => {
       const markets = await program.account.playerMintConfig.all();
       return markets;
+    },
+  });
+
+  const createTeam = useMutation({
+    mutationKey: ["markets", "create-team", { cluster }],
+    mutationFn: async ({
+      teamName,
+      teamImage,
+      teamSportsdataId,
+    }: {
+      teamName: string;
+      teamImage: string;
+      teamSportsdataId: string;
+    }) => {
+      createTeamAPI.mutateAsync({
+        teamName,
+        teamImage,
+        teamSportsdataId,
+      });
+    },
+    onSuccess: () => {
+      toast.success("Team created");
     },
   });
 
@@ -228,19 +251,20 @@ export function useMarkets() {
     },
     onSuccess: async (data) => {
       transactionToast(data.signature);
+      const playerName = "Jayden Daniels";
       await createMint.mutateAsync(
         {
-          mintName: "Lamar Jackson",
-          mintSymbol: "LAMAR",
+          mintName: playerName,
+          mintSymbol: "JAYDEN",
           mintImage:
             "https://www.google.com/images/branding/googlelogo/1x/googlelogo_color_272x92dp.png",
           mintSlug: data.playerId,
           timestamp: data.timestamp,
-          description: "Lamar Jackson",
+          description: playerName,
           baseMint: data.player_token_mint.toBase58(),
-          teamId: "cm5zu89es0001rca24651nt9v",
+          teamId: "cm6956n4l0000rcd8bwncqgxy",
           position: "QB",
-          playerName: "Lamar Jackson",
+          playerName: playerName,
           playerSportsdataId: parseInt(data.playerId),
           playerImage:
             "https://www.google.com/images/branding/googlelogo/1x/googlelogo_color_272x92dp.png",
@@ -257,8 +281,8 @@ export function useMarkets() {
 
             createMarketAPI.mutateAsync(
               {
-                marketName: "Lamar Jackson",
-                description: "Lamar Jackson",
+                marketName: playerName,
+                description: playerName,
                 address: keyPair.toBase58(),
                 mintAddress: data.player_token_mint.toBase58(),
               },
@@ -347,6 +371,7 @@ export function useMarkets() {
     markets,
     initialize: initializeMint,
     updateProjectionOracle,
+    createTeam,
   };
 }
 

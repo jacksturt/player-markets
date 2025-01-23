@@ -2,6 +2,7 @@
 import { createCallerFactory, createTRPCRouter } from "@/server/api/trpc";
 import { marketRouter } from "./routers/market";
 import { mintRouter } from "./routers/mint";
+import { teamRouter } from "./routers/team";
 
 /**
  * This is the primary router for your server.
@@ -11,6 +12,7 @@ import { mintRouter } from "./routers/mint";
 export const appRouter = createTRPCRouter({
   market: marketRouter,
   mint: mintRouter,
+  team: teamRouter,
   // counter: counterRouter,
 });
 
