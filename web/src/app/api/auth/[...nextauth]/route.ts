@@ -1,6 +1,5 @@
-import NextAuth from "next-auth";
+import { NextApiRequest, NextApiResponse } from "next";
 
-import { authConfig } from "@/server/auth/config";
-
-const handler = NextAuth(authConfig);
-export { handler as GET, handler as POST };
+export default function handler(req: NextApiRequest, res: NextApiResponse) {
+  res.status(200).json({ status: "auth endpoint reached" });
+}
