@@ -26,9 +26,13 @@ export default function SignIn() {
     let isMounted = true;
 
     const checkCapsuleSession = async () => {
+      debugger;
       try {
+        console.log("checkCapsuleSession");
         const isActive = await capsule.isSessionActive();
+        console.log("isActive", isActive);
         if (isActive && isMounted) {
+          console.log("handleCapsuleSetup");
           await handleCapsuleSetup();
         }
       } catch (error) {
@@ -41,9 +45,11 @@ export default function SignIn() {
 
   const handleCapsuleSetup = async () => {
     try {
+      console.log("handleCapsuleSetup");
       const { data } = await capsule.userSetupAfterLogin();
 
       const serializedSession = await capsule.exportSession();
+      console.log("serializedSession", serializedSession);
       const email = capsule.getEmail();
       const publicKey = capsule.getAddress();
       const result = await signIn("capsule", {
@@ -53,6 +59,7 @@ export default function SignIn() {
         serializedSession,
         redirect: false,
       });
+      console.log("result", result);
       if (result?.error) {
         console.error("NextAuth sign in failed:", result.error);
       } else if (result?.ok) {
