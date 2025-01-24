@@ -12,7 +12,7 @@ export default function DataTablesUser() {
   const [activeTab, setActiveTab] = useState(UserDataView.POSITIONS);
 
   return (
-    <div className="px-5 flex items-center justify-between">
+    <div className="mt-5 px-5 flex items-center justify-between">
       {Object.values(UserDataView).map((view) => (
         <button
           key={view}
