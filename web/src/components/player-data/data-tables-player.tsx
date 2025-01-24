@@ -8,7 +8,7 @@ export enum PlayerDataView {
   MY_TRADES = "my trades",
 }
 
-export default function DataTables() {
+export default function DataTablesPlayer() {
   const [activeTab, setActiveTab] = useState(PlayerDataView.DETAILS);
 
   return (
