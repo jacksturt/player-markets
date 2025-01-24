@@ -69,9 +69,65 @@
 }
 @layer base {
   * {
-    @apply border-border;
+    @apply border-border font-clashGrotesk;
   }
   body {
     @apply bg-background text-foreground;
+  }
+  @font-face {
+    font-family: "Clash Display ExtraLight";
+    src: url("/fonts/ClashDisplay-ExtraLight.otf") format("opentype");
+    font-weight: 200;
+    font-style: normal;
+    font-display: swap;
+  }
+  @font-face {
+    font-family: "Clash Display Light";
+    src: url("/fonts/ClashDisplay-Light.otf") format("opentype");
+    font-weight: 300;
+    font-style: normal;
+    font-display: swap;
+  }
+  @font-face {
+    font-family: "Clash Display Reg";
+    src: url("/fonts/ClashDisplay-Regular.otf") format("opentype");
+    font-weight: 400;
+    font-style: normal;
+    font-display: swap;
+  }
+  @font-face {
+    font-family: "Clash Display Med";
+    src: url("/fonts/ClashDisplay-Medium.otf") format("opentype");
+    font-weight: 500;
+    font-style: normal;
+    font-display: swap;
+  }
+  @font-face {
+    font-family: "Clash Display Semibold";
+    src: url("/fonts/ClashDisplay-Semibold.otf") format("opentype");
+    font-weight: 600;
+    font-style: normal;
+    font-display: swap;
+  }
+  @font-face {
+    font-family: "Clash Display Bold";
+    src: url("/fonts/ClashDisplay-Bold.otf") format("opentype");
+    font-weight: 700;
+    font-style: normal;
+    font-display: swap;
+  }
+  @font-face {
+    font-family: "Clash Grotesk Reg";
+    src: url("/fonts/ClashGrotesk-Regular.otf") format("opentype");
+    font-weight: 400;
+    font-style: normal;
+    font-display: swap;
+  }
+  @font-face {
+    font-family: "Clash Grotesk Med";
+    src: url("/fonts/ClashGrotesk-Medium.otf") format("opentype");
+    font-weight: 500;
+    font-style: normal;
+    font-display: swap;
   }
 }

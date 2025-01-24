@@ -9,6 +9,16 @@ const config: Config = {
   ],
   theme: {
     extend: {
+      fontFamily: {
+        clashExtraLight: ["Clash Display ExtraLight", "sans-serif"],
+        clashLight: ["Clash Display Light", "sans-serif"],
+        clash: ["Clash Display Reg", "sans-serif"],
+        clashMed: ["Clash Display Med", "sans-serif"],
+        clashSemiBold: ["Clash Display Semibold", "sans-serif"],
+        clashBold: ["Clash Display Bold", "sans-serif"],
+        clashGrotesk: ["Clash Grotesk Reg", "sans-serif"],
+        clashGroteskMed: ["Clash Grotesk Med", "sans-serif"],
+      },
       borderRadius: {
         lg: "var(--radius)",
         md: "calc(var(--radius) - 2px)",

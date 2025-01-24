@@ -19,7 +19,7 @@ export default function PlayerDetailsPage() {
       <div className="px-5">
         <p>Patrick Mahomes</p>
         <div className="flex items-end justify-between">
-          <p className="text-[50px] leading-[50px] font-bold">$1.08</p>
+          <p className="text-[50px] leading-[50px] font-clashSemiBold">$1.08</p>
           <PriceTrend playerData={{ pctChange: 10 }} />
         </div>
       </div>
