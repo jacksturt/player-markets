@@ -10,6 +10,13 @@ export enum PnLTimePeriod {
   Year = "Year",
 }
 
+const walletData = {
+  balance: 1920.08,
+  volume: 4305.35,
+  pnl: -123.69,
+  maxTradeSize: 777.34,
+};
+
 export default function PnL() {
   const [selectedTimePeriod, setSelectedTimePeriod] = useState(
     PnLTimePeriod.Today
@@ -22,19 +29,26 @@ export default function PnL() {
         {/* Volume */}
         <div className="flex flex-col items-center gap-1">
           <span className="text-gray-500 text-sm">Volume</span>
-          <span className="font-semibold">$4305.35</span>
+          <span className="font-semibold">${walletData.volume}</span>
         </div>
 
         {/* P&L */}
         <div className="flex flex-col items-center gap-1">
           <span className="text-gray-500 text-sm">P&L</span>
-          <span className="font-semibold text-green-500">+$123.69</span>
+          <span
+            className={cn(
+              "font-semibold",
+              walletData.pnl > 0 ? "text-green-500" : "text-red-500"
+            )}
+          >
+            {walletData.pnl > 0 ? "+" : "-"}${walletData.pnl}
+          </span>
         </div>
 
         {/* Max Trade Size */}
         <div className="flex flex-col items-center gap-1">
           <span className="text-gray-500 text-sm">Max Trade Size</span>
-          <span className="font-semibold">$777.34</span>
+          <span className="font-semibold">${walletData.maxTradeSize}</span>
         </div>
       </div>
 
