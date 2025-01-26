@@ -33,7 +33,7 @@ model PlayerProjection {
     id String @id @default(cuid())
 
     playerId String @unique
-    player   Player @relation(fields: [playerId], references: [id])
+    player   Player @relation(fields: [playerId], references: [id], onDelete: Cascade)
 
     rushingAttempts              Float
     rushingYards                 Float

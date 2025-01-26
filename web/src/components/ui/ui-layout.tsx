@@ -1,10 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import * as React from "react";
-import { ReactNode, Suspense, useEffect, useRef } from "react";
+import { ReactNode, Suspense, useEffect, useRef, useState } from "react";
 import toast, { Toaster } from "react-hot-toast";
+import { capsule } from "@/lib/capsule";
+import { IconCopy } from "@tabler/icons-react";
 
 import { AccountChecker } from "../account/account-ui";
 import {
@@ -13,6 +15,8 @@ import {
   ExplorerLink,
 } from "../cluster/cluster-ui";
 import { WalletButton } from "../solana/solana-provider";
+import { Button } from "./button";
+import { PublicKey } from "@solana/web3.js";
 
 export function UiLayout({
   children,
@@ -33,6 +37,7 @@ export function UiLayout({
           </Link>
         </div>
         <div className="flex-none space-x-2">
+          <CapsuleAccountInfo />
           <WalletButton />
           <ClusterUiSelect />
         </div>
@@ -165,4 +170,41 @@ export function useTransactionToast() {
       </div>
     );
   };
+}
+
+function CapsuleAccountInfo() {
+  const [isActive, setIsActive] = useState(false);
+  const router = useRouter();
+  const pathname = usePathname();
+
+  useEffect(() => {
+    capsule.isSessionActive().then(setIsActive);
+  }, [capsule]);
+
+  if (!isActive) {
+    return (
+      <Button
+        onClick={() => {
+          console.log("redirecting to signin");
+          router.push(
+            `/auth/signin?callbackUrl=${encodeURIComponent(pathname)}`
+          );
+        }}
+      >
+        Sign in
+      </Button>
+    );
+  }
+  const pk = new PublicKey(capsule.getAddress()!);
+  return (
+    <div
+      className="btn btn-primary flex flex-row gap-2 h-full"
+      onClick={() => {
+        navigator.clipboard.writeText(pk.toBase58());
+      }}
+    >
+      <IconCopy />
+      {pk.toBase58().slice(0, 4)}...{pk.toBase58().slice(-4)}
+    </div>
+  );
 }

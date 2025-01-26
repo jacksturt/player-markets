@@ -6,7 +6,7 @@ import { capsule } from "@/lib/capsule";
 import "@usecapsule/react-sdk/styles.css";
 import { OAuthMethod } from "@usecapsule/react-sdk";
 import dynamic from "next/dynamic";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 const CapsuleModal = dynamic(
   () => import("@usecapsule/react-sdk").then((mod) => mod.CapsuleModal),
   { ssr: false }
@@ -15,24 +15,16 @@ const CapsuleModal = dynamic(
 export default function SignIn() {
   const [isOpen, setIsOpen] = useState(true);
   const router = useRouter();
-  const { data: session } = useSession();
+  const searchParams = useSearchParams();
+  const callbackUrl = searchParams.get("callbackUrl") ?? "/";
 
   useEffect(() => {
-    if (session) {
-      router.push("/");
-      return;
-    }
-
     let isMounted = true;
 
     const checkCapsuleSession = async () => {
-      debugger;
       try {
-        console.log("checkCapsuleSession");
         const isActive = await capsule.isSessionActive();
-        console.log("isActive", isActive);
         if (isActive && isMounted) {
-          console.log("handleCapsuleSetup");
           await handleCapsuleSetup();
         }
       } catch (error) {
@@ -45,11 +37,9 @@ export default function SignIn() {
 
   const handleCapsuleSetup = async () => {
     try {
-      console.log("handleCapsuleSetup");
       const { data } = await capsule.userSetupAfterLogin();
 
       const serializedSession = await capsule.exportSession();
-      console.log("serializedSession", serializedSession);
       const email = capsule.getEmail();
       const publicKey = capsule.getAddress();
       const result = await signIn("capsule", {
@@ -59,11 +49,10 @@ export default function SignIn() {
         serializedSession,
         redirect: false,
       });
-      console.log("result", result);
       if (result?.error) {
         console.error("NextAuth sign in failed:", result.error);
       } else if (result?.ok) {
-        router.push("/");
+        router.push(callbackUrl);
       }
     } catch (error) {
       console.error("Error during Capsule setup:", error);
@@ -77,7 +66,7 @@ export default function SignIn() {
         isOpen={isOpen}
         onClose={() => {
           setIsOpen(false);
-          router.push("/");
+          router.push(callbackUrl);
         }}
         appName="Your App Name"
         oAuthMethods={[OAuthMethod.GOOGLE]}

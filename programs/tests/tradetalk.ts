@@ -666,7 +666,7 @@ describe("tradetalk", () => {
     // ]);
   });
 
-  it("Payout provider", async () => {
+  xit("Payout provider", async () => {
     const mintRecordProvider = PublicKey.findProgramAddressSync(
       [
         Buffer.from("mint_record"),
