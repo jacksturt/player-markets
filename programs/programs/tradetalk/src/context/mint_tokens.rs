@@ -1,3 +1,4 @@
+use crate::errors::OracleError;
 use crate::{
     state::{mint::PlayerMintConfig, MintRecord, PlayerStats},
     MINTER_COLLATERAL_RATE,
@@ -9,7 +10,6 @@ use anchor_spl::{
     token_interface::{mint_to, transfer_checked, MintTo, TransferChecked},
     token_interface::{Mint, TokenAccount},
 };
-
 #[derive(Accounts)]
 pub struct MintTokens<'info> {
     #[account(
@@ -69,6 +69,10 @@ pub struct MintTokens<'info> {
 
 impl<'info> MintTokens<'info> {
     pub fn mint_tokens(&mut self, quantity: u64) -> Result<()> {
+        if !self.config.minting_enabled {
+            return Err(OracleError::MintingNotEnabled.into());
+        }
+
         let seeds = &[
             "mint".as_bytes(),
             &self.config.player_id.as_bytes(),

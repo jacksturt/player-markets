@@ -6,6 +6,8 @@ use anchor_spl::{
     token_interface::{burn, transfer_checked, Burn, Mint, TokenAccount, TransferChecked},
 };
 
+use crate::errors::OracleError;
+
 #[derive(Accounts)]
 pub struct Payout<'info> {
     #[account(mut)]
@@ -64,6 +66,9 @@ pub struct Payout<'info> {
 
 impl<'info> Payout<'info> {
     pub fn payout(&mut self) -> Result<()> {
+        if !self.mint_config.payout_enabled {
+            return Err(OracleError::PayoutNotEnabled.into());
+        }
         self.burn_player_tokens()?;
         self.transfer_quote_tokens()?;
         Ok(())

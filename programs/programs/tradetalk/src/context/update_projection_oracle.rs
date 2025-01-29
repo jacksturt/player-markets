@@ -21,7 +21,12 @@ pub struct UpdateProjectionOracle<'info> {
 }
 
 impl<'info> UpdateProjectionOracle<'info> {
-    pub fn update_projection_oracle(&mut self, projected_points: f64) -> Result<()> {
+    pub fn update_projection_oracle(
+        &mut self,
+        projected_points: f64,
+        set_mint_disabled: bool,
+        set_payout_enabled: bool,
+    ) -> Result<()> {
         require!(
             self.authority.key().to_string() == ADMIN_PUBKEY,
             OracleError::UnauthorizedAuthority
