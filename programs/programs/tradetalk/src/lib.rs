@@ -61,9 +61,11 @@ pub mod tradetalk {
     pub fn update_projection_oracle(
         ctx: Context<UpdateProjectionOracle>,
         projected_points: f64,
+        set_mint_disabled: bool,
+        set_payout_enabled: bool,
     ) -> Result<()> {
         ctx.accounts
-            .update_projection_oracle(projected_points)
+            .update_projection_oracle(projected_points, set_mint_disabled, set_payout_enabled)
             .unwrap();
         Ok(())
     }

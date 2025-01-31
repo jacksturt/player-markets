@@ -53,6 +53,8 @@ impl<'info> InitializeMint<'info> {
         self.config.set_inner(PlayerMintConfig {
             config_bump,
             player_token_bump,
+            minting_enabled: true,
+            payout_enabled: false,
             quote_token_mint: self.quote_token_mint.key(),
             player_token_mint: self.player_token_mint.key(),
             timestamp,
