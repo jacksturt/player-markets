@@ -12,16 +12,12 @@ import Link from "next/link";
 export default function Markets() {
   const { publicKey } = useWallet();
   const { markets } = useMarkets();
-  const { setPlayerMarket } = usePlayerMarket();
 
   return publicKey ? (
     <div className="w-full grid grid-cols-6 gap-4 py-10 px-10">
       {markets.data?.map((market) => (
         <Link
           key={market.account.timestamp}
-          onClick={() => {
-            setPlayerMarket(market.publicKey);
-          }}
           href={`/markets/${market.publicKey.toBase58()}`}
           className="flex flex-col p-2 rounded-sm border-purple-700 border"
         >

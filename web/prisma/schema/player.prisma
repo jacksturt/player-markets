@@ -1,8 +1,9 @@
 model Player {
-    id       String   @id @default(cuid())
-    name     String
-    position Position
-    image    String?
+    id           String   @id @default(cuid())
+    name         String
+    position     Position
+    image        String?
+    sportsDataId Int      @unique
 
     market   Market? @relation()
     marketId String?
@@ -12,6 +13,9 @@ model Player {
 
     team   Team   @relation(fields: [teamId], references: [id])
     teamId String
+
+    projections   PlayerProjection?
+    projectionsId String?
 
     trades Trade[]
 }
@@ -23,4 +27,30 @@ enum Position {
     TE
     K
     DEF
+}
+
+model PlayerProjection {
+    id String @id @default(cuid())
+
+    playerId String @unique
+    player   Player @relation(fields: [playerId], references: [id], onDelete: Cascade)
+
+    rushingAttempts              Float
+    rushingYards                 Float
+    rushingTouchdowns            Float
+    fumblesLost                  Float
+    catches                      Float
+    receivingYards               Float
+    receivingTouchdowns          Float
+    passingInterceptions         Float
+    passingYards                 Float
+    passingTouchdowns            Float
+    passingSacks                 Float
+    fieldGoalsMade               Float
+    fieldGoalsMissed             Float
+    extraPointKickingConversions Float
+    extraPointKickingMisses      Float
+    fantasyPointsHalfPpr         Float
+    fantasyPointsPpr             Float
+    fantasyPointsNonPpr          Float
 }

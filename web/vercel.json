@@ -1,0 +1,6 @@
+{
+    "crons": [{
+      "path": "/api/cron/fetchPlayerProjections?team=BAL",
+      "schedule": "*/10 * * * *"
+    }]
+  }

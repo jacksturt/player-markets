@@ -1,0 +1,12 @@
+[phases.setup]
+nixPkgs = ['nodejs_20', 'yarn']
+aptPkgs = ['git']
+env = ['NODE_VERSION=20.18.0']
+
+[phases.install]
+workdir = "/fillFeed"
+cmds = ['yarn install']
+
+[start]
+workdir = "/fillFeed"
+cmd = 'yarn start'

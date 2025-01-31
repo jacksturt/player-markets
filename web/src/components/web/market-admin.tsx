@@ -5,6 +5,7 @@ import {
   QuoteTokenFaucet,
   InitPlayerMint,
   UpdateProjectionOracle,
+  CreateTeam,
 } from "./web-ui";
 import { PublicKey } from "@solana/web3.js";
 
@@ -15,6 +16,7 @@ export default function MarketAdmin() {
         <div className="flex flex-col gap-4">
           <QuoteTokenCreate />
           <QuoteTokenFaucet />
+          <CreateTeam />
           <InitPlayerMint />
           <UpdateProjectionOracle />
         </div>

@@ -49,20 +49,18 @@ export default function MarketFeature({
       sender: string;
     }[]
   >([]);
-  console.log("marketAddress", marketAddress);
   const { bids, asks, balances, playerTokenBalance } = usePlayerMarket();
   const { quoteTokenBalance } = useQuoteToken();
 
   useEffect(() => {
     async function checkCapsuleSession() {
       const isActive = await capsule.isSessionActive();
-      console.log("isActive", isActive);
     }
     checkCapsuleSession();
   }, []);
 
   useEffect(() => {
-    const feedUrl = "ws://localhost:1234";
+    const feedUrl = "wss://fillfeed-production.up.railway.app";
     if (!feedUrl) {
       toast.error("NEXT_PUBLIC_FEED_URL not set");
       throw new Error("NEXT_PUBLIC_FEED_URL not set");
@@ -78,14 +76,12 @@ export default function MarketFeature({
     };
 
     ws.onmessage = async (message): Promise<void> => {
-      console.log("message received", message);
       const fill: FillLogResult = JSON.parse(message.data);
-      console.log("message received");
       if (fill.market !== marketAddress) {
         console.log("market not match");
         return;
       }
-      console.log("market match");
+      console.log("market match", fill);
     };
   }, [marketAddress]);
 
@@ -111,13 +107,11 @@ export default function MarketFeature({
       setMessages(
         messages.map((message) => {
           const sender = message.isUserMessage() ? message.sender : null;
-          console.log(sender);
           const senderName = sender
             ? sender.nickname !== ""
               ? sender.nickname
               : sender.userId
             : null;
-          console.log(senderName);
           return {
             message: message.message,
             sender: senderName ?? "Market",

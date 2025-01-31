@@ -6,7 +6,7 @@ import { capsule } from "@/lib/capsule";
 import "@usecapsule/react-sdk/styles.css";
 import { OAuthMethod } from "@usecapsule/react-sdk";
 import dynamic from "next/dynamic";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 const CapsuleModal = dynamic(
   () => import("@usecapsule/react-sdk").then((mod) => mod.CapsuleModal),
   { ssr: false }
@@ -15,21 +15,15 @@ const CapsuleModal = dynamic(
 export default function SignIn() {
   const [isOpen, setIsOpen] = useState(true);
   const router = useRouter();
-  const { data: session } = useSession();
+  const searchParams = useSearchParams();
+  const callbackUrl = searchParams.get("callbackUrl") ?? "/";
 
   useEffect(() => {
-    if (session) {
-      router.push("/");
-      return;
-    }
-
     let isMounted = true;
 
     const checkCapsuleSession = async () => {
-      console.log("checking capsule session");
       try {
         const isActive = await capsule.isSessionActive();
-        console.log("isActive", isActive, isMounted);
         if (isActive && isMounted) {
           await handleCapsuleSetup();
         }
@@ -58,7 +52,7 @@ export default function SignIn() {
       if (result?.error) {
         console.error("NextAuth sign in failed:", result.error);
       } else if (result?.ok) {
-        router.push("/");
+        router.push(callbackUrl);
       }
     } catch (error) {
       console.error("Error during Capsule setup:", error);
@@ -72,7 +66,7 @@ export default function SignIn() {
         isOpen={isOpen}
         onClose={() => {
           setIsOpen(false);
-          router.push("/");
+          router.push(callbackUrl);
         }}
         appName="Your App Name"
         oAuthMethods={[OAuthMethod.GOOGLE]}

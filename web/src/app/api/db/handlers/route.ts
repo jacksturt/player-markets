@@ -13,7 +13,6 @@ const orderTypeMap = {
 
 export async function POST(request: Request) {
   const { data, type } = await request.json();
-  console.log("received data", data);
 
   try {
     if (type === "fill") {
@@ -131,9 +130,6 @@ export async function POST(request: Request) {
           baseMint: true,
         },
       });
-
-      console.log("wallet", wallet);
-      console.log("market", market);
 
       const numBaseTokens = parseInt(orderData.baseAtoms);
 
