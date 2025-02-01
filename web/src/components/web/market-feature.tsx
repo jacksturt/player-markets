@@ -32,6 +32,7 @@ import toast from "react-hot-toast";
 import { useSession } from "next-auth/react";
 import { capsule } from "@/lib/capsule";
 import ChartComponent from "@/components/player-data/chart";
+import { PlaceOrderLogResult } from "@/lib/types";
 
 const sb = SendbirdChat.init({
   appId: "434D4E2C-4EEF-41DB-AE99-30D00B5AFF1D",
@@ -78,13 +79,21 @@ export default function MarketFeature({
     };
 
     ws.onmessage = async (message): Promise<void> => {
-      const fill: FillLogResult = JSON.parse(message.data);
-      console.log("fill", fill);
-      if (fill.market !== marketAddress) {
-        console.log("market not match");
-        return;
+      console.log("message", message);
+      const event:
+        | {
+            type: "fill";
+            data: FillLogResult;
+          }
+        | {
+            type: "placeOrder";
+            data: PlaceOrderLogResult;
+          } = JSON.parse(message.data);
+      if (event.type === "fill") {
+        console.log("fill", event.data);
+      } else if (event.type === "placeOrder") {
+        console.log("placeOrder", event.data);
       }
-      console.log("market match", fill);
     };
   }, [marketAddress]);
 

@@ -22,9 +22,7 @@ const TokenPriceChart = ({ data }: { data: PriceDataPoint[] }) => {
   return (
     <div className="flex flex-col w-full gap-4">
       <div className="h-64 w-full relative">
-        {/* @ts-expect-error Server Component */}
         <ResponsiveContainer width="100%" height="100%">
-          {/* @ts-expect-error Server Component */}
           <LineChart
             data={data}
             margin={{ top: 0, right: 0, bottom: 0, left: 0 }}
@@ -34,7 +32,6 @@ const TokenPriceChart = ({ data }: { data: PriceDataPoint[] }) => {
               vertical={false}
               stroke="#C9C9C9"
             />
-            {/* @ts-expect-error Server Component */}
             <XAxis
               dataKey="date"
               tick={{ fontSize: 10 }}
@@ -46,7 +43,6 @@ const TokenPriceChart = ({ data }: { data: PriceDataPoint[] }) => {
               }
               tickLine={false}
             />
-            {/* @ts-expect-error Server Component */}
             <YAxis
               tick={{ fontSize: 10 }}
               tickFormatter={(value) => `$${value.toFixed(2)}`}
@@ -54,12 +50,10 @@ const TokenPriceChart = ({ data }: { data: PriceDataPoint[] }) => {
               axisLine={false}
               tickLine={false}
             />
-            {/* @ts-expect-error Server Component */}
             <Tooltip
               formatter={(value: number) => [`$${value}`, "Price"]}
               labelFormatter={(label) => new Date(label).toLocaleDateString()}
             />
-            {/* @ts-expect-error Server Component */}
             <Line
               type="monotone"
               dataKey="price"

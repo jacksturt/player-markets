@@ -21,7 +21,7 @@ const orderTypeMap = {
   3: OrderType.GLOBAL,
 } as const;
 
-export function genAccDiscriminator(accName: string) {
+function genAccDiscriminator(accName: string) {
   return keccak256(
     Buffer.concat([
       Buffer.from(bs58.decode(PROGRAM_ID.toBase58())),

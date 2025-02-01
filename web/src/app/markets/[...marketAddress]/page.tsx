@@ -1,22 +1,23 @@
+"use client";
+import { useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
 import MarketFeature from "@/components/web/market-feature";
-import { PublicKey } from "@solana/web3.js";
 
-export default function Page({
+export default function MarketPage({
   params,
 }: {
-  params: { marketAddress: string | string[] };
+  params: { marketAddress: string[] };
 }) {
-  const marketAddress =
-    typeof params.marketAddress === "string"
-      ? params.marketAddress
-      : params.marketAddress[0];
-  if (!marketAddress || marketAddress === "index.iife.min.js.map") {
-    return <div>No market address</div>;
+  const { data: session } = useSession();
+  const router = useRouter();
+  const marketAddress = Array.isArray(params.marketAddress)
+    ? params.marketAddress[0]
+    : params.marketAddress;
+
+  if (!session) {
+    router.push(`/auth/signin?callbackUrl=/markets/${marketAddress}`);
+    return null;
   }
-  try {
-    const marketAddressCheck = new PublicKey(marketAddress);
-    return <MarketFeature marketAddress={marketAddressCheck.toString()} />;
-  } catch (e) {
-    return <div>No market address</div>;
-  }
+
+  return <MarketFeature marketAddress={marketAddress} />;
 }

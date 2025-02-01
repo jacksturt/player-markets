@@ -23,7 +23,7 @@ export default function PlayerDetailsPage() {
           <PriceTrend playerData={{ pctChange: 10 }} />
         </div>
       </div>
-      <ChartComponent />
+      <ChartComponent data={[]} />
       {/* info categories / tabs */}
       <DataTablesPlayer />
       <div className="mt-auto mb-16 flex items-center justify-between gap-5 px-5 pb-5">

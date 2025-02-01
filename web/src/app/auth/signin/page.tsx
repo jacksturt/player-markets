@@ -1,6 +1,6 @@
 // src/pages/auth/signin.tsx
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
 import { signIn, useSession } from "next-auth/react";
 import { capsule } from "@/lib/capsule";
 import "@usecapsule/react-sdk/styles.css";
@@ -12,7 +12,7 @@ const CapsuleModal = dynamic(
   { ssr: false }
 );
 
-export default function SignIn() {
+function SignInContent() {
   const [isOpen, setIsOpen] = useState(true);
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -72,5 +72,13 @@ export default function SignIn() {
         oAuthMethods={[OAuthMethod.GOOGLE]}
       />
     </div>
+  );
+}
+
+export default function SignIn() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <SignInContent />
+    </Suspense>
   );
 }

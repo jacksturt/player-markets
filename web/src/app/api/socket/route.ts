@@ -1,15 +1,25 @@
 // app/api/socket/route.ts
 import { NextResponse } from "next/server";
-import { db } from "@/server/db";
-import { OrderType } from "@prisma/client";
-import { PlaceOrderLogResult } from "@/lib/types";
 export const runtime = "edge";
 
 import { headers } from "next/headers";
 let socket: WebSocket | null = null;
+let lastMessageTime: number = Date.now();
+const TIMEOUT_THRESHOLD = 30000; // 30 seconds timeout
+
+function checkConnection() {
+  if (socket && Date.now() - lastMessageTime > TIMEOUT_THRESHOLD) {
+    console.log("Connection timed out, reconnecting...");
+    socket.close();
+    socket = null;
+  }
+}
+
+// Start a periodic check
+setInterval(checkConnection, 5000); // Check every 5 seconds
 
 export async function GET() {
-  if (!socket || socket.readyState === WebSocket.CLOSED) {
+  const setupSocket = () => {
     const url = "ws://localhost:1234";
     socket = new WebSocket(url);
     const headersList = headers();
@@ -19,7 +29,6 @@ export async function GET() {
 
     const sendData = async (data: any) => {
       try {
-        // Forward the data to your database handler route
         await fetch(`${baseUrl}/api/db/handlers`, {
           method: "POST",
           body: JSON.stringify(data),
@@ -34,17 +43,34 @@ export async function GET() {
 
     socket.onopen = () => {
       console.log("Connected to server");
+      lastMessageTime = Date.now();
     };
 
     socket.onmessage = async (event) => {
+      lastMessageTime = Date.now(); // Update last message time
       const data = JSON.parse(event.data);
       await sendData(data);
     };
 
     socket.onclose = () => {
-      // Handle reconnection logic
+      console.log("Connection closed, attempting to reconnect...");
       socket = null;
+      // Attempt to reconnect after a short delay
+      setTimeout(() => {
+        if (!socket || socket.readyState === WebSocket.CLOSED) {
+          setupSocket();
+        }
+      }, 5000);
     };
+
+    socket.onerror = (error) => {
+      console.error("WebSocket error:", error);
+      socket?.close();
+    };
+  };
+
+  if (!socket || socket.readyState === WebSocket.CLOSED) {
+    setupSocket();
   }
 
   return NextResponse.json({ status: "connected" });
