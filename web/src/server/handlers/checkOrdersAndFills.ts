@@ -253,16 +253,17 @@ async function handleSignature(
             price: fillData.priceAtoms,
           },
         });
-        await db.market.update({
-          where: {
-            id: market?.id,
-          },
-          data: {
-            lastTradePrice: fillData.priceAtoms,
-          },
-        });
         console.log("Created trade", trade);
       }
+
+      await db.market.update({
+        where: {
+          id: market?.id,
+        },
+        data: {
+          lastTradePrice: fillData.priceAtoms,
+        },
+      });
     } else if (buffer.subarray(0, 8).equals(placeOrderDiscriminant)) {
       const maybeOrder = await db.order.findUnique({
         where: {
