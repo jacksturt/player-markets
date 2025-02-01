@@ -53,7 +53,7 @@ export default function MarketFeature({
       sender: string;
     }[]
   >([]);
-  const { bids, asks, balances, playerTokenBalance, trades } =
+  const { bids, asks, balances, playerTokenBalance, trades, market } =
     usePlayerMarket();
   const { quoteTokenBalance } = useQuoteToken();
   const queryClient = useQueryClient();
@@ -120,7 +120,7 @@ export default function MarketFeature({
     // return () => {
     //   ws.close();
     // };
-  }, [marketAddress, queryClient]);
+  }, [marketAddress, queryClient, utils]);
 
   const connectToChat = async () => {
     const user = await sb.connect(username);
@@ -210,6 +210,11 @@ export default function MarketFeature({
               <div>{balances.data?.baseOpenOrdersBalanceTokens.toString()}</div>
             </div>
           </div>
+          <div>
+            <h1>Current Price:</h1>
+
+            {market.data && <h1>{market.data?.lastTradePrice.toString()}</h1>}
+          </div>
           <h1 className="text-2xl font-bold">Trades</h1>
           <h2 className="text-lg font-bold">Bids</h2>
           <div className="grid grid-cols-3 gap-4 mb-4">
@@ -275,7 +280,7 @@ export default function MarketFeature({
           {trades && trades.data && (
             <ChartComponent
               data={trades.data?.map((trade) => ({
-                date: parseInt(trade.baseMint.timestamp),
+                date: trade.createdAt.getTime(),
                 price: Number(trade.price),
               }))}
             />

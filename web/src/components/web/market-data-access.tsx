@@ -464,17 +464,11 @@ export function usePlayerMarket() {
   const playerTokenAccount = useQuery({
     queryKey: ["player-token-account", { cluster }],
     queryFn: async () => {
-      console.log(
-        "getting player token account",
-        playerTokenMint.data?.toBase58(),
-        capsulePubkey.data?.toBase58()
-      );
       const playerTokenAccount = getAssociatedTokenAddressSync(
         playerTokenMint.data!,
         capsulePubkey.data!,
         true
       );
-      console.log(playerTokenAccount.toBase58());
       return playerTokenAccount;
     },
     enabled: !!capsulePubkey.data,
@@ -483,10 +477,6 @@ export function usePlayerMarket() {
   const playerTokenBalance = useQuery({
     queryKey: ["market", "player-token-balance", { playerMintPK: marketPK }],
     queryFn: async () => {
-      console.log(
-        "getting player token balance",
-        playerTokenAccount.data?.toBase58
-      );
       if (!playerTokenAccount.data) return "loading...";
       const account = await getAccount(
         provider.connection,
@@ -973,6 +963,7 @@ export function usePlayerMarket() {
 
   return {
     mint,
+    market,
     depositBase,
     depositQuote,
     buy,
