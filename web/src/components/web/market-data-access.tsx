@@ -507,6 +507,7 @@ export function usePlayerMarket() {
       const bids = await market.bids();
       return bids;
     },
+    refetchInterval: 10000,
   });
 
   const asks = useQuery({
@@ -519,6 +520,7 @@ export function usePlayerMarket() {
       const asks = await market.asks();
       return asks;
     },
+    refetchInterval: 10000,
   });
 
   const trades = api.trade.readForMarket.useQuery(
@@ -527,6 +529,7 @@ export function usePlayerMarket() {
     },
     {
       enabled: !!marketAddress,
+      refetchInterval: 10000,
     }
   );
 

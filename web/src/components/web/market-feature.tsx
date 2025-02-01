@@ -34,6 +34,7 @@ import { capsule } from "@/lib/capsule";
 import ChartComponent from "@/components/player-data/chart";
 import { PlaceOrderLogResult } from "@/lib/types";
 import { useQueryClient } from "@tanstack/react-query";
+import { api } from "@/trpc/react";
 
 const sb = SendbirdChat.init({
   appId: "434D4E2C-4EEF-41DB-AE99-30D00B5AFF1D",
@@ -56,7 +57,7 @@ export default function MarketFeature({
     usePlayerMarket();
   const { quoteTokenBalance } = useQuoteToken();
   const queryClient = useQueryClient();
-
+  const utils = api.useUtils();
   useEffect(() => {
     async function checkCapsuleSession() {
       const isActive = await capsule.isSessionActive();
@@ -99,12 +100,18 @@ export default function MarketFeature({
         queryClient.invalidateQueries({
           queryKey: ["market", "asks", { marketAddress }],
         });
+        utils.trade.readForMarket.invalidate({
+          marketAddress: marketAddress,
+        });
       } else if (event.type === "placeOrder") {
         queryClient.invalidateQueries({
           queryKey: ["market", "bids", { marketAddress }],
         });
         queryClient.invalidateQueries({
           queryKey: ["market", "asks", { marketAddress }],
+        });
+        utils.trade.readForMarket.invalidate({
+          marketAddress: marketAddress,
         });
         console.log("placeOrder", event.data);
       }
