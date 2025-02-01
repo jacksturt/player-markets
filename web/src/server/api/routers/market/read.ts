@@ -20,3 +20,18 @@ export const readMarket = protectedProcedure
     });
     return market;
   });
+
+export const lastTradePrice = protectedProcedure
+  .input(
+    z.object({
+      marketAddress: z.string(),
+    })
+  )
+  .query(async ({ input }) => {
+    const market = await db.market.findUniqueOrThrow({
+      where: {
+        address: input.marketAddress,
+      },
+    });
+    return market.lastTradePrice;
+  });

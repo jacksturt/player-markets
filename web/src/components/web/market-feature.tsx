@@ -53,8 +53,15 @@ export default function MarketFeature({
       sender: string;
     }[]
   >([]);
-  const { bids, asks, balances, playerTokenBalance, trades, market } =
-    usePlayerMarket();
+  const {
+    bids,
+    asks,
+    balances,
+    playerTokenBalance,
+    trades,
+    market,
+    lastTradePrice,
+  } = usePlayerMarket();
   const { quoteTokenBalance } = useQuoteToken();
   const queryClient = useQueryClient();
   const utils = api.useUtils();
@@ -213,7 +220,7 @@ export default function MarketFeature({
           <div>
             <h1>Current Price:</h1>
 
-            {market.data && <h1>{market.data?.lastTradePrice.toString()}</h1>}
+            {lastTradePrice.data && <h1>{lastTradePrice.data.toString()}</h1>}
           </div>
           <h1 className="text-2xl font-bold">Trades</h1>
           <h2 className="text-lg font-bold">Bids</h2>
@@ -268,7 +275,7 @@ export default function MarketFeature({
               }))}
             />
           )}
-          <h1 className="text-2xl font-bold">Trades</h1>
+          <h1 className="text-2xl font-bold">Chat</h1>
           <div>
             <input
               type="text"
@@ -287,7 +294,6 @@ export default function MarketFeature({
               </div>
             ))}
           </div>
-          <div></div>
         </div>
         <div className="flex flex-col gap-4">
           <MintPlayerTokens />

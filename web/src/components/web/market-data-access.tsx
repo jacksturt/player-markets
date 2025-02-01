@@ -396,6 +396,16 @@ export function usePlayerMarket() {
     }
   );
 
+  const lastTradePrice = api.market.lastTradePrice.useQuery(
+    {
+      marketAddress: marketAddress,
+    },
+    {
+      enabled: !!marketAddress,
+      refetchInterval: 2500,
+    }
+  );
+
   const marketPK = useQuery({
     queryKey: ["market-pk", { marketAddress }],
     queryFn: () => new PublicKey(marketAddress),
@@ -519,7 +529,7 @@ export function usePlayerMarket() {
     },
     {
       enabled: !!marketAddress,
-      refetchInterval: 10000,
+      refetchInterval: 2500,
     }
   );
 
@@ -978,5 +988,6 @@ export function usePlayerMarket() {
     playerTokenAccount,
     playerTokenBalance,
     trades,
+    lastTradePrice,
   };
 }
