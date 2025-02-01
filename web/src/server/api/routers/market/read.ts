@@ -32,6 +32,9 @@ export const lastTradePrice = protectedProcedure
       where: {
         address: input.marketAddress,
       },
+      select: {
+        lastTradePrice: true,
+      },
     });
-    return market.lastTradePrice;
+    return market.lastTradePrice?.toNumber() ?? null;
   });

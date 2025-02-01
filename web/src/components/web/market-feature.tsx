@@ -53,15 +53,8 @@ export default function MarketFeature({
       sender: string;
     }[]
   >([]);
-  const {
-    bids,
-    asks,
-    balances,
-    playerTokenBalance,
-    trades,
-    market,
-    lastTradePrice,
-  } = usePlayerMarket();
+  const { bids, asks, balances, playerTokenBalance, trades, lastTradePrice } =
+    usePlayerMarket();
   const { quoteTokenBalance } = useQuoteToken();
   const queryClient = useQueryClient();
   const utils = api.useUtils();
@@ -100,7 +93,7 @@ export default function MarketFeature({
             data: PlaceOrderLogResult;
           } = JSON.parse(message.data);
       if (event.type === "fill") {
-        console.log("fill", event.data);
+        console.log("fill", event.data, Date.now());
         queryClient.invalidateQueries({
           queryKey: ["market", "bids", { marketAddress }],
         });
