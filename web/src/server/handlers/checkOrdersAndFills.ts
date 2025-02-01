@@ -2,7 +2,6 @@ import { PlayerProjection } from "@/lib/types/sportsdata";
 import { db } from "@/server/db";
 import { program } from "@coral-xyz/anchor/dist/cjs/native/system";
 import { ConfirmedSignatureInfo, Connection, PublicKey } from "@solana/web3.js";
-import { NextResponse } from "next/server";
 import { getTradetalkProgram, getTradetalkProgramId } from "@project/anchor";
 import { AnchorProvider } from "@coral-xyz/anchor";
 import { EnvWallet } from "@/lib/envWallet";
@@ -32,24 +31,15 @@ export async function checkOrdersAndFills() {
   );
 
   if (!process.env.RPC_URL) {
-    return NextResponse.json(
-      { success: false, error: "RPC_URL not found" },
-      { status: 404 }
-    );
+    throw new Error("RPC_URL not found");
   }
 
   if (!lastSignature) {
-    return NextResponse.json(
-      { success: false, error: "Last signature not found" },
-      { status: 404 }
-    );
+    throw new Error("Last signature not found");
   }
 
   if (!lastSlot) {
-    return NextResponse.json(
-      { success: false, error: "Last slot not found" },
-      { status: 404 }
-    );
+    throw new Error("Last slot not found");
   }
 
   try {
@@ -68,7 +58,7 @@ export async function checkOrdersAndFills() {
 
     // If there is only 1, do not use it because it could get stuck on the same sig.
     if (signatures.length <= 0) {
-      return NextResponse.json({ success: true });
+      return;
     }
     const marketAddresses = (
       await db.market.findMany({

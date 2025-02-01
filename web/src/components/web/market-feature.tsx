@@ -33,6 +33,7 @@ import { useSession } from "next-auth/react";
 import { capsule } from "@/lib/capsule";
 import ChartComponent from "@/components/player-data/chart";
 import { PlaceOrderLogResult } from "@/lib/types";
+import { useQueryClient } from "@tanstack/react-query";
 
 const sb = SendbirdChat.init({
   appId: "434D4E2C-4EEF-41DB-AE99-30D00B5AFF1D",
@@ -54,6 +55,7 @@ export default function MarketFeature({
   const { bids, asks, balances, playerTokenBalance, trades } =
     usePlayerMarket();
   const { quoteTokenBalance } = useQuoteToken();
+  const queryClient = useQueryClient();
 
   useEffect(() => {
     async function checkCapsuleSession() {
@@ -91,11 +93,27 @@ export default function MarketFeature({
           } = JSON.parse(message.data);
       if (event.type === "fill") {
         console.log("fill", event.data);
+        queryClient.invalidateQueries({
+          queryKey: ["market", "bids", { marketAddress }],
+        });
+        queryClient.invalidateQueries({
+          queryKey: ["market", "asks", { marketAddress }],
+        });
       } else if (event.type === "placeOrder") {
+        queryClient.invalidateQueries({
+          queryKey: ["market", "bids", { marketAddress }],
+        });
+        queryClient.invalidateQueries({
+          queryKey: ["market", "asks", { marketAddress }],
+        });
         console.log("placeOrder", event.data);
       }
     };
-  }, [marketAddress]);
+
+    // return () => {
+    //   ws.close();
+    // };
+  }, [marketAddress, queryClient]);
 
   const connectToChat = async () => {
     const user = await sb.connect(username);

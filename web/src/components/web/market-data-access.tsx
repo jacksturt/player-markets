@@ -498,7 +498,7 @@ export function usePlayerMarket() {
   });
 
   const bids = useQuery({
-    queryKey: ["market", "bids", { playerMintPK: marketPK }],
+    queryKey: ["market", "bids", { marketAddress }],
     queryFn: async () => {
       const market = await Market.loadFromAddress({
         connection: provider.connection,
@@ -510,7 +510,7 @@ export function usePlayerMarket() {
   });
 
   const asks = useQuery({
-    queryKey: ["market", "asks", { playerMintPK: marketPK }],
+    queryKey: ["market", "asks", { marketAddress }],
     queryFn: async () => {
       const market = await Market.loadFromAddress({
         connection: provider.connection,
