@@ -175,7 +175,7 @@ export default function MarketFeature({
   const isAdmin = true;
   return (
     <div className="w-screen px-[10%] flex items-center justify-center">
-      <div className="w-full grid grid-cols-2 gap-4 mt-20">
+      <div className="w-full grid grid-cols-3 gap-4 mt-20">
         <div>
           <h1>Your Balances</h1>
           <div className="flex flex-col gap-2">
@@ -258,6 +258,16 @@ export default function MarketFeature({
               </>
             ))}
           </div>
+        </div>
+        <div>
+          {trades && trades.data && (
+            <ChartComponent
+              data={trades.data?.map((trade) => ({
+                date: trade.createdAt.getTime(),
+                price: Number(trade.price),
+              }))}
+            />
+          )}
           <h1 className="text-2xl font-bold">Trades</h1>
           <div>
             <input
@@ -277,14 +287,7 @@ export default function MarketFeature({
               </div>
             ))}
           </div>
-          {trades && trades.data && (
-            <ChartComponent
-              data={trades.data?.map((trade) => ({
-                date: trade.createdAt.getTime(),
-                price: Number(trade.price),
-              }))}
-            />
-          )}
+          <div></div>
         </div>
         <div className="flex flex-col gap-4">
           <MintPlayerTokens />
