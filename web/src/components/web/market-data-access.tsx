@@ -402,7 +402,7 @@ export function usePlayerMarket() {
     },
     {
       enabled: !!marketAddress,
-      refetchInterval: 2500,
+      refetchInterval: 10000,
     }
   );
 
@@ -529,7 +529,7 @@ export function usePlayerMarket() {
     },
     {
       enabled: !!marketAddress,
-      refetchInterval: 2500,
+      refetchInterval: 10000,
     }
   );
 

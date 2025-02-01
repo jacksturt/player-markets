@@ -54,6 +54,9 @@ export default function MarketFeature({
       sender: string;
     }[]
   >([]);
+  const [tradeData, setTradeData] = useState<{ date: number; price: number }[]>(
+    []
+  );
   const { bids, asks, balances, playerTokenBalance, trades, lastTradePrice } =
     usePlayerMarket();
   const { quoteTokenBalance } = useQuoteToken();
@@ -65,6 +68,19 @@ export default function MarketFeature({
     }
     checkCapsuleSession();
   }, []);
+
+  useEffect(() => {
+    if (trades.data) {
+      if (trades.data.length > tradeData.length) {
+        setTradeData(
+          trades.data.map((trade) => ({
+            date: trade.createdAt.getTime(),
+            price: Number(trade.price),
+          }))
+        );
+      }
+    }
+  }, [trades.data]);
 
   useEffect(() => {
     const feedUrl = "wss://fillfeed-production.up.railway.app";
@@ -95,6 +111,13 @@ export default function MarketFeature({
           } = JSON.parse(message.data);
       if (event.type === "fill") {
         console.log("fill", event.data, Date.now());
+        setTradeData((prevData) => [
+          ...prevData,
+          {
+            date: Date.now(),
+            price: Number(event.data.priceAtoms),
+          },
+        ]);
         queryClient.invalidateQueries({
           queryKey: ["market", "bids", { marketAddress }],
         });
@@ -261,14 +284,7 @@ export default function MarketFeature({
           </div>
         </div>
         <div>
-          {trades && trades.data && (
-            <ChartComponent
-              data={trades.data?.map((trade) => ({
-                date: trade.createdAt.getTime(),
-                price: Number(trade.price),
-              }))}
-            />
-          )}
+          {trades && <ChartComponent data={tradeData} />}
           <h1 className="text-2xl font-bold">Chat</h1>
           <div>
             <input
