@@ -59,6 +59,7 @@ export class FillFeed {
   private shouldEnd: boolean = false;
   private ended: boolean = false;
   private lastUpdateUnix: number = Date.now();
+  private processingSignatures: Set<string> = new Set();
 
   constructor(private connection: Connection) {
     this.wss = new WebSocket.Server({ port: 1234 });
@@ -103,7 +104,6 @@ export class FillFeed {
    * Parse logs in an endless loop.
    */
   public async parseLogs(endEarly?: boolean) {
-    // Start with a hopefully recent signature.
     const lastSignatureStatus = (
       await this.connection.getSignaturesForAddress(
         PROGRAM_ID,
@@ -114,12 +114,10 @@ export class FillFeed {
     let lastSignature: string | undefined = lastSignatureStatus.signature;
     let lastSlot: number = lastSignatureStatus.slot;
 
-    // End early is 30 seconds, used for testing.
     const endTime: Date = endEarly
       ? new Date(Date.now() + 30_000)
       : new Date(Date.now() + 1_000_000_000_000);
 
-    // TODO: remove endTime in favor of stopParseLogs for testing
     while (!this.shouldEnd && new Date(Date.now()) < endTime) {
       await new Promise((f) => setTimeout(f, 10_000));
       const signatures: ConfirmedSignatureInfo[] =
@@ -130,20 +128,36 @@ export class FillFeed {
           },
           "finalized"
         );
-      // Flip it so we do oldest first.
       signatures.reverse();
-
-      // If there is only 1, do not use it because it could get stuck on the same sig.
-      if (signatures.length <= 1) {
+      if (signatures.length < 1) {
         continue;
       }
+
+      try {
+        const response = await fetch(
+          "https://player-markets.vercel.app/api/cron/checkOrdersAndFills",
+          {
+            method: "GET",
+          }
+        );
+        const data = await response.json();
+        console.log("checkOrdersAndFills", data);
+      } catch (error) {
+        console.error(error);
+      }
+
       for (const signature of signatures) {
-        // Separately track the last slot. This is necessary because sometimes
-        // gsfa ignores the until param and just gives 1_000 signatures.
+        if (this.processingSignatures.has(signature.signature)) {
+          continue;
+        }
+
         if (signature.slot < lastSlot) {
           continue;
         }
+
+        this.processingSignatures.add(signature.signature);
         await this.handleSignature(signature);
+        this.processingSignatures.delete(signature.signature);
       }
 
       console.log(
@@ -158,6 +172,11 @@ export class FillFeed {
       lastSlot = signatures[signatures.length - 1].slot;
 
       this.lastUpdateUnix = Date.now();
+
+      if (this.processingSignatures.size > 1000) {
+        const signaturesArray = Array.from(this.processingSignatures);
+        this.processingSignatures = new Set(signaturesArray.slice(-1000));
+      }
     }
 
     console.log("ended loop");
