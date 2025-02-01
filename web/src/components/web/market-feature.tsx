@@ -17,6 +17,7 @@ import {
   DepositQuote,
   Trade,
   WithdrawAll,
+  QuoteTokenFaucet,
 } from "./web-ui";
 import { PublicKey } from "@solana/web3.js";
 import { minimizePubkey } from "@/utils/web3";
@@ -289,6 +290,7 @@ export default function MarketFeature({
           </div>
         </div>
         <div className="flex flex-col gap-4">
+          <QuoteTokenFaucet />
           <MintPlayerTokens />
           <DepositBase />
           <DepositQuote />
