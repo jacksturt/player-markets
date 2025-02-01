@@ -17,6 +17,16 @@ export async function POST(request: Request) {
   try {
     if (type === "fill") {
       const fillData: FillLogResult = data;
+
+      const maybeTrade = await db.trade.findUnique({
+        where: {
+          signature: fillData.signature,
+        },
+      });
+      if (maybeTrade) {
+        console.log("Skipping already processed trade", fillData.signature);
+        return NextResponse.json({ success: true });
+      }
       const market = await db.market.findFirst({
         where: {
           address: fillData.market,
@@ -93,6 +103,8 @@ export async function POST(request: Request) {
             sellOrderId: takerOrder?.id,
             sellerId: takerWallet?.user.id,
             sellerWalletId: takerWallet?.id,
+            signature: fillData.signature,
+            price: fillData.priceAtoms,
           },
         });
       } else if (market.team) {
@@ -107,12 +119,22 @@ export async function POST(request: Request) {
             sellOrderId: takerOrder?.id,
             sellerId: takerWallet?.user.id,
             sellerWalletId: takerWallet?.id,
+            signature: fillData.signature,
+            price: fillData.priceAtoms,
           },
         });
       }
     } else if (type === "placeOrder") {
       const orderData: PlaceOrderLogResult = data;
-
+      const maybeOrder = await db.order.findUnique({
+        where: {
+          signature: orderData.signature,
+        },
+      });
+      if (maybeOrder) {
+        console.log("Skipping already processed order", orderData.signature);
+        return NextResponse.json({ success: true });
+      }
       const wallet = await db.wallet.findFirst({
         where: {
           address: orderData.trader,
@@ -141,6 +163,7 @@ export async function POST(request: Request) {
           numBaseTokens: numBaseTokens,
           numQuoteTokens: numBaseTokens * orderData.price,
           sequenceNumber: parseInt(orderData.orderSequenceNumber),
+          signature: orderData.signature,
           baseMint: {
             connect: {
               id: market?.baseMint.id,

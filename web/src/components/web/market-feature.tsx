@@ -31,6 +31,7 @@ import { FillLogResult } from "manifest/src";
 import toast from "react-hot-toast";
 import { useSession } from "next-auth/react";
 import { capsule } from "@/lib/capsule";
+import ChartComponent from "@/components/player-data/chart";
 
 const sb = SendbirdChat.init({
   appId: "434D4E2C-4EEF-41DB-AE99-30D00B5AFF1D",
@@ -49,7 +50,8 @@ export default function MarketFeature({
       sender: string;
     }[]
   >([]);
-  const { bids, asks, balances, playerTokenBalance } = usePlayerMarket();
+  const { bids, asks, balances, playerTokenBalance, trades } =
+    usePlayerMarket();
   const { quoteTokenBalance } = useQuoteToken();
 
   useEffect(() => {
@@ -77,6 +79,7 @@ export default function MarketFeature({
 
     ws.onmessage = async (message): Promise<void> => {
       const fill: FillLogResult = JSON.parse(message.data);
+      console.log("fill", fill);
       if (fill.market !== marketAddress) {
         console.log("market not match");
         return;
@@ -235,6 +238,14 @@ export default function MarketFeature({
               </div>
             ))}
           </div>
+          {trades && trades.data && (
+            <ChartComponent
+              data={trades.data?.map((trade) => ({
+                date: parseInt(trade.baseMint.timestamp),
+                price: Number(trade.price),
+              }))}
+            />
+          )}
         </div>
         <div className="flex flex-col gap-4">
           <MintPlayerTokens />

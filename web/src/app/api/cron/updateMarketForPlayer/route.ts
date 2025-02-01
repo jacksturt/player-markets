@@ -6,9 +6,6 @@ import { NextResponse } from "next/server";
 import { getTradetalkProgram, getTradetalkProgramId } from "@project/anchor";
 import { AnchorProvider } from "@coral-xyz/anchor";
 import { EnvWallet } from "@/lib/envWallet";
-const baseUrl = process.env.VERCEL_URL
-  ? `https://${process.env.VERCEL_URL}`
-  : process.env.URL || "http://localhost:3000";
 export async function GET(request: Request) {
   if (
     request.headers.get("Authorization") !== `Bearer ${process.env.CRON_SECRET}`
@@ -20,52 +17,52 @@ export async function GET(request: Request) {
   }
 
   const { searchParams } = new URL(request.url);
-  const team = searchParams.get("team");
-  if (!team) {
+  const playerId = searchParams.get("playerId");
+  if (!playerId) {
     return NextResponse.json(
-      { success: false, error: "Team is required" },
+      { success: false, error: "Player ID is required" },
       { status: 400 }
     );
   }
   const season = "2024POST";
   const week = "4";
   try {
-    const players = await db.player.findMany({
+    const player = await db.player.findUniqueOrThrow({
       where: {
-        team: {
-          sportsDataId: team!,
-        },
+        id: playerId,
       },
       include: {
         team: true,
         mint: true,
+        projections: true,
       },
     });
 
     try {
       const response = await fetch(
-        `https://baker-api.sportsdata.io/baker/v2/nfl/projections/players/${season}/${week}/team/${team}/avg?key=${process.env.SPORTSDATA_API_KEY}`,
+        `https://baker-api.sportsdata.io/baker/v2/nfl/projections/players/${season}/${week}/team/${player?.team?.sportsDataId}/avg?key=${process.env.SPORTSDATA_API_KEY}`,
         {
           headers: {
             Authorization: `Bearer ${process.env.ORACLE_API_KEY}`,
           },
         }
       );
-      for (const player of players) {
-        const data: PlayerProjection[] = await response.json();
-        console.log("data", data);
+      const playerProjectionData: PlayerProjection = await response.json();
+      console.log("data", playerProjectionData);
 
-        const playerProjectionData = data.find(
-          (player) => player.player_id === player.player_id
+      if (!playerProjectionData) {
+        return NextResponse.json(
+          { success: false, error: "Player projection not found" },
+          { status: 404 }
         );
-        if (!playerProjectionData) {
-          return NextResponse.json(
-            { success: false, error: "Player projection not found" },
-            { status: 404 }
-          );
-        }
-        const camelCaseData =
-          convertPlayerProjectionToCamelCase(playerProjectionData);
+      }
+
+      const camelCaseData =
+        convertPlayerProjectionToCamelCase(playerProjectionData);
+      if (
+        player.projections?.fantasyPointsHalfPpr !==
+        camelCaseData.fantasyPointsHalfPpr
+      ) {
         await db.playerProjection.upsert({
           where: {
             playerId: player.id,

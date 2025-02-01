@@ -1,4 +1,4 @@
-import Capsule, { Environment } from "@usecapsule/react-sdk";
+import Capsule, { Environment, CoreCapsule } from "@usecapsule/react-sdk";
 
 export const capsule = new Capsule(
   Environment.BETA, // or Environment.PROD for production

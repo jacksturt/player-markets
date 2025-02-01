@@ -2163,22 +2163,6 @@
     inputmask "5.0.9"
     qrcode-with-logos "1.1.1"
 
-"@usecapsule/core-sdk@2.17.0":
-  version "2.17.0"
-  resolved "https://registry.yarnpkg.com/@usecapsule/core-sdk/-/core-sdk-2.17.0.tgz#fa14341430065a7a37cf0998d74987e439ded889"
-  integrity sha512-vrnbGUWKwjdAzQCbMWWFO0KLLlwhcxniPnpaQD9cF/4wehCxhMRPrUZbz7856EoWkaOAQ/togzTjTH0napJ1Og==
-  dependencies:
-    "@celo/utils" "^8.0.0"
-    "@cosmjs/encoding" "^0.32.4"
-    "@noble/hashes" "^1.5.0"
-    "@usecapsule/user-management-client" "1.39.0"
-    base64url "^3.0.1"
-    buffer "6.0.3"
-    ethereumjs-util "7.1.5"
-    libphonenumber-js "1.11.2"
-    node-forge "^1.3.1"
-    qs "^6.12.0"
-
 "@usecapsule/core-sdk@2.20.0":
   version "2.20.0"
   resolved "https://registry.yarnpkg.com/@usecapsule/core-sdk/-/core-sdk-2.20.0.tgz#5bf7c377220ce95538ee879415b97c0f8a2a9e39"
@@ -2215,7 +2199,7 @@
   dependencies:
     "@usecapsule/core-components" "3.25.0"
 
-"@usecapsule/react-sdk@^4.17.0":
+"@usecapsule/react-sdk@^4.20.0":
   version "4.20.0"
   resolved "https://registry.yarnpkg.com/@usecapsule/react-sdk/-/react-sdk-4.20.0.tgz#717681615b35e3f7357cbc6f239bd3d2832fd1dd"
   integrity sha512-0u/MfROdOT1M/PYxFONoimcETSoxRn5svZBzH7K5tXwB+PHxfR2YXooa2wQ+0Z1ygHX3S7G7Sd2cdOmHV7XkSQ==
@@ -2230,7 +2214,7 @@
     styled-components "^6.1.8"
     zustand "^4.5.2"
 
-"@usecapsule/server-sdk@^2.17.0":
+"@usecapsule/server-sdk@^2.20.0":
   version "2.20.0"
   resolved "https://registry.yarnpkg.com/@usecapsule/server-sdk/-/server-sdk-2.20.0.tgz#98bf6bc1af776f4e3e20fc62a7ddc633e7f88e62"
   integrity sha512-EpFwVXfEg/3BiE0dBLeUVJBVQs3ArTlZNxZZtQt6k0biaB0xqgDWaS5/+qOYuD6SQ43Kat7q3qNhGEXhocyjEw==
@@ -2240,22 +2224,13 @@
     uuid "^9.0.1"
     ws "^8.14.2"
 
-"@usecapsule/solana-web3.js-v1-integration@1.17.0":
-  version "1.17.0"
-  resolved "https://registry.yarnpkg.com/@usecapsule/solana-web3.js-v1-integration/-/solana-web3.js-v1-integration-1.17.0.tgz#d754154038dce03e9b1876e7cb8d815abf109ae5"
-  integrity sha512-oQorThdodId9nGmnjouHrfXb40kaA1AO4V/lYoQaXG0kMJxPWWoW3dotpPRHra5CyWVvpCdIvvfnGsGqXb2WYQ==
+"@usecapsule/solana-web3.js-v1-integration@1.20.0":
+  version "1.20.0"
+  resolved "https://registry.yarnpkg.com/@usecapsule/solana-web3.js-v1-integration/-/solana-web3.js-v1-integration-1.20.0.tgz#8c25bb5bdbc7f09f12c7d9236624f843cb84a260"
+  integrity sha512-c5KJY8gOnF0GbSpjJSIV3rk5w59Dg/qWwwU0ecnPkCZJCaJBvmk0odZkFLyJ3RLzK/skcWXFXzdgYKhwnCq+HA==
   dependencies:
     "@solana/web3.js" "^1.95.8"
-    "@usecapsule/core-sdk" "2.17.0"
-
-"@usecapsule/user-management-client@1.39.0":
-  version "1.39.0"
-  resolved "https://registry.yarnpkg.com/@usecapsule/user-management-client/-/user-management-client-1.39.0.tgz#cc708a5529a8d8d7672bad4e05efa76fd45ad99e"
-  integrity sha512-Eu4QWYOEpToCfV1AFaXNplikCHxtWwor2GrsyPeqF11K7PKA/i6YVqJxpJwzdxGLeaEY0jGbr6imuLSudh0gHg==
-  dependencies:
-    axios "^1.6.3"
-    libphonenumber-js "1.11.2"
-    qs "^6.12.0"
+    "@usecapsule/core-sdk" "2.20.0"
 
 "@usecapsule/user-management-client@1.42.0":
   version "1.42.0"
@@ -7196,6 +7171,7 @@ string-length@^4.0.1:
     strip-ansi "^6.0.0"
 
 "string-width-cjs@npm:string-width@^4.2.0", string-width@^4.1.0, string-width@^4.2.0, string-width@^4.2.3:
+  name string-width-cjs
   version "4.2.3"
   resolved "https://registry.yarnpkg.com/string-width/-/string-width-4.2.3.tgz#269c7117d27b05ad2e536830a8ec895ef9c6d010"
   integrity sha512-wKyQRQpjJ0sIp62ErSZdGsjMJWsap5oRNihHhu6G7JVO/9jIB6UyevL+tXuOqrng8j/cxKTWyWUwvSTriiZz/g==
@@ -7297,6 +7273,7 @@ stringify-entities@^4.0.0:
     character-entities-legacy "^3.0.0"
 
 "strip-ansi-cjs@npm:strip-ansi@^6.0.1", strip-ansi@^6.0.0, strip-ansi@^6.0.1:
+  name strip-ansi-cjs
   version "6.0.1"
   resolved "https://registry.yarnpkg.com/strip-ansi/-/strip-ansi-6.0.1.tgz#9e26c63d30f53443e9489495b2105d37b67a85d9"
   integrity sha512-Y38VPSHcqkFrCpFnQ9vuSXmquuv5oXOKpGeT6aGrr3o3Gc9AlVa6JBfUSOCnbxGGZF+/0ooI7KrPuUSztUdU5A==
@@ -7995,6 +7972,7 @@ word-wrap@^1.2.5:
   integrity sha512-BN22B5eaMMI9UMtjrGd5g5eCYPpCPDUy0FJXbYsaT5zYxjFOckS53SQDE3pWkVoWpHXVb3BrYcEN4Twa55B5cA==
 
 "wrap-ansi-cjs@npm:wrap-ansi@^7.0.0", wrap-ansi@^7.0.0:
+  name wrap-ansi-cjs
   version "7.0.0"
   resolved "https://registry.yarnpkg.com/wrap-ansi/-/wrap-ansi-7.0.0.tgz#67e145cff510a6a6984bdf1152911d69d2eb9e43"
   integrity sha512-YVGIj2kamLSTxw6NsZjoBxfSwsn0ycdesmc4p+Q21c5zPuZ1pl+NfxVdxPtdHvmNVOQ6XSYG4AUtyt/Fi7D16Q==

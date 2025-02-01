@@ -1,0 +1,2 @@
+-- AlterTable
+ALTER TABLE "Trade" ALTER COLUMN "price" DROP DEFAULT;

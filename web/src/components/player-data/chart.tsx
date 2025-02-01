@@ -12,21 +12,11 @@ import {
 } from "recharts";
 
 interface PriceDataPoint {
-  date: string;
+  date: number;
   price: number;
 }
 
-const TokenPriceChart = () => {
-  const data: PriceDataPoint[] = [
-    { date: "2024-01-01", price: 1.23 },
-    { date: "2024-01-02", price: 1.45 },
-    { date: "2024-01-03", price: 1.38 },
-    { date: "2024-01-04", price: 1.52 },
-    { date: "2024-01-05", price: 1.48 },
-    { date: "2024-01-06", price: 1.67 },
-    { date: "2024-01-07", price: 1.89 },
-  ];
-
+const TokenPriceChart = ({ data }: { data: PriceDataPoint[] }) => {
   const [timeRange, setTimeRange] = useState("1H");
 
   return (

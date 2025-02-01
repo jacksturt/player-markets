@@ -7,6 +7,7 @@ import { ReactQueryProvider } from "./react-query-provider";
 import { TRPCReactProvider } from "@/trpc/react";
 import { SessionProvider } from "next-auth/react";
 import Footer from "@/components/ui/footer";
+import { Toaster } from "react-hot-toast";
 
 const links: { label: string; path: string }[] = [
   { label: "Account", path: "/account" },
@@ -27,7 +28,9 @@ export default function RootLayout({
             <ClusterProvider>
               <SolanaProvider>
                 <TRPCReactProvider>
-                  <main className="relative mx-auto max-w-[430px] min-h-screen bg-background">
+                  <Toaster />
+
+                  <main className="relative  max-w-screen min-h-screen bg-background">
                     {children}
                     <Footer />
                   </main>

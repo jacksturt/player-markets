@@ -251,18 +251,18 @@ export function useMarkets() {
     },
     onSuccess: async (data) => {
       transactionToast(data.signature);
-      const playerName = "Jayden Daniels";
+      const playerName = "Jaylen Hurts";
       await createMint.mutateAsync(
         {
           mintName: playerName,
-          mintSymbol: "JAYDEN",
+          mintSymbol: "JAYLEN",
           mintImage:
             "https://www.google.com/images/branding/googlelogo/1x/googlelogo_color_272x92dp.png",
           mintSlug: data.playerId,
           timestamp: data.timestamp,
           description: playerName,
           baseMint: data.player_token_mint.toBase58(),
-          teamId: "cm6956n4l0000rcd8bwncqgxy",
+          teamId: "cm6l90r8j0000rcxnu1blil7n",
           position: "QB",
           playerName: playerName,
           playerSportsdataId: parseInt(data.playerId),
@@ -521,6 +521,15 @@ export function usePlayerMarket() {
     },
   });
 
+  const trades = api.trade.readForMarket.useQuery(
+    {
+      marketAddress: marketAddress,
+    },
+    {
+      enabled: !!marketAddress,
+    }
+  );
+
   const balances = useQuery({
     queryKey: ["market", "balances", { playerMintPK: marketPK }],
     queryFn: async () => {
@@ -654,6 +663,7 @@ export function usePlayerMarket() {
       return signature;
     },
     onSuccess: (signature) => {
+      console.log("deposited quote", signature);
       transactionToast(`Deposited quote: ${signature}`);
       return accounts.refetch();
     },
@@ -973,5 +983,6 @@ export function usePlayerMarket() {
     latestTransaction,
     playerTokenAccount,
     playerTokenBalance,
+    trades,
   };
 }

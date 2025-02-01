@@ -1,5 +1,7 @@
 model Trade {
-    id String @id @default(cuid())
+    id        String  @id @default(cuid())
+    signature String  @unique
+    price     Decimal
 
     marketId String
     market   Market @relation(fields: [marketId], references: [id])
@@ -7,10 +9,10 @@ model Trade {
     baseMintId String
     baseMint   Mint   @relation(fields: [baseMintId], references: [id])
 
-    playerId String? @unique
+    playerId String?
     player   Player? @relation(fields: [playerId], references: [id])
 
-    teamId String? @unique
+    teamId String?
     team   Team?   @relation(fields: [teamId], references: [id])
 
     buyOrderId String? @unique
