@@ -40,47 +40,50 @@ export async function GET(request: Request) {
     });
 
     try {
-      const url = player.market?.hasGameStarted
-        ? `https://api.sportsdata.io/v3/nfl/stats/json/PlayerGameStatsByTeam/${season}/${week}/${player?.team?.sportsDataId}?key=${process.env.SPORTSDATA_API_KEY}`
-        : `https://baker-api.sportsdata.io/baker/v2/nfl/projections/players/${season}/${week}/team/${player?.team?.sportsDataId}/avg?key=${process.env.SPORTSDATA_API_KEY}`;
-      const response = await fetch(url, {
-        headers: {
-          Authorization: `Bearer ${process.env.ORACLE_API_KEY}`,
-        },
-      });
-      const playerProjectionData: PlayerProjection = await response.json();
-      console.log("data", playerProjectionData);
+      if (player.market?.hasGameStarted) {
+        const url = `https://api.sportsdata.io/v3/nfl/stats/json/PlayerGameStatsByTeam/${season}/${week}/${player?.team?.sportsDataId}?key=${process.env.SPORTSDATA_API_KEY}`;
+      } else {
+        const url = `https://baker-api.sportsdata.io/baker/v2/nfl/projections/players/${season}/${week}/team/${player?.team?.sportsDataId}/avg?key=${process.env.SPORTSDATA_API_KEY}`;
 
-      if (!playerProjectionData) {
-        return NextResponse.json(
-          { success: false, error: "Player projection not found" },
-          { status: 404 }
-        );
-      }
-
-      const camelCaseData =
-        convertPlayerProjectionToCamelCase(playerProjectionData);
-      if (
-        player.projections?.fantasyPointsHalfPpr !==
-        camelCaseData.fantasyPointsHalfPpr
-      ) {
-        await db.playerStatsAndProjection.upsert({
-          where: {
-            playerId: player.id,
-          },
-          update: {
-            ...camelCaseData,
-          },
-          create: {
-            playerId: player.id,
-            ...camelCaseData,
+        const response = await fetch(url, {
+          headers: {
+            Authorization: `Bearer ${process.env.ORACLE_API_KEY}`,
           },
         });
-        await updateProjectionOracle(
-          player.sportsDataId.toString(),
-          player.mint!.timestamp,
-          playerProjectionData.fantasy_points_ppr
-        );
+        const playerProjectionData: PlayerProjection = await response.json();
+        console.log("data", playerProjectionData);
+
+        if (!playerProjectionData) {
+          return NextResponse.json(
+            { success: false, error: "Player projection not found" },
+            { status: 404 }
+          );
+        }
+
+        const camelCaseData =
+          convertPlayerProjectionToCamelCase(playerProjectionData);
+        if (
+          player.projections?.projectedFantasyPointsHalfPpr !==
+          camelCaseData.projectedFantasyPointsHalfPpr
+        ) {
+          await db.playerStatsAndProjection.upsert({
+            where: {
+              playerId: player.id,
+            },
+            update: {
+              ...camelCaseData,
+            },
+            create: {
+              playerId: player.id,
+              ...camelCaseData,
+            },
+          });
+          await updateProjectionOracle(
+            player.sportsDataId.toString(),
+            player.mint!.timestamp,
+            playerProjectionData.fantasy_points_ppr
+          );
+        }
       }
 
       return NextResponse.json({ success: true });
@@ -101,24 +104,25 @@ export async function GET(request: Request) {
 
 function convertPlayerProjectionToCamelCase(projection: PlayerProjection) {
   return {
-    rushingAttempts: projection.rushing_attempts,
-    rushingYards: projection.rushing_yards,
-    rushingTouchdowns: projection.rushing_touchdowns,
-    fumblesLost: projection.fumbles_lost,
-    catches: projection.catches,
-    receivingYards: projection.receiving_yards,
-    receivingTouchdowns: projection.receiving_touchdowns,
-    passingInterceptions: projection.passing_interceptions,
-    passingYards: projection.passing_yards,
-    passingTouchdowns: projection.passing_touchdowns,
-    passingSacks: projection.passing_sacks,
-    fieldGoalsMade: projection.field_goals_made,
-    fieldGoalsMissed: projection.field_goals_missed,
-    extraPointKickingConversions: projection.extra_point_kicking_conversions,
-    extraPointKickingMisses: projection.extra_point_kicking_misses,
-    fantasyPointsHalfPpr: projection.fantasy_points_half_ppr,
-    fantasyPointsPpr: projection.fantasy_points_ppr,
-    fantasyPointsNonPpr: projection.fantasy_points_non_ppr,
+    projectedRushingAttempts: projection.rushing_attempts,
+    projectedRushingYards: projection.rushing_yards,
+    projectedRushingTouchdowns: projection.rushing_touchdowns,
+    projectedFumblesLost: projection.fumbles_lost,
+    projectedCatches: projection.catches,
+    projectedReceivingYards: projection.receiving_yards,
+    projectedReceivingTouchdowns: projection.receiving_touchdowns,
+    projectedPassingInterceptions: projection.passing_interceptions,
+    projectedPassingYards: projection.passing_yards,
+    projectedPassingTouchdowns: projection.passing_touchdowns,
+    projectedPassingSacks: projection.passing_sacks,
+    projectedFieldGoalsMade: projection.field_goals_made,
+    projectedFieldGoalsMissed: projection.field_goals_missed,
+    projectedExtraPointKickingConversions:
+      projection.extra_point_kicking_conversions,
+    projectedExtraPointKickingMisses: projection.extra_point_kicking_misses,
+    projectedFantasyPointsHalfPpr: projection.fantasy_points_half_ppr,
+    projectedFantasyPointsPpr: projection.fantasy_points_ppr,
+    projectedFantasyPointsNonPpr: projection.fantasy_points_non_ppr,
   };
 }
 
