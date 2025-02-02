@@ -35,18 +35,19 @@ export async function GET(request: Request) {
         team: true,
         mint: true,
         projections: true,
+        market: true,
       },
     });
 
     try {
-      const response = await fetch(
-        `https://baker-api.sportsdata.io/baker/v2/nfl/projections/players/${season}/${week}/team/${player?.team?.sportsDataId}/avg?key=${process.env.SPORTSDATA_API_KEY}`,
-        {
-          headers: {
-            Authorization: `Bearer ${process.env.ORACLE_API_KEY}`,
-          },
-        }
-      );
+      const url = player.market?.hasGameStarted
+        ? `https://api.sportsdata.io/v3/nfl/stats/json/PlayerGameStatsByTeam/${season}/${week}/${player?.team?.sportsDataId}?key=${process.env.SPORTSDATA_API_KEY}`
+        : `https://baker-api.sportsdata.io/baker/v2/nfl/projections/players/${season}/${week}/team/${player?.team?.sportsDataId}/avg?key=${process.env.SPORTSDATA_API_KEY}`;
+      const response = await fetch(url, {
+        headers: {
+          Authorization: `Bearer ${process.env.ORACLE_API_KEY}`,
+        },
+      });
       const playerProjectionData: PlayerProjection = await response.json();
       console.log("data", playerProjectionData);
 
@@ -63,7 +64,7 @@ export async function GET(request: Request) {
         player.projections?.fantasyPointsHalfPpr !==
         camelCaseData.fantasyPointsHalfPpr
       ) {
-        await db.playerProjection.upsert({
+        await db.playerStatsAndProjection.upsert({
           where: {
             playerId: player.id,
           },

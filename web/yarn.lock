@@ -2199,7 +2199,7 @@
   dependencies:
     "@usecapsule/core-components" "3.25.0"
 
-"@usecapsule/react-sdk@^4.20.0":
+"@usecapsule/react-sdk@4.20.0", "@usecapsule/react-sdk@^4.20.0":
   version "4.20.0"
   resolved "https://registry.yarnpkg.com/@usecapsule/react-sdk/-/react-sdk-4.20.0.tgz#717681615b35e3f7357cbc6f239bd3d2832fd1dd"
   integrity sha512-0u/MfROdOT1M/PYxFONoimcETSoxRn5svZBzH7K5tXwB+PHxfR2YXooa2wQ+0Z1ygHX3S7G7Sd2cdOmHV7XkSQ==
@@ -2223,6 +2223,13 @@
     "@usecapsule/user-management-client" "1.42.0"
     uuid "^9.0.1"
     ws "^8.14.2"
+
+"@usecapsule/solana-wallet-connectors@1.20.0":
+  version "1.20.0"
+  resolved "https://registry.yarnpkg.com/@usecapsule/solana-wallet-connectors/-/solana-wallet-connectors-1.20.0.tgz#b5a3de0904daeccfee6e3d207b0e5c9bd7fb3af7"
+  integrity sha512-XkjwGgxbr9kMds8X58uEpX9S/sao7/y7ZG+DFYHLdXlOi+7uuYIMSL9jgzHWvy+krtNFzCT4wPWpjjqTyLtHHA==
+  dependencies:
+    "@usecapsule/react-sdk" "4.20.0"
 
 "@usecapsule/solana-web3.js-v1-integration@1.20.0":
   version "1.20.0"

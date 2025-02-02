@@ -11,6 +11,7 @@ const CapsuleModal = dynamic(
   () => import("@usecapsule/react-sdk").then((mod) => mod.CapsuleModal),
   { ssr: false }
 );
+import { ExternalWallet } from "@usecapsule/react-sdk";
 
 function SignInContent() {
   const [isOpen, setIsOpen] = useState(true);
@@ -40,12 +41,18 @@ function SignInContent() {
       const { data } = await capsule.userSetupAfterLogin();
 
       const serializedSession = await capsule.exportSession();
+      const isFullyLoggedIn = await capsule.isFullyLoggedIn();
+      console.log("isFullyLoggedIn", isFullyLoggedIn, data);
       const email = capsule.getEmail();
       const publicKey = capsule.getAddress();
+      const wallets = capsule.getWallets();
+      console.log("email", email);
+      console.log("publicKey", publicKey);
+      console.log("wallets", wallets);
       const result = await signIn("capsule", {
         userId: (data as any).userId,
-        email,
-        publicKey,
+        email: email ?? undefined,
+        publicKey: publicKey ?? undefined,
         serializedSession,
         redirect: false,
       });
@@ -70,6 +77,11 @@ function SignInContent() {
         }}
         appName="Your App Name"
         oAuthMethods={[OAuthMethod.GOOGLE]}
+        externalWallets={[
+          ExternalWallet.PHANTOM,
+          ExternalWallet.GLOW,
+          ExternalWallet.BACKPACK,
+        ]}
       />
     </div>
   );

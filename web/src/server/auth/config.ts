@@ -72,16 +72,35 @@ export const authConfig = {
             throw new Error("No user ID provided");
           }
           capsuleServer.importSession(credentials.serializedSession as string);
-          const user = await db.user.upsert({
+          let user = await db.user.findUnique({
             where: { id: credentials.userId as string },
-            update: {
-              email: credentials.email as string,
-            },
-            create: {
-              id: credentials.userId as string,
-              email: credentials.email as string,
-            },
           });
+
+          if (!user) {
+            if (credentials.email) {
+              user = await db.user.create({
+                data: {
+                  id: credentials.userId as string,
+                  email: credentials.email as string,
+                },
+              });
+            } else {
+              user = await db.user.create({
+                data: {
+                  id: credentials.userId as string,
+                },
+              });
+            }
+          }
+
+          if (user && !user.email && credentials.email) {
+            await db.user.update({
+              where: { id: user.id },
+              data: {
+                email: credentials.email as string,
+              },
+            });
+          }
 
           const wallets = await db.wallet.findMany({
             where: {

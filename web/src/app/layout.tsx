@@ -99,6 +99,9 @@ function CapsuleAccountInfo() {
       </Button>
     );
   }
+  if (!capsule.getAddress()) {
+    return null;
+  }
   const pk = new PublicKey(capsule.getAddress()!);
   return (
     <div

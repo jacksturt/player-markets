@@ -4,6 +4,7 @@ model Market {
     description    String
     address        String  @unique
     lastTradePrice Decimal @default(0)
+    hasGameStarted Boolean @default(false)
 
     baseMint   Mint   @relation(fields: [baseMintId], references: [id], onDelete: Cascade)
     baseMintId String @unique
