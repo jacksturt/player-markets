@@ -37,11 +37,7 @@ pub mod tradetalk {
         Ok(())
     }
 
-    pub fn init_projection_oracle(
-        ctx: Context<InitializeProjectionOracle>,
-        player_id: String,
-        timestamp: String,
-    ) -> Result<()> {
+    pub fn init_projection_oracle(ctx: Context<InitializeProjectionOracle>) -> Result<()> {
         ctx.accounts
             .initialize_projection_oracle(&ctx.bumps)
             .unwrap();
@@ -60,12 +56,13 @@ pub mod tradetalk {
 
     pub fn update_projection_oracle(
         ctx: Context<UpdateProjectionOracle>,
-        projected_points: f64,
+        points: f64,
+        is_projected: bool,
         set_mint_disabled: bool,
         set_payout_enabled: bool,
     ) -> Result<()> {
         ctx.accounts
-            .update_projection_oracle(projected_points, set_mint_disabled, set_payout_enabled)
+            .update_projection_oracle(points, is_projected, set_mint_disabled, set_payout_enabled)
             .unwrap();
         Ok(())
     }

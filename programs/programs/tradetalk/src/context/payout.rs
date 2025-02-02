@@ -78,7 +78,7 @@ impl<'info> Payout<'info> {
         msg!("vault total: {}", self.vault.amount);
         msg!("player token supply: {}", self.player_token_mint.supply);
         let vault_remaining = self.vault.amount
-            - (self.player_token_mint.supply as f64 * self.player_stats.projected_points) as u64;
+            - (self.player_token_mint.supply as f64 * self.player_stats.actual_points) as u64;
         msg!("vault remaining: {}", vault_remaining);
 
         let percent_due = self.mint_record.deposited_amount as f64
@@ -105,9 +105,11 @@ impl<'info> Payout<'info> {
 
         let cpi_ctx = CpiContext::new_with_signer(cpi_program, cpi_accounts, signer_seeds);
 
-        let amount = (self.player_stats.projected_points
+        let amount = (self.player_stats.actual_points
             * self.payer_player_token_account.amount as f64) as u64;
-
+        msg!("tokens: {}", self.payer_player_token_account.amount);
+        msg!("amount: {}", amount);
+        msg!("minter_rewards: {}", minter_rewards);
         transfer_checked(
             cpi_ctx,
             amount + minter_rewards as u64,
