@@ -80,6 +80,9 @@ export function UpdateProjectionOracle() {
   const playerId = "23235";
   const projection = 13.371;
   const timestamp = "1737625327577";
+  const isProjected = true;
+  const setMintingDisabled = false;
+  const setPayoutEnabled = false;
 
   return (
     <button
@@ -89,6 +92,9 @@ export function UpdateProjectionOracle() {
           playerId,
           timestamp,
           projection,
+          isProjected,
+          setMintingDisabled,
+          setPayoutEnabled,
         })
       }
       disabled={updateProjectionOracle.isPending}
