@@ -12,17 +12,53 @@ const CapsuleModal = dynamic(
   { ssr: false }
 );
 import { ExternalWallet } from "@usecapsule/react-sdk";
+import { useWallet } from "@solana/wallet-adapter-react";
 
 function SignInContent() {
   const [isOpen, setIsOpen] = useState(true);
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { publicKey } = useWallet();
   const callbackUrl = searchParams.get("callbackUrl") ?? "/";
 
   useEffect(() => {
     let isMounted = true;
 
     const checkCapsuleSession = async () => {
+      const handleCapsuleSetup = async () => {
+        try {
+          const { data } = await capsule.userSetupAfterLogin();
+          console.log(data);
+
+          const serializedSession = await capsule.exportSession();
+          const isFullyLoggedIn = await capsule.isFullyLoggedIn();
+          console.log("isFullyLoggedIn", isFullyLoggedIn, data);
+          const email = capsule.getEmail();
+          const capsulePublicKey = capsule.getAddress();
+          const wallets = capsule.getWallets();
+          console.log("email", email);
+          console.log("publicKey", publicKey);
+          console.log("wallets", wallets);
+          console.log("capsulePublicKey", capsulePublicKey);
+          debugger;
+          if (!!publicKey || !!capsulePublicKey) {
+            const result = await signIn("capsule", {
+              userId: (data as any).userId,
+              email: email ?? undefined,
+              publicKey: publicKey ?? undefined,
+              serializedSession,
+              redirect: false,
+            });
+            if (result?.error) {
+              console.error("NextAuth sign in failed:", result.error);
+            } else if (result?.ok) {
+              router.push(callbackUrl);
+            }
+          }
+        } catch (error) {
+          console.error("Error during Capsule setup:", error);
+        }
+      };
       try {
         const isActive = await capsule.isSessionActive();
         if (isActive && isMounted) {
@@ -34,37 +70,7 @@ function SignInContent() {
     };
 
     checkCapsuleSession();
-  }, []);
-
-  const handleCapsuleSetup = async () => {
-    try {
-      const { data } = await capsule.userSetupAfterLogin();
-
-      const serializedSession = await capsule.exportSession();
-      const isFullyLoggedIn = await capsule.isFullyLoggedIn();
-      console.log("isFullyLoggedIn", isFullyLoggedIn, data);
-      const email = capsule.getEmail();
-      const publicKey = capsule.getAddress();
-      const wallets = capsule.getWallets();
-      console.log("email", email);
-      console.log("publicKey", publicKey);
-      console.log("wallets", wallets);
-      const result = await signIn("capsule", {
-        userId: (data as any).userId,
-        email: email ?? undefined,
-        publicKey: publicKey ?? undefined,
-        serializedSession,
-        redirect: false,
-      });
-      if (result?.error) {
-        console.error("NextAuth sign in failed:", result.error);
-      } else if (result?.ok) {
-        router.push(callbackUrl);
-      }
-    } catch (error) {
-      console.error("Error during Capsule setup:", error);
-    }
-  };
+  }, [publicKey]);
 
   return (
     <div>

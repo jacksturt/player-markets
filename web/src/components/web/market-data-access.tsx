@@ -285,6 +285,7 @@ export function useMarkets() {
                 description: playerName,
                 address: keyPair.toBase58(),
                 mintAddress: data.player_token_mint.toBase58(),
+                network: "DEVNET",
               },
               {
                 onSuccess: async () => {
@@ -297,7 +298,7 @@ export function useMarkets() {
                     program.programId
                   )[0];
                   return program.methods
-                    .initProjectionOracle(data.playerId, data.timestamp)
+                    .initProjectionOracle()
                     .accountsStrict({
                       payer: provider.publicKey,
                       config: data.mintConfig,
@@ -335,10 +336,16 @@ export function useMarkets() {
       playerId,
       timestamp,
       projection,
+      isProjected,
+      setMintingDisabled,
+      setPayoutEnabled,
     }: {
       playerId: string;
       timestamp: string;
       projection: number;
+      isProjected: boolean;
+      setMintingDisabled: boolean;
+      setPayoutEnabled: boolean;
     }) => {
       const mintConfig = PublicKey.findProgramAddressSync(
         [Buffer.from("config"), Buffer.from(playerId), Buffer.from(timestamp)],
@@ -353,7 +360,12 @@ export function useMarkets() {
         program.programId
       )[0];
       return program.methods
-        .updateProjectionOracle(projection)
+        .updateProjectionOracle(
+          projection,
+          isProjected,
+          setMintingDisabled,
+          setPayoutEnabled
+        )
         .accountsStrict({
           authority: provider.publicKey,
           config: mintConfig,

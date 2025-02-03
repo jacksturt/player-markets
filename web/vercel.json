@@ -1,7 +1,7 @@
 {
     "crons": [
       {
-        "path": "/api/cron/fetchPlayerProjections?team=BAL",
+        "path": "/api/cron/updateMarketForPlayer?playerId=21831",
         "schedule": "*/10 * * * *"
       },
       {

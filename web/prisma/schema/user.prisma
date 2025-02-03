@@ -1,5 +1,6 @@
 model User {
     id            String    @id @default(cuid())
+    capsuleUserId String?   @unique
     name          String?
     sendbirdId    String?
     username      String?   @unique

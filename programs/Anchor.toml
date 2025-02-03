@@ -8,10 +8,10 @@ skip-lint = false
 tradetalk = "BuxU7uwwkoobF8p4Py7nRoTgxWRJfni8fc4U3YKGEXKs"
 
 [registry]
-url = "https://api.apr.dev"
+url = "https://devnet.helius-rpc.com/?api-key=d4943793-a5a1-4d4e-872c-1cdd2a0267f2"
 
 [provider]
-cluster = "localnet"
+cluster = "devnet"
 wallet = "~/.config/solana/id.json"
 
 [scripts]

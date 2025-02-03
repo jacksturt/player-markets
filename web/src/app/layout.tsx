@@ -19,6 +19,7 @@ import { Button } from "@/components/ui/button";
 import { PublicKey } from "@solana/web3.js";
 import { IconCopy } from "@tabler/icons-react";
 import Link from "next/link";
+import { useWallet } from "@solana/wallet-adapter-react";
 
 const links: { label: string; path: string }[] = [
   { label: "Account", path: "/account" },
@@ -51,8 +52,7 @@ export default function RootLayout({
                       </Link>
                     </div>
                     <div className="flex-none space-x-2">
-                      <CapsuleAccountInfo />
-                      <WalletButton />
+                      <AccountButtons />
                     </div>
                   </div>
                   <Suspense
@@ -76,30 +76,39 @@ export default function RootLayout({
     </html>
   );
 }
-function CapsuleAccountInfo() {
+
+function AccountButtons() {
   const [isActive, setIsActive] = useState(false);
   const router = useRouter();
   const pathname = usePathname();
+  const { publicKey } = useWallet();
 
   useEffect(() => {
     capsule.isSessionActive().then(setIsActive);
-  }, [capsule]);
+  }, [setIsActive]);
 
   if (!isActive) {
     return (
-      <Button
-        onClick={() => {
-          console.log("redirecting to signin");
-          router.push(
-            `/auth/signin?callbackUrl=${encodeURIComponent(pathname)}`
-          );
-        }}
-      >
-        Sign in
-      </Button>
+      <>
+        <Button
+          onClick={() => {
+            console.log("redirecting to signin");
+            router.push(
+              `/auth/signin?callbackUrl=${encodeURIComponent(pathname)}`
+            );
+          }}
+        >
+          Sign in
+        </Button>
+      </>
     );
   }
+  console.log("isActive", isActive);
+  console.log("capsule.getAddress()", capsule.getAddress());
   if (!capsule.getAddress()) {
+    if (publicKey) {
+      return <WalletButton />;
+    }
     return null;
   }
   const pk = new PublicKey(capsule.getAddress()!);

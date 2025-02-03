@@ -1,4 +1,4 @@
-import { PlayerProjection } from "@/lib/types/sportsdata";
+import { PlayerGameStats, PlayerProjection } from "@/lib/types/sportsdata";
 import { db } from "@/server/db";
 import { program } from "@coral-xyz/anchor/dist/cjs/native/system";
 import { Connection, PublicKey } from "@solana/web3.js";
@@ -42,6 +42,43 @@ export async function GET(request: Request) {
     try {
       if (player.market?.hasGameStarted) {
         const url = `https://api.sportsdata.io/v3/nfl/stats/json/PlayerGameStatsByTeam/${season}/${week}/${player?.team?.sportsDataId}?key=${process.env.SPORTSDATA_API_KEY}`;
+        const response = await fetch(url, {
+          headers: {
+            Authorization: `Bearer ${process.env.ORACLE_API_KEY}`,
+          },
+        });
+        const playerActualData: PlayerGameStats = await response.json();
+        console.log("data", playerActualData);
+
+        if (!playerActualData) {
+          return NextResponse.json(
+            { success: false, error: "Player projection not found" },
+            { status: 404 }
+          );
+        }
+
+        const camelCaseData = convertPlayerGameStatsToActual(playerActualData);
+        if (
+          player.projections?.projectedFantasyPointsPpr !==
+          camelCaseData.actualFantasyPointsPpr
+        ) {
+          await db.playerStatsAndProjection.update({
+            where: {
+              playerId: player.id,
+            },
+            data: {
+              ...camelCaseData,
+            },
+          });
+          await updateProjectionOracle(
+            player.sportsDataId.toString(),
+            player.mint!.timestamp,
+            camelCaseData.actualFantasyPointsPpr,
+            false,
+            false,
+            false
+          );
+        }
       } else {
         const url = `https://baker-api.sportsdata.io/baker/v2/nfl/projections/players/${season}/${week}/team/${player?.team?.sportsDataId}/avg?key=${process.env.SPORTSDATA_API_KEY}`;
 
@@ -63,8 +100,8 @@ export async function GET(request: Request) {
         const camelCaseData =
           convertPlayerProjectionToCamelCase(playerProjectionData);
         if (
-          player.projections?.projectedFantasyPointsHalfPpr !==
-          camelCaseData.projectedFantasyPointsHalfPpr
+          player.projections?.projectedFantasyPointsPpr !==
+          camelCaseData.projectedFantasyPointsPpr
         ) {
           await db.playerStatsAndProjection.upsert({
             where: {
@@ -81,7 +118,10 @@ export async function GET(request: Request) {
           await updateProjectionOracle(
             player.sportsDataId.toString(),
             player.mint!.timestamp,
-            playerProjectionData.fantasy_points_ppr
+            playerProjectionData.fantasy_points_ppr,
+            true,
+            false,
+            false
           );
         }
       }
@@ -126,10 +166,38 @@ function convertPlayerProjectionToCamelCase(projection: PlayerProjection) {
   };
 }
 
+function convertPlayerGameStatsToActual(actual: PlayerGameStats) {
+  return {
+    actualRushingAttempts: actual.RushingAttempts,
+    actualRushingYards: actual.RushingYards,
+    actualRushingTouchdowns: actual.RushingTouchdowns,
+    actualFumblesLost: actual.FumblesLost,
+    actualCatches: actual.Receptions,
+    actualReceivingYards: actual.ReceivingYards,
+    actualReceivingTouchdowns: actual.ReceivingTouchdowns,
+    actualPassingInterceptions: actual.PassingInterceptions,
+    actualPassingYards: actual.PassingYards,
+    actualPassingTouchdowns: actual.PassingTouchdowns,
+    actualPassingSacks: actual.PassingSacks,
+    actualFieldGoalsMade: actual.FieldGoalsMade,
+    actualFieldGoalsMissed: actual.FieldGoalsAttempted - actual.FieldGoalsMade,
+    actualExtraPointKickingConversions: actual.ExtraPointsMade,
+    actualExtraPointKickingMisses:
+      actual.ExtraPointsAttempted - actual.ExtraPointsMade,
+    actualFantasyPointsHalfPpr:
+      (actual.FantasyPointsPPR + actual.FantasyPoints) / 2,
+    actualFantasyPointsPpr: actual.FantasyPointsPPR,
+    actualFantasyPointsNonPpr: actual.FantasyPoints,
+  };
+}
+
 function updateProjectionOracle(
   playerId: string,
   timestamp: string,
-  projection: number
+  projection: number,
+  isProjected: boolean,
+  setMintingDisabled: boolean,
+  setPayoutEnabled: boolean
 ) {
   const connection = new Connection(process.env.ANCHOR_PROVIDER_URL!);
   const wallet = new EnvWallet();
@@ -149,7 +217,12 @@ function updateProjectionOracle(
     program.programId
   )[0];
   return program.methods
-    .updateProjectionOracle(projection)
+    .updateProjectionOracle(
+      projection,
+      isProjected,
+      setMintingDisabled,
+      setPayoutEnabled
+    )
     .accountsStrict({
       authority: provider.publicKey,
       config: mintConfig,

@@ -62,65 +62,111 @@ export const authConfig = {
       name: "Capsule",
       credentials: {
         email: { label: "Email", type: "text" },
-        userId: { label: "User ID", type: "text" },
+        capsuleUserId: { label: "Capsule User ID", type: "text" },
         publicKey: { label: "Public Key", type: "text" },
         serializedSession: { label: "Serialized Session", type: "text" },
       },
       async authorize(credentials) {
         try {
-          if (!credentials?.userId) {
-            throw new Error("No user ID provided");
+          if (!credentials) {
+            throw new Error("No credentials provided");
           }
-          capsuleServer.importSession(credentials.serializedSession as string);
-          let user = await db.user.findUnique({
-            where: { id: credentials.userId as string },
-          });
+          if (credentials.capsuleUserId) {
+            capsuleServer.importSession(
+              credentials.serializedSession as string
+            );
+            let user = await db.user.findUnique({
+              where: { capsuleUserId: credentials.capsuleUserId as string },
+            });
 
-          if (!user) {
-            if (credentials.email) {
-              user = await db.user.create({
+            if (!user) {
+              if (credentials.email) {
+                user = await db.user.create({
+                  data: {
+                    capsuleUserId: credentials.capsuleUserId as string,
+                    email: credentials.email as string,
+                  },
+                });
+              } else {
+                user = await db.user.create({
+                  data: {
+                    capsuleUserId: credentials.capsuleUserId as string,
+                  },
+                });
+              }
+            }
+
+            if (user && !user.email && credentials.email) {
+              await db.user.update({
+                where: { id: user.id },
                 data: {
-                  id: credentials.userId as string,
                   email: credentials.email as string,
                 },
               });
-            } else {
-              user = await db.user.create({
+            }
+
+            const wallets = await db.wallet.findMany({
+              where: {
+                userId: user.id,
+              },
+            });
+            const walletAddresses = wallets.map((wallet) => wallet.address);
+            if (
+              walletAddresses.length === 0 ||
+              !walletAddresses.includes(credentials.publicKey as string)
+            ) {
+              const wallet = await db.wallet.create({
                 data: {
-                  id: credentials.userId as string,
+                  address: credentials.publicKey as string,
+                  userId: user.id,
+                },
+              });
+              await db.user.update({
+                where: { id: user.id },
+                data: {
+                  wallets: {
+                    connect: {
+                      id: wallet.id,
+                    },
+                  },
                 },
               });
             }
-          }
 
-          if (user && !user.email && credentials.email) {
-            await db.user.update({
-              where: { id: user.id },
-              data: {
-                email: credentials.email as string,
+            return user;
+          } else if (credentials.publicKey) {
+            const wallet = await db.wallet.findUnique({
+              where: {
+                address: credentials.publicKey as string,
+              },
+              include: {
+                user: true,
               },
             });
-          }
+            if (wallet?.user) {
+              return wallet.user;
+            }
 
-          const wallets = await db.wallet.findMany({
-            where: {
-              userId: user.id,
-            },
-          });
-          const walletAddresses = wallets.map((wallet) => wallet.address);
-          if (
-            walletAddresses.length === 0 ||
-            !walletAddresses.includes(credentials.publicKey as string)
-          ) {
-            await db.wallet.create({
+            const user = await db.user.create({});
+            const newWallet = await db.wallet.create({
               data: {
                 address: credentials.publicKey as string,
                 userId: user.id,
               },
             });
+            await db.user.update({
+              where: { id: user.id },
+              data: {
+                wallets: {
+                  connect: {
+                    id: newWallet.id,
+                  },
+                },
+              },
+            });
+            return user;
           }
-
-          return user;
+          return null;
         } catch (error) {
           console.error("Authorize error:", error);
           return null;

@@ -14,6 +14,162 @@ export type Tradetalk = {
   };
   instructions: [
     {
+      name: "closeAccounts";
+      discriminator: [171, 222, 94, 233, 34, 250, 202, 1];
+      accounts: [
+        {
+          name: "admin";
+          writable: true;
+          signer: true;
+        },
+        {
+          name: "quoteTokenMint";
+        },
+        {
+          name: "mintConfig";
+          writable: true;
+        },
+        {
+          name: "vault";
+          writable: true;
+          pda: {
+            seeds: [
+              {
+                kind: "account";
+                path: "mintConfig";
+              },
+              {
+                kind: "const";
+                value: [
+                  6,
+                  221,
+                  246,
+                  225,
+                  215,
+                  101,
+                  161,
+                  147,
+                  217,
+                  203,
+                  225,
+                  70,
+                  206,
+                  235,
+                  121,
+                  172,
+                  28,
+                  180,
+                  133,
+                  237,
+                  95,
+                  91,
+                  55,
+                  145,
+                  58,
+                  140,
+                  245,
+                  133,
+                  126,
+                  255,
+                  0,
+                  169
+                ];
+              },
+              {
+                kind: "account";
+                path: "quoteTokenMint";
+              }
+            ];
+            program: {
+              kind: "const";
+              value: [
+                140,
+                151,
+                37,
+                143,
+                78,
+                36,
+                137,
+                241,
+                187,
+                61,
+                16,
+                41,
+                20,
+                142,
+                13,
+                131,
+                11,
+                90,
+                19,
+                153,
+                218,
+                255,
+                16,
+                132,
+                4,
+                142,
+                123,
+                216,
+                219,
+                233,
+                248,
+                89
+              ];
+            };
+          };
+        },
+        {
+          name: "playerStats";
+          writable: true;
+          pda: {
+            seeds: [
+              {
+                kind: "const";
+                value: [
+                  112,
+                  108,
+                  97,
+                  121,
+                  101,
+                  114,
+                  95,
+                  115,
+                  116,
+                  97,
+                  116,
+                  115
+                ];
+              },
+              {
+                kind: "account";
+                path: "mint_config.player_id";
+                account: "playerMintConfig";
+              },
+              {
+                kind: "account";
+                path: "mint_config.timestamp";
+                account: "playerMintConfig";
+              }
+            ];
+          };
+        },
+        {
+          name: "systemProgram";
+          address: "11111111111111111111111111111111";
+        },
+        {
+          name: "tokenProgram";
+          address: "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA";
+        },
+        {
+          name: "associatedTokenProgram";
+          address: "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL";
+        }
+      ];
+      args: [];
+    },
+    {
       name: "faucetQuote";
       discriminator: [191, 38, 44, 66, 27, 132, 255, 23];
       accounts: [
@@ -331,12 +487,14 @@ export type Tradetalk = {
                 value: [99, 111, 110, 102, 105, 103];
               },
               {
-                kind: "arg";
-                path: "playerId";
+                kind: "account";
+                path: "config.player_id";
+                account: "playerMintConfig";
               },
               {
-                kind: "arg";
-                path: "timestamp";
+                kind: "account";
+                path: "config.timestamp";
+                account: "playerMintConfig";
               }
             ];
           };
@@ -364,12 +522,14 @@ export type Tradetalk = {
                 ];
               },
               {
-                kind: "arg";
-                path: "playerId";
+                kind: "account";
+                path: "config.player_id";
+                account: "playerMintConfig";
               },
               {
-                kind: "arg";
-                path: "timestamp";
+                kind: "account";
+                path: "config.timestamp";
+                account: "playerMintConfig";
               }
             ];
           };
@@ -387,16 +547,7 @@ export type Tradetalk = {
           address: "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL";
         }
       ];
-      args: [
-        {
-          name: "playerId";
-          type: "string";
-        },
-        {
-          name: "timestamp";
-          type: "string";
-        }
-      ];
+      args: [];
     },
     {
       name: "initQuote";
@@ -858,15 +1009,6 @@ export type Tradetalk = {
         },
         {
           name: "quoteTokenMint";
-          writable: true;
-          pda: {
-            seeds: [
-              {
-                kind: "const";
-                value: [113, 117, 111, 116, 101];
-              }
-            ];
-          };
         },
         {
           name: "payerQuoteTokenAccount";
@@ -1240,6 +1382,7 @@ export type Tradetalk = {
       accounts: [
         {
           name: "config";
+          writable: true;
           pda: {
             seeds: [
               {
@@ -1301,8 +1444,20 @@ export type Tradetalk = {
       ];
       args: [
         {
-          name: "projectedPoints";
+          name: "points";
           type: "f64";
+        },
+        {
+          name: "isProjected";
+          type: "bool";
+        },
+        {
+          name: "setMintDisabled";
+          type: "bool";
+        },
+        {
+          name: "setPayoutEnabled";
+          type: "bool";
         }
       ];
     }
@@ -1340,6 +1495,21 @@ export type Tradetalk = {
       code: 6002;
       name: "unauthorizedAuthority";
       msg: "Unauthorized authority.";
+    },
+    {
+      code: 6003;
+      name: "mintingNotEnabled";
+      msg: "Tokens can only be minted before the game starts.";
+    },
+    {
+      code: 6004;
+      name: "payoutNotEnabled";
+      msg: "Payout can only happen after the game ends.";
+    },
+    {
+      code: 6005;
+      name: "adminOnlyUnlock";
+      msg: "Admin can only lock and unlock minting/payout.";
     }
   ];
   types: [
@@ -1367,6 +1537,14 @@ export type Tradetalk = {
           {
             name: "playerTokenBump";
             type: "u8";
+          },
+          {
+            name: "mintingEnabled";
+            type: "bool";
+          },
+          {
+            name: "payoutEnabled";
+            type: "bool";
           },
           {
             name: "totalDepositedAmount";
@@ -1402,6 +1580,10 @@ export type Tradetalk = {
           },
           {
             name: "projectedPoints";
+            type: "f64";
+          },
+          {
+            name: "actualPoints";
             type: "f64";
           },
           {
