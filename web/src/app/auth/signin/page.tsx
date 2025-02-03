@@ -38,10 +38,12 @@ function SignInContent() {
       console.log("capsulePublicKey", capsulePublicKey);
       debugger;
       if (!!publicKey || !!capsulePublicKey) {
+        const signInKey = publicKey ?? capsulePublicKey;
         const result = await signIn("capsule", {
           userId: (data as any).userId,
-          email: email ?? undefined,
-          publicKey: capsulePublicKey ?? undefined,
+          email: email,
+          publicKey: signInKey,
+          capsuleUserId: (data as any).userId ?? "undefined",
           serializedSession,
           redirect: false,
         });

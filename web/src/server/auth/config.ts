@@ -4,6 +4,7 @@ import { type DefaultSession, type NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { db } from "@/server/db";
 import { capsuleServer } from "../capsule";
+import { PublicKey } from "@solana/web3.js";
 
 /**
  * Module augmentation for `next-auth` types. Allows us to add custom properties to the `session`
@@ -15,6 +16,7 @@ declare module "next-auth" {
   interface Session extends DefaultSession {
     user: {
       id: string;
+      wallets: string[];
       // ...other properties
       // role: UserRole;
     } & DefaultSession["user"];
@@ -43,11 +45,15 @@ export const authConfig = {
     async session({ session, token }: { session: any; token: any }) {
       const dbuser = await db.user.findUnique({
         where: { id: token.userId as string },
+        include: {
+          wallets: true,
+        },
       });
       const email = dbuser?.email;
       if (session.user) {
         session.user.id = token.userId as string;
         session.user.email = email as string;
+        session.user.wallets = dbuser?.wallets.map((wallet) => wallet.address);
       }
       return session;
     },
@@ -71,7 +77,7 @@ export const authConfig = {
           if (!credentials) {
             throw new Error("No credentials provided");
           }
-          if (credentials.capsuleUserId) {
+          if (credentials.capsuleUserId !== "undefined") {
             console.log("A");
             capsuleServer.importSession(
               credentials.serializedSession as string
@@ -142,6 +148,12 @@ export const authConfig = {
 
             return user;
           } else if (credentials.publicKey) {
+            try {
+              const pk = new PublicKey(credentials.publicKey as string);
+            } catch (error) {
+              console.error("Invalid public key", error);
+              return null;
+            }
             console.log("G");
             const wallet = await db.wallet.findUnique({
               where: {
