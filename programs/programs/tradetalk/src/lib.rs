@@ -66,4 +66,9 @@ pub mod tradetalk {
             .unwrap();
         Ok(())
     }
+
+    pub fn close_accounts(ctx: Context<CloseMintAccounts>) -> Result<()> {
+        ctx.accounts.close_accounts().unwrap();
+        Ok(())
+    }
 }

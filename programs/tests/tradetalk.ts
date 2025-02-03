@@ -676,7 +676,7 @@ describe("tradetalk", () => {
       });
   });
 
-  it("Can Create Market!", async () => {
+  it("Can Operate Market!", async () => {
     marketAddress = await createMarket(
       connection,
       maker,
@@ -1081,20 +1081,7 @@ describe("tradetalk", () => {
           "totalDepositedAmount",
           mintConfigAccount.totalDepositedAmount.toString()
         );
-        const mintRecordMakerAccount = await program.account.mintRecord.fetch(
-          mintRecordMaker
-        );
-        console.log(
-          "mintRecordMakerAccount",
-          mintRecordMakerAccount.depositedAmount.toString()
-        );
-        const mintRecordTakerAccount = await program.account.mintRecord.fetch(
-          mintRecordTaker
-        );
-        console.log(
-          "mintRecordTakerAccount",
-          mintRecordTakerAccount.depositedAmount.toString()
-        );
+
         assert(mintConfigAccount.payoutEnabled === true);
         const projectionOracleAccount = await program.account.playerStats.fetch(
           playerStats
@@ -1214,10 +1201,27 @@ describe("tradetalk", () => {
       .then(confirm)
       .then(log)
       .then(async () => {
-        const makerQuote = await getAccount(connection, makerAtaQuote);
-        console.log("maker quote amount after", makerQuote.amount);
-        const makerPlayer = await getAccount(connection, makerAtaPlayer);
-        console.log("maker player amount after", makerPlayer.amount);
+        // const makerQuote = await getAccount(connection, makerAtaQuote);
+        // console.log("maker quote amount after", makerQuote.amount);
+        try {
+          const makerPlayer = await getAccount(connection, makerAtaPlayer);
+          assert(false, "maker player account should not exist");
+        } catch (e) {
+          assert(e.toString().includes("TokenAccountNotFoundError"));
+        }
+        try {
+          const mintRecordMakerAccount = await program.account.mintRecord.fetch(
+            mintRecordMaker
+          );
+          assert(false, "mint record account should not exist");
+        } catch (e) {
+          console.log(e);
+          assert(
+            e
+              .toString()
+              .includes("Error: Account does not exist or has no data")
+          );
+        }
       });
   });
 
@@ -1264,12 +1268,25 @@ describe("tradetalk", () => {
       .then(async () => {
         const takerQuote = await getAccount(connection, takerAtaQuote);
         console.log("taker quote amount after", takerQuote.amount);
-        const takerPlayer = await getAccount(connection, takerAtaPlayer);
-        console.log("taker player amount after", takerPlayer.amount);
-
-        const vaultAccount = await getAccount(connection, vault);
-        console.log("vault", vaultAccount.amount);
-        // assert(vaultAccount.amount.toString() === "0");
+        try {
+          const takerPlayer = await getAccount(connection, takerAtaPlayer);
+          assert(false, "taker player account should not exist");
+        } catch (e) {
+          assert(e.toString().includes("TokenAccountNotFoundError"));
+        }
+        try {
+          const mintRecordTakerAccount = await program.account.mintRecord.fetch(
+            mintRecordTaker
+          );
+          assert(false, "mint record account should not exist");
+        } catch (e) {
+          console.log(e);
+          assert(
+            e
+              .toString()
+              .includes("Error: Account does not exist or has no data")
+          );
+        }
       });
   });
 
@@ -1319,15 +1336,94 @@ describe("tradetalk", () => {
           thirdPartyAtaQuote
         );
         console.log("thirdParty quote amount after", thirdPartyQuote.amount);
-        const thirdPartyPlayer = await getAccount(
-          connection,
-          thirdPartyAtaPlayer
-        );
-        console.log("thirdParty player amount after", thirdPartyPlayer.amount);
-
+        try {
+          const thirdPartyPlayer = await getAccount(
+            connection,
+            thirdPartyAtaPlayer
+          );
+          assert(false, "third party player account should not exist");
+        } catch (e) {
+          console.log(e);
+          assert(e.toString().includes("TokenAccountNotFoundError"));
+        }
+        try {
+          const mintRecordThirdPartyAccount =
+            await program.account.mintRecord.fetch(mintRecordThirdParty);
+          assert(false, "mint record account should not exist");
+        } catch (e) {
+          assert(
+            e
+              .toString()
+              .includes("Error: Account does not exist or has no data")
+          );
+        }
         const vaultAccount = await getAccount(connection, vault);
         console.log("vault", vaultAccount.amount);
         assert(vaultAccount.amount.toString() === "0");
+      });
+  });
+
+  it("Close Accounts", async () => {
+    const context = {
+      admin: provider.publicKey,
+      quoteTokenMint: quote_token_mint,
+      playerStats,
+      mintConfig,
+      vault,
+      tokenProgram: TOKEN_PROGRAM_ID,
+      associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
+      systemProgram: SystemProgram.programId,
+    };
+
+    Object.entries(context).forEach(([key, value]) => {
+      console.log(key, value.toBase58());
+    });
+    console.log("close accounts before");
+
+    const tx = await program.methods
+      .closeAccounts()
+      .accountsStrict(context)
+      .rpc()
+      .then(confirm)
+      .then(log)
+      .then(async () => {
+        console.log("close accounts after1");
+
+        try {
+          const mintConfigAccount =
+            await program.account.playerMintConfig.fetch(mintConfig);
+          assert(false, "mint config account should not exist");
+        } catch (e) {
+          console.log(e);
+          assert(
+            e
+              .toString()
+              .includes("Error: Account does not exist or has no data")
+          );
+        }
+        console.log("close accounts after2");
+
+        try {
+          const playerStatsAccount = await program.account.playerStats.fetch(
+            playerStats
+          );
+          assert(false, "player stats account should not exist");
+        } catch (e) {
+          console.log(e);
+          assert(
+            e
+              .toString()
+              .includes("Error: Account does not exist or has no data")
+          );
+        }
+        console.log("close accounts after3");
+        try {
+          const vaultAccount = await getAccount(connection, vault);
+          assert(false, "vault account should not exist");
+        } catch (e) {
+          console.log(e);
+          assert(e.toString().includes("TokenAccountNotFoundError"));
+        }
       });
   });
 });

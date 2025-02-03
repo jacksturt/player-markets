@@ -1,9 +1,12 @@
 use crate::state::{mint::PlayerMintConfig, MintRecord, PlayerStats};
-use anchor_lang::prelude::*;
+use anchor_lang::{prelude::*, solana_program::pubkey::Pubkey};
 use anchor_spl::{
     associated_token::AssociatedToken,
     token::Token,
-    token_interface::{burn, transfer_checked, Burn, Mint, TokenAccount, TransferChecked},
+    token_interface::{
+        burn, close_account, transfer_checked, Burn, CloseAccount, Mint, TokenAccount,
+        TransferChecked,
+    },
 };
 
 use crate::errors::OracleError;
@@ -12,14 +15,7 @@ use crate::errors::OracleError;
 pub struct Payout<'info> {
     #[account(mut)]
     pub payer: Signer<'info>,
-    #[account(
-        mut,
-        seeds = [b"quote"],
-        mint::authority = quote_token_mint,
-        mint::decimals = 6,
-        bump,
-    )]
-    pub quote_token_mint: InterfaceAccount<'info, Mint>,
+    pub quote_token_mint: Box<InterfaceAccount<'info, Mint>>,
     #[account(
         mut,
         associated_token::mint = quote_token_mint,
@@ -69,21 +65,22 @@ impl<'info> Payout<'info> {
         if !self.mint_config.payout_enabled {
             return Err(OracleError::PayoutNotEnabled.into());
         }
-        self.burn_player_tokens()?;
         self.transfer_quote_tokens()?;
+        self.burn_player_tokens()?;
+        self.close_mint_record()?;
         Ok(())
     }
 
     pub fn transfer_quote_tokens(&mut self) -> Result<()> {
-        msg!("vault total: {}", self.vault.amount);
-        msg!("player token supply: {}", self.player_token_mint.supply);
+        // How much is left in the vault after all payouts are made
         let vault_remaining = self.vault.amount
             - (self.player_token_mint.supply as f64 * self.player_stats.actual_points) as u64;
-        msg!("vault remaining: {}", vault_remaining);
 
+        // Percentage of the total deposited amount that is due to the minter
         let percent_due = self.mint_record.deposited_amount as f64
             / self.mint_config.total_deposited_amount as f64;
 
+        // How much is due to the minter
         let minter_rewards = vault_remaining as f64 * percent_due;
         let cpi_program = self.token_program.to_account_info();
         let bump = self.mint_config.config_bump;
@@ -105,17 +102,16 @@ impl<'info> Payout<'info> {
 
         let cpi_ctx = CpiContext::new_with_signer(cpi_program, cpi_accounts, signer_seeds);
 
+        // How much is due based on player tokens the person owns
         let amount = (self.player_stats.actual_points
             * self.payer_player_token_account.amount as f64) as u64;
-        msg!("tokens: {}", self.payer_player_token_account.amount);
-        msg!("amount: {}", amount);
-        msg!("minter_rewards: {}", minter_rewards);
         transfer_checked(
             cpi_ctx,
             amount + minter_rewards as u64,
             self.quote_token_mint.decimals,
         )?;
         self.mint_config.total_deposited_amount -= self.mint_record.deposited_amount;
+        self.mint_record.deposited_amount = 0;
         Ok(())
     }
 
@@ -127,18 +123,21 @@ impl<'info> Payout<'info> {
         };
 
         let ctx = CpiContext::new(self.token_program.to_account_info(), cpi_accounts);
-        burn(ctx, self.payer_player_token_account.amount)
+        burn(ctx, self.payer_player_token_account.amount)?;
+        let close_account_ctx = CpiContext::new(
+            self.token_program.to_account_info(),
+            CloseAccount {
+                account: self.payer_player_token_account.to_account_info(),
+                destination: self.payer.to_account_info(),
+                authority: self.payer.to_account_info(),
+            },
+        );
+        close_account(close_account_ctx)?;
+        Ok(())
     }
 
-    pub fn close_accounts(&mut self) -> Result<()> {
-        self.payer_player_token_account
-            .close(self.payer.to_account_info())?;
+    pub fn close_mint_record(&mut self) -> Result<()> {
         self.mint_record.close(self.payer.to_account_info())?;
-        if self.mint_config.total_deposited_amount == 0 {
-            self.vault.close(self.payer.to_account_info())?;
-            self.mint_config.close(self.payer.to_account_info())?;
-            self.player_stats.close(self.payer.to_account_info())?;
-        }
         Ok(())
     }
 }
