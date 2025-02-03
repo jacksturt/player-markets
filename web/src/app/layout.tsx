@@ -8,7 +8,7 @@ import {
 } from "@/components/solana/solana-provider";
 import { ReactQueryProvider } from "./react-query-provider";
 import { TRPCReactProvider } from "@/trpc/react";
-import { SessionProvider } from "next-auth/react";
+import { SessionProvider, useSession } from "next-auth/react";
 import Footer from "@/components/ui/footer";
 import { Toaster } from "react-hot-toast";
 import { Suspense, useEffect, useState } from "react";
@@ -82,35 +82,46 @@ function AccountButtons() {
   const router = useRouter();
   const pathname = usePathname();
   const { publicKey } = useWallet();
+  const { data: session } = useSession();
 
   useEffect(() => {
     capsule.isSessionActive().then(setIsActive);
-  }, [setIsActive]);
+  }, [setIsActive, session, publicKey]);
+
+  if (publicKey) {
+    return <WalletButton />;
+  }
+
+  if (!session) {
+    return (
+      <Button
+        onClick={() => {
+          console.log("redirecting to signin");
+          router.push(
+            `/auth/signin?callbackUrl=${encodeURIComponent(pathname)}`
+          );
+        }}
+      >
+        Sign in
+      </Button>
+    );
+  }
 
   if (!isActive) {
     return (
-      <>
-        <Button
-          onClick={() => {
-            console.log("redirecting to signin");
-            router.push(
-              `/auth/signin?callbackUrl=${encodeURIComponent(pathname)}`
-            );
-          }}
-        >
-          Sign in
-        </Button>
-      </>
+      <Button
+        onClick={() => {
+          console.log("redirecting to signin");
+          router.push(
+            `/auth/signin?callbackUrl=${encodeURIComponent(pathname)}`
+          );
+        }}
+      >
+        Sign in
+      </Button>
     );
   }
-  console.log("isActive", isActive);
-  console.log("capsule.getAddress()", capsule.getAddress());
-  if (!capsule.getAddress()) {
-    if (publicKey) {
-      return <WalletButton />;
-    }
-    return null;
-  }
+
   const pk = new PublicKey(capsule.getAddress()!);
   return (
     <div

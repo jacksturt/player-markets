@@ -20,47 +20,49 @@ function SignInContent() {
   const searchParams = useSearchParams();
   const { publicKey } = useWallet();
   const callbackUrl = searchParams.get("callbackUrl") ?? "/";
+  const handleCapsuleSetup = async () => {
+    console.log("handleCapsuleSetup");
+    try {
+      const { data } = await capsule.userSetupAfterLogin();
+      console.log(data);
+
+      const serializedSession = await capsule.exportSession();
+      const isFullyLoggedIn = await capsule.isFullyLoggedIn();
+      console.log("isFullyLoggedIn", isFullyLoggedIn, data);
+      const email = capsule.getEmail();
+      const capsulePublicKey = capsule.getAddress();
+      const wallets = capsule.getWallets();
+      console.log("email", email);
+      console.log("publicKey", publicKey);
+      console.log("wallets", wallets);
+      console.log("capsulePublicKey", capsulePublicKey);
+      debugger;
+      if (!!publicKey || !!capsulePublicKey) {
+        const result = await signIn("capsule", {
+          userId: (data as any).userId,
+          email: email ?? undefined,
+          publicKey: capsulePublicKey ?? undefined,
+          serializedSession,
+          redirect: false,
+        });
+        if (result?.error) {
+          console.error("NextAuth sign in failed:", result.error);
+        } else if (result?.ok) {
+          router.push(callbackUrl);
+        }
+      }
+    } catch (error) {
+      console.error("Error during Capsule setup:", error);
+    }
+  };
 
   useEffect(() => {
     let isMounted = true;
 
     const checkCapsuleSession = async () => {
-      const handleCapsuleSetup = async () => {
-        try {
-          const { data } = await capsule.userSetupAfterLogin();
-          console.log(data);
-
-          const serializedSession = await capsule.exportSession();
-          const isFullyLoggedIn = await capsule.isFullyLoggedIn();
-          console.log("isFullyLoggedIn", isFullyLoggedIn, data);
-          const email = capsule.getEmail();
-          const capsulePublicKey = capsule.getAddress();
-          const wallets = capsule.getWallets();
-          console.log("email", email);
-          console.log("publicKey", publicKey);
-          console.log("wallets", wallets);
-          console.log("capsulePublicKey", capsulePublicKey);
-          debugger;
-          if (!!publicKey || !!capsulePublicKey) {
-            const result = await signIn("capsule", {
-              userId: (data as any).userId,
-              email: email ?? undefined,
-              publicKey: publicKey ?? undefined,
-              serializedSession,
-              redirect: false,
-            });
-            if (result?.error) {
-              console.error("NextAuth sign in failed:", result.error);
-            } else if (result?.ok) {
-              router.push(callbackUrl);
-            }
-          }
-        } catch (error) {
-          console.error("Error during Capsule setup:", error);
-        }
-      };
       try {
         const isActive = await capsule.isSessionActive();
+        console.log("isActive", isActive, isMounted);
         if (isActive && isMounted) {
           await handleCapsuleSetup();
         }
@@ -79,6 +81,7 @@ function SignInContent() {
         isOpen={isOpen}
         onClose={() => {
           setIsOpen(false);
+          handleCapsuleSetup();
           router.push(callbackUrl);
         }}
         appName="Your App Name"

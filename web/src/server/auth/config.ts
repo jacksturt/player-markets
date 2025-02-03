@@ -72,6 +72,7 @@ export const authConfig = {
             throw new Error("No credentials provided");
           }
           if (credentials.capsuleUserId) {
+            console.log("A");
             capsuleServer.importSession(
               credentials.serializedSession as string
             );
@@ -80,7 +81,10 @@ export const authConfig = {
             });
 
             if (!user) {
+              console.log("B");
+
               if (credentials.email) {
+                console.log("C");
                 user = await db.user.create({
                   data: {
                     capsuleUserId: credentials.capsuleUserId as string,
@@ -88,6 +92,7 @@ export const authConfig = {
                   },
                 });
               } else {
+                console.log("D");
                 user = await db.user.create({
                   data: {
                     capsuleUserId: credentials.capsuleUserId as string,
@@ -97,6 +102,7 @@ export const authConfig = {
             }
 
             if (user && !user.email && credentials.email) {
+              console.log("E");
               await db.user.update({
                 where: { id: user.id },
                 data: {
@@ -115,6 +121,7 @@ export const authConfig = {
               walletAddresses.length === 0 ||
               !walletAddresses.includes(credentials.publicKey as string)
             ) {
+              console.log("F");
               const wallet = await db.wallet.create({
                 data: {
                   address: credentials.publicKey as string,
@@ -135,6 +142,7 @@ export const authConfig = {
 
             return user;
           } else if (credentials.publicKey) {
+            console.log("G");
             const wallet = await db.wallet.findUnique({
               where: {
                 address: credentials.publicKey as string,
@@ -144,18 +152,28 @@ export const authConfig = {
               },
             });
             if (wallet?.user) {
+              console.log("H");
               return wallet.user;
             }
-
-            const user = await db.user.create({});
+            console.log("I");
             const newWallet = await db.wallet.create({
               data: {
                 address: credentials.publicKey as string,
-                userId: user.id,
+                user: {
+                  create: {},
+                },
+              },
+            });
+            const walletWithUser = await db.wallet.findUnique({
+              where: {
+                id: newWallet.id,
+              },
+              include: {
+                user: true,
               },
             });
             await db.user.update({
-              where: { id: user.id },
+              where: { id: walletWithUser?.user?.id },
               data: {
                 wallets: {
                   connect: {
@@ -164,7 +182,10 @@ export const authConfig = {
                 },
               },
             });
-            return user;
+            if (walletWithUser?.user) {
+              return walletWithUser?.user;
+            }
+            return null;
           }
           return null;
         } catch (error) {
