@@ -8,6 +8,8 @@ import { TRPCReactProvider } from "@/trpc/react";
 import { SessionProvider } from "next-auth/react";
 import Footer from "@/components/ui/footer";
 import { Toaster } from "react-hot-toast";
+import Banner from "@/components/home/banner";
+import Navbar from "@/components/shared/navbar";
 
 const links: { label: string; path: string }[] = [
   { label: "Account", path: "/account" },
@@ -21,18 +23,19 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className="bg-background overflow-x-hidden">
-      <body className="bg-zinc-900">
+    <html lang="en" className="bg-background">
+      <body className="h-screen overflow-hidden bg-[url('/background.png')] bg-cover bg-center bg-fixed">
+        {/* Dark overlay */}
         <SessionProvider>
           <ReactQueryProvider>
             <ClusterProvider>
               <SolanaProvider>
                 <TRPCReactProvider>
                   <Toaster />
-
-                  <main className="relative  max-w-screen min-h-screen bg-background">
-                    {children}
-                    <Footer />
+                  <main className="relative max-w-screen h-full flex flex-col gap-5">
+                    <Banner />
+                    <Navbar />
+                    <div className="flex-1 overflow-y-auto">{children}</div>
                   </main>
                 </TRPCReactProvider>
               </SolanaProvider>

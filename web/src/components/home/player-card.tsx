@@ -19,9 +19,9 @@ interface PlayerData {
 export default function PlayerCard({ playerData }: { playerData: PlayerData }) {
   const { bookmarkedPlayers, setBookmarkedPlayers } = useFiltersStore();
   return (
-    <div className="w-[350px] mx-auto h-full flex flex-col gap-2">
+    <div className="flex flex-col gap-2">
       <Link href={`/home/${playerData.name}`}>
-        <div className="w-full h-[500px] rounded-xl relative overflow-hidden">
+        <div className="w-[251px] h-[311px] rounded-xl relative overflow-hidden">
           <div
             className="absolute inset-0"
             style={{
@@ -56,7 +56,7 @@ export default function PlayerCard({ playerData }: { playerData: PlayerData }) {
           </div>
         </div>
       </Link>
-      <div className="w-full flex items-center justify-between px-3">
+      {/* <div className="w-full flex items-center justify-between px-3">
         <div className="flex items-center gap-5">
           <div className="flex items-center gap-1">
             <Comments size={20} />
@@ -88,7 +88,7 @@ export default function PlayerCard({ playerData }: { playerData: PlayerData }) {
             }
           />
         </button>
-      </div>
+      </div> */}
     </div>
   );
 }

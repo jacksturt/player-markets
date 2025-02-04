@@ -107,9 +107,11 @@ const playerData: Player[] = [
 
 export default function Home() {
   return (
-    <div className="h-full py-5 flex flex-col gap-5 justify-center">
-      <Filters />
-      <PlayersList playerData={playerData} />
+    <div className="relative h-full flex flex-col gap-5 justify-center">
+      {/* <Filters /> */}
+      <div className="flex-1 overflow-y-auto">
+        <PlayersList playerData={playerData} />
+      </div>
     </div>
   );
 }
