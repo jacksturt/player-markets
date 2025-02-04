@@ -19,11 +19,6 @@ const config: Config = {
         clashGrotesk: ["Clash Grotesk Reg", "sans-serif"],
         clashGroteskMed: ["Clash Grotesk Med", "sans-serif"],
       },
-      borderRadius: {
-        lg: "var(--radius)",
-        md: "calc(var(--radius) - 2px)",
-        sm: "calc(var(--radius) - 4px)",
-      },
       colors: {
         background: "hsl(var(--background))",
         foreground: "hsl(var(--foreground))",

@@ -1,4 +1,4 @@
-export default function TrendDown({ size }: { size: number }) {
+export default function TrendDownIcon({ size }: { size: number }) {
   return (
     <svg
       width={size}
