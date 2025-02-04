@@ -231,14 +231,13 @@ export default function MarketFeatureNew({
 
   const isAdmin = true;
   return (
-    <div className="w-full flex flex-col gap-[79px] px-14 text-white">
+    <div className="w-full flex flex-col gap-[79px] px-14 text-white mb-20">
       <div className="w-full flex items-start gap-10">
         <div className="w-full flex flex-col gap-10">
           <PlayerCard />
           <ChartComponent data={[]} />
           <DataTablesPlayer />
         </div>
-        {/* TODO: buy/sell card */}
         <div className="w-[450px]">
           <Trade />
         </div>

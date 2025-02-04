@@ -282,7 +282,7 @@ export const Trade = () => {
                   alt="player"
                   width={29}
                   height={29}
-                  className="rounded-full object-cover"
+                  className="rounded-full object-cover w-[28px] h-[28px]"
                 />
                 <p className="text-white font-clashGroteskMed text-[15px] leading-[15px]">
                   FROM TOKEN
@@ -312,7 +312,7 @@ export const Trade = () => {
                   alt="player"
                   width={29}
                   height={29}
-                  className="rounded-full object-cover"
+                  className="rounded-full object-cover w-[28px] h-[28px]"
                 />
                 <p className="text-white font-clashGroteskMed text-[15px] leading-[15px]">
                   TO TOKEN

@@ -79,11 +79,11 @@ const TokenPriceChart = ({ data }: { data: PriceDataPoint[] }) => {
       </div>
 
       {/* Time Range Picker */}
-      <div className="flex gap-2 justify-center">
+      <div className="flex gap-2 justify-between pr-[50px]">
         {["1m", "15m", "1H", "4H", "1D", "ALL"].map((range) => (
           <button
             key={range}
-            className={`px-4 py-2 rounded-full text-[10px] text-white 
+            className={`px-[32px] py-[12px] rounded-full text-[13px] text-white 
               ${
                 range === timeRange
                   ? "bg-[#353535] text-black"
