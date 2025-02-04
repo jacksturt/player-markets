@@ -77,12 +77,12 @@ export function InitPlayerMint() {
 
 export function UpdateProjectionOracle() {
   const { updateProjectionOracle } = useMarkets();
-  const playerId = "23235";
-  const projection = 13.371;
-  const timestamp = "1737625327577";
-  const isProjected = true;
+  const playerId = "21831";
+  const projection = 15.69;
+  const timestamp = "1738629789018";
+  const isProjected = false;
   const setMintingDisabled = false;
-  const setPayoutEnabled = false;
+  const setPayoutEnabled = true;
 
   return (
     <button

@@ -50,6 +50,7 @@ import { Global } from "./global";
 import { AnchorProvider } from "@coral-xyz/anchor";
 import { CapsuleSolanaWeb3Signer } from "@usecapsule/solana-web3.js-v1-integration";
 import { capsule } from "@/lib/capsule";
+import { Wallet } from "@solana/wallet-adapter-react";
 export interface SetupData {
   setupNeeded: boolean;
   instructions: TransactionInstruction[];
@@ -177,14 +178,17 @@ export class ManifestClient {
    */
   public static async getClientForMarket(
     provider: AnchorProvider,
-    marketPk: PublicKey
+    marketPk: PublicKey,
+    wallet?: Wallet
   ): Promise<ManifestClient> {
     const connection = provider.connection;
-    const solanaSigner = new CapsuleSolanaWeb3Signer(
-      capsule,
-      provider.connection
-    );
-    const payer = new PublicKey(solanaSigner.address!);
+    let solanaSigner: CapsuleSolanaWeb3Signer | null = null;
+    if (!wallet) {
+      solanaSigner = new CapsuleSolanaWeb3Signer(capsule, provider.connection);
+    }
+
+    const payer =
+      wallet?.adapter.publicKey ?? new PublicKey(solanaSigner!.address!);
     const marketObject: Market = await Market.loadFromAddress({
       connection: connection,
       address: marketPk,
@@ -251,8 +255,12 @@ export class ManifestClient {
       transaction.add(createWrapperIx);
       transaction.add(claimSeatIx);
       await transaction.sign(wrapperKeypair);
-      const signed = await solanaSigner.signTransaction(transaction);
-      await provider.connection.sendRawTransaction(signed.serialize());
+      if (!wallet) {
+        const signed = await solanaSigner!.signTransaction(transaction);
+        await provider.connection.sendRawTransaction(signed.serialize());
+      } else {
+        await wallet.adapter.sendTransaction(transaction, provider.connection);
+      }
       const wrapper = await Wrapper.loadFromAddress({
         connection,
         address: wrapperKeypair.publicKey,
@@ -302,8 +310,12 @@ export class ManifestClient {
       wrapperState: userWrapper.pubkey,
     });
     transaction.add(claimSeatIx);
-    const signed = await solanaSigner.signTransaction(transaction);
-    await provider.connection.sendRawTransaction(signed.serialize());
+    if (!wallet) {
+      const signed = await solanaSigner!.signTransaction(transaction);
+      await provider.connection.sendRawTransaction(signed.serialize());
+    } else {
+      await wallet.adapter.sendTransaction(transaction, provider.connection);
+    }
     const wrapper = await Wrapper.loadFromAddress({
       connection,
       address: userWrapper.pubkey,

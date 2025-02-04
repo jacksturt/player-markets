@@ -2,7 +2,7 @@
 
 import { getTradetalkProgram, getTradetalkProgramId } from "@project/anchor";
 import { BN } from "@coral-xyz/anchor";
-import { useConnection } from "@solana/wallet-adapter-react";
+import { useConnection, useWallet } from "@solana/wallet-adapter-react";
 import {
   Cluster,
   Keypair,
@@ -39,6 +39,7 @@ export function useQuoteToken() {
   const { cluster } = useCluster();
   const transactionToast = useTransactionToast();
   const provider = useAnchorProvider();
+  const { publicKey } = useWallet();
   const programId = useMemo(
     () => getTradetalkProgramId(cluster.network as Cluster),
     [cluster]
@@ -76,13 +77,17 @@ export function useQuoteToken() {
   const quoteTokenAccount = useQuery({
     queryKey: ["quote-token-account", { cluster }],
     queryFn: async () => {
-      return getAssociatedTokenAddressSync(
-        quoteTokenMint,
-        capsulePubkey.data!,
-        true
-      );
+      if (!publicKey) {
+        return getAssociatedTokenAddressSync(
+          quoteTokenMint,
+          capsulePubkey.data!,
+          true
+        );
+      } else {
+        return getAssociatedTokenAddressSync(quoteTokenMint, publicKey);
+      }
     },
-    enabled: !!capsulePubkey.data,
+    enabled: !!capsulePubkey.data || !!publicKey,
   });
 
   const initialize = useMutation({
@@ -124,37 +129,55 @@ export function useQuoteToken() {
   const faucetQuote = useMutation({
     mutationKey: ["quote-token", "faucet", { cluster }],
     mutationFn: async () => {
-      const solanaSigner = new CapsuleSolanaWeb3Signer(
-        capsule,
-        provider.connection
-      );
+      if (!publicKey) {
+        const solanaSigner = new CapsuleSolanaWeb3Signer(
+          capsule,
+          provider.connection
+        );
 
-      const ix = await program.methods
-        .faucetQuote(new BN(10000000000000))
-        .accountsStrict({
-          payer: capsulePubkey.data!,
-          quoteTokenMint,
-          config: quoteConfig,
-          destination: quoteTokenAccount.data!,
-          tokenProgram: TOKEN_PROGRAM_ID,
-          associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
-          systemProgram: SystemProgram.programId,
-        })
-        .instruction();
+        const ix = await program.methods
+          .faucetQuote(new BN(10000000000000))
+          .accountsStrict({
+            payer: capsulePubkey.data!,
+            quoteTokenMint,
+            config: quoteConfig,
+            destination: quoteTokenAccount.data!,
+            tokenProgram: TOKEN_PROGRAM_ID,
+            associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
+            systemProgram: SystemProgram.programId,
+          })
+          .instruction();
 
-      const blockhash = await provider.connection.getLatestBlockhash();
-      await provider.connection.getLatestBlockhash();
+        const blockhash = await provider.connection.getLatestBlockhash();
+        await provider.connection.getLatestBlockhash();
 
-      const transaction = new Transaction({
-        feePayer: capsulePubkey.data!,
-        blockhash: blockhash.blockhash,
-        lastValidBlockHeight: blockhash.lastValidBlockHeight,
-      }).add(ix);
+        const transaction = new Transaction({
+          feePayer: capsulePubkey.data!,
+          blockhash: blockhash.blockhash,
+          lastValidBlockHeight: blockhash.lastValidBlockHeight,
+        }).add(ix);
 
-      const signed = await solanaSigner.signTransaction(transaction);
+        const signed = await solanaSigner.signTransaction(transaction);
 
-      const signature = await connection.sendRawTransaction(signed.serialize());
-      return signature;
+        const signature = await connection.sendRawTransaction(
+          signed.serialize()
+        );
+        return signature;
+      } else {
+        const signature = await program.methods
+          .faucetQuote(new BN(10000000000000))
+          .accountsStrict({
+            payer: publicKey,
+            quoteTokenMint,
+            config: quoteConfig,
+            destination: quoteTokenAccount.data!,
+            tokenProgram: TOKEN_PROGRAM_ID,
+            associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
+            systemProgram: SystemProgram.programId,
+          })
+          .rpc();
+        return signature;
+      }
     },
     onSuccess: (signature) => {
       transactionToast(signature);
@@ -332,7 +355,7 @@ export function useMarkets() {
 
   const updateProjectionOracle = useMutation({
     mutationKey: ["markets", "update-projection-oracle", { cluster }],
-    mutationFn: ({
+    mutationFn: async ({
       playerId,
       timestamp,
       projection,
@@ -359,7 +382,7 @@ export function useMarkets() {
         ],
         program.programId
       )[0];
-      return program.methods
+      const signature = await program.methods
         .updateProjectionOracle(
           projection,
           isProjected,
@@ -372,9 +395,14 @@ export function useMarkets() {
           playerStats,
         })
         .rpc();
+      return { signature, playerStats };
     },
-    onSuccess: (signature) => {
-      transactionToast(signature);
+    onSuccess: async (data: { signature: string; playerStats: PublicKey }) => {
+      transactionToast(data.signature);
+      const playerStatsAccount = await program.account.playerStats.fetch(
+        data.playerStats
+      );
+      console.log("playerStatsAccount", playerStatsAccount);
       return accounts.refetch();
     },
     onError: () => toast.error("Failed to initialize account"),
@@ -392,6 +420,7 @@ export function usePlayerMarket() {
   const transactionToast = useTransactionToast();
   const { program, accounts, quoteToken } = useQuoteToken();
   const provider = useAnchorProvider();
+  const { publicKey, wallet } = useWallet();
   const queryClient = useQueryClient();
   const { marketAddress: marketAddressParam } = useParams();
   const marketAddress =
@@ -457,16 +486,38 @@ export function usePlayerMarket() {
     enabled: !!playerId.data && !!timestamp.data,
   });
 
+  const playerStatsAccount = useQuery({
+    queryKey: ["player-stats-account", { cluster }],
+    queryFn: () => {
+      if (!playerId.data || !timestamp.data) return;
+      const playerStats = PublicKey.findProgramAddressSync(
+        [
+          Buffer.from("player_stats"),
+          Buffer.from(playerId.data),
+          Buffer.from(timestamp.data),
+        ],
+        program.programId
+      )[0];
+      const playerStatsAccount = program.account.playerStats.fetch(playerStats);
+      return playerStatsAccount;
+    },
+    enabled: !!playerId.data && !!timestamp.data,
+  });
+
   const quoteTokenAccount = useQuery({
     queryKey: ["quote-token-account", { cluster }],
     queryFn: async () => {
-      return getAssociatedTokenAddressSync(
-        quoteToken,
-        capsulePubkey.data!,
-        true
-      );
+      if (!publicKey) {
+        return getAssociatedTokenAddressSync(
+          quoteToken,
+          capsulePubkey.data!,
+          true
+        );
+      } else {
+        return getAssociatedTokenAddressSync(quoteToken, publicKey);
+      }
     },
-    enabled: !!capsulePubkey.data,
+    enabled: !!capsulePubkey.data || !!publicKey,
   });
 
   const latestTransaction = useQuery({
@@ -486,14 +537,18 @@ export function usePlayerMarket() {
   const playerTokenAccount = useQuery({
     queryKey: ["player-token-account", { cluster }],
     queryFn: async () => {
-      const playerTokenAccount = getAssociatedTokenAddressSync(
-        playerTokenMint.data!,
-        capsulePubkey.data!,
-        true
-      );
-      return playerTokenAccount;
+      if (!publicKey) {
+        const playerTokenAccount = getAssociatedTokenAddressSync(
+          playerTokenMint.data!,
+          capsulePubkey.data!,
+          true
+        );
+        return playerTokenAccount;
+      } else {
+        return getAssociatedTokenAddressSync(playerTokenMint.data!, publicKey);
+      }
     },
-    enabled: !!capsulePubkey.data,
+    enabled: !!capsulePubkey.data || !!publicKey,
   });
 
   const playerTokenBalance = useQuery({
@@ -550,7 +605,8 @@ export function usePlayerMarket() {
     queryFn: async () => {
       const client = await ManifestClient.getClientForMarket(
         provider,
-        marketPK.data!
+        marketPK.data!,
+        wallet || undefined
       );
       const balances = await client.market.getBalances(capsulePubkey.data!);
       return balances;
@@ -560,21 +616,13 @@ export function usePlayerMarket() {
   const mint = useMutation({
     mutationKey: ["market", "mint", { playerMintPK: marketPK }],
     mutationFn: async () => {
-      if (
-        !playerId.data ||
-        !timestamp.data ||
-        !capsulePubkey.data ||
-        !playerTokenAccount.data
-      ) {
+      if (!playerId.data || !timestamp.data) {
         throw new Error("Player ID or timestamp not found");
       }
-      console.log(
-        "minting tokens",
-        playerId.data,
-        timestamp.data,
-        capsulePubkey.data.toBase58(),
-        playerTokenAccount.data.toBase58()
-      );
+
+      if (!publicKey && !capsulePubkey.data) {
+        throw new Error("No public key found");
+      }
 
       const mintConfig = PublicKey.findProgramAddressSync(
         [
@@ -585,57 +633,95 @@ export function usePlayerMarket() {
         program.programId
       )[0];
       const vault = getAssociatedTokenAddressSync(quoteToken, mintConfig, true);
+      if (!publicKey) {
+        const mintRecord = PublicKey.findProgramAddressSync(
+          [
+            Buffer.from("mint_record"),
+            mintConfig.toBuffer(),
+            capsulePubkey.data!.toBuffer(),
+          ],
+          program.programId
+        )[0];
 
-      const mintRecord = PublicKey.findProgramAddressSync(
-        [
-          Buffer.from("mint_record"),
-          mintConfig.toBuffer(),
-          capsulePubkey.data!.toBuffer(),
-        ],
-        program.programId
-      )[0];
+        const playerStats = PublicKey.findProgramAddressSync(
+          [
+            Buffer.from("player_stats"),
+            Buffer.from(playerId.data ?? ""),
+            Buffer.from(timestamp.data ?? ""),
+          ],
+          program.programId
+        )[0];
 
-      const playerStats = PublicKey.findProgramAddressSync(
-        [
-          Buffer.from("player_stats"),
-          Buffer.from(playerId.data ?? ""),
-          Buffer.from(timestamp.data ?? ""),
-        ],
-        program.programId
-      )[0];
+        const ix = await program.methods
+          .mintTokens(new BN(30000000000))
+          .accountsStrict({
+            payer: capsulePubkey.data!,
+            quoteTokenMint: quoteToken,
+            vault,
+            playerTokenMint: playerTokenMint.data!,
+            destination: playerTokenAccount.data!,
+            config: mintConfig,
+            tokenProgram: TOKEN_PROGRAM_ID,
+            systemProgram: SystemProgram.programId,
+            associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
+            playerStats,
+            mintRecord,
+            payerAtaQuote: quoteTokenAccount.data!,
+          })
+          .instruction();
+        const blockhash = await provider.connection.getLatestBlockhash();
+        const transaction = new Transaction({
+          feePayer: capsulePubkey.data!,
+          blockhash: blockhash.blockhash,
+          lastValidBlockHeight: blockhash.lastValidBlockHeight,
+        }).add(ix);
+        const solanaSigner = new CapsuleSolanaWeb3Signer(
+          capsule,
+          provider.connection
+        );
+        const signed = await solanaSigner.signTransaction(transaction);
+        const signature = await provider.connection.sendRawTransaction(
+          signed.serialize()
+        );
+        return signature;
+      } else {
+        const mintRecord = PublicKey.findProgramAddressSync(
+          [
+            Buffer.from("mint_record"),
+            mintConfig.toBuffer(),
+            publicKey.toBuffer(),
+          ],
+          program.programId
+        )[0];
 
-      const ix = await program.methods
-        .mintTokens(new BN(30000000000))
-        .accountsStrict({
-          payer: capsulePubkey.data!,
-          quoteTokenMint: quoteToken,
-          vault,
-          playerTokenMint: playerTokenMint.data!,
-          destination: playerTokenAccount.data!,
-          config: mintConfig,
-          tokenProgram: TOKEN_PROGRAM_ID,
-          systemProgram: SystemProgram.programId,
-          associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
-          playerStats,
-          mintRecord,
-          payerAtaQuote: quoteTokenAccount.data!,
-        })
-        .instruction();
-      const blockhash = await provider.connection.getLatestBlockhash();
-      const transaction = new Transaction({
-        feePayer: capsulePubkey.data!,
-        blockhash: blockhash.blockhash,
-        lastValidBlockHeight: blockhash.lastValidBlockHeight,
-      }).add(ix);
-      const solanaSigner = new CapsuleSolanaWeb3Signer(
-        capsule,
-        provider.connection
-      );
-      const signed = await solanaSigner.signTransaction(transaction);
-      const signature = await provider.connection.sendRawTransaction(
-        signed.serialize()
-      );
-      return signature;
+        const playerStats = PublicKey.findProgramAddressSync(
+          [
+            Buffer.from("player_stats"),
+            Buffer.from(playerId.data ?? ""),
+            Buffer.from(timestamp.data ?? ""),
+          ],
+          program.programId
+        )[0];
+
+        const signature = await program.methods
+          .mintTokens(new BN(30000000000))
+          .accountsStrict({
+            payer: publicKey,
+            quoteTokenMint: quoteToken,
+            vault,
+            playerTokenMint: playerTokenMint.data!,
+            destination: playerTokenAccount.data!,
+            config: mintConfig,
+            tokenProgram: TOKEN_PROGRAM_ID,
+            systemProgram: SystemProgram.programId,
+            associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
+            playerStats,
+            mintRecord,
+            payerAtaQuote: quoteTokenAccount.data!,
+          })
+          .rpc();
+        return signature;
+      }
     },
     onSuccess: (signature) => {
       transactionToast(signature);
@@ -644,8 +730,13 @@ export function usePlayerMarket() {
     },
     onError: async (error: SendTransactionError) => {
       toast.error("Failed to mint tokens");
-      const logs = await error.getLogs(provider.connection);
-      console.log("logs", logs);
+      console.error("error", error);
+      try {
+        const logs = await error.getLogs(provider.connection);
+        console.log("logs", logs);
+      } catch (error) {
+        console.error("error", error);
+      }
     },
   });
 
@@ -654,28 +745,36 @@ export function usePlayerMarket() {
     mutationFn: async (amount: number) => {
       const client = await ManifestClient.getClientForMarket(
         provider,
-        marketPK.data!
+        marketPK.data!,
+        wallet || undefined
       );
-      const depositIx = client.depositIx(
-        capsulePubkey.data!,
-        quoteToken,
-        amount
-      );
+      const feePayer = publicKey ?? capsulePubkey.data!;
+      console.log("depositPK", feePayer);
+      const depositIx = client.depositIx(feePayer, quoteToken, amount);
+
       const blockhash = await provider.connection.getLatestBlockhash();
       const transaction = new Transaction({
-        feePayer: capsulePubkey.data!,
+        feePayer,
         blockhash: blockhash.blockhash,
         lastValidBlockHeight: blockhash.lastValidBlockHeight,
       }).add(depositIx);
-      const solanaSigner = new CapsuleSolanaWeb3Signer(
-        capsule,
-        provider.connection
-      );
-      const signed = await solanaSigner.signTransaction(transaction);
-      const signature = await provider.connection.sendRawTransaction(
-        signed.serialize()
-      );
-      return signature;
+
+      if (!publicKey) {
+        const solanaSigner = new CapsuleSolanaWeb3Signer(
+          capsule,
+          provider.connection
+        );
+        const signed = await solanaSigner.signTransaction(transaction);
+        const signature = await provider.connection.sendRawTransaction(
+          signed.serialize()
+        );
+        return signature;
+      } else {
+        return wallet?.adapter.sendTransaction(
+          transaction,
+          provider.connection
+        );
+      }
     },
     onSuccess: (signature) => {
       console.log("deposited quote", signature);
@@ -690,7 +789,8 @@ export function usePlayerMarket() {
     mutationFn: async (amount: number) => {
       const client = await ManifestClient.getClientForMarket(
         provider,
-        marketPK.data!
+        marketPK.data!,
+        wallet || undefined
       );
       const player_token_mint = PublicKey.findProgramAddressSync(
         [
@@ -700,26 +800,31 @@ export function usePlayerMarket() {
         ],
         program.programId
       )[0];
-      const depositIx = client.depositIx(
-        capsulePubkey.data!,
-        player_token_mint,
-        amount
-      );
+      const feePayer = publicKey ?? capsulePubkey.data!;
+
+      const depositIx = client.depositIx(feePayer, player_token_mint, amount);
       const blockhash = await provider.connection.getLatestBlockhash();
       const transaction = new Transaction({
-        feePayer: capsulePubkey.data!,
+        feePayer,
         blockhash: blockhash.blockhash,
         lastValidBlockHeight: blockhash.lastValidBlockHeight,
       }).add(depositIx);
-      const solanaSigner = new CapsuleSolanaWeb3Signer(
-        capsule,
-        provider.connection
-      );
-      const signed = await solanaSigner.signTransaction(transaction);
-      const signature = await provider.connection.sendRawTransaction(
-        signed.serialize()
-      );
-      return signature;
+      if (!publicKey) {
+        const solanaSigner = new CapsuleSolanaWeb3Signer(
+          capsule,
+          provider.connection
+        );
+        const signed = await solanaSigner.signTransaction(transaction);
+        const signature = await provider.connection.sendRawTransaction(
+          signed.serialize()
+        );
+        return signature;
+      } else {
+        return wallet?.adapter.sendTransaction(
+          transaction,
+          provider.connection
+        );
+      }
     },
     onSuccess: (signature) => {
       transactionToast(`Deposited quote: ${signature}`);
@@ -739,12 +844,9 @@ export function usePlayerMarket() {
     }) => {
       const client = await ManifestClient.getClientForMarket(
         provider,
-        marketPK.data!
+        marketPK.data!,
+        wallet || undefined
       );
-      const market = await Market.loadFromAddress({
-        connection: provider.connection,
-        address: marketPK.data!,
-      });
       // const sequenceNumber = await market.
       const orderIx = client.placeOrderIx({
         numBaseTokens: numBaseTokens,
@@ -754,25 +856,34 @@ export function usePlayerMarket() {
         orderType: OrderType.Limit,
         clientOrderId: 0,
       });
+      const feePayer = publicKey ?? capsulePubkey.data!;
 
       const blockhash = await provider.connection.getLatestBlockhash();
       const transaction = new Transaction({
-        feePayer: capsulePubkey.data!,
+        feePayer,
         blockhash: blockhash.blockhash,
         lastValidBlockHeight: blockhash.lastValidBlockHeight,
       }).add(orderIx);
-      const solanaSigner = new CapsuleSolanaWeb3Signer(
-        capsule,
-        provider.connection
-      );
-      const signed = await solanaSigner.signTransaction(transaction);
-      const signature = await provider.connection.sendRawTransaction(
-        signed.serialize()
-      );
-      return { signature, tokenPrice, numBaseTokens };
+      if (!publicKey) {
+        const solanaSigner = new CapsuleSolanaWeb3Signer(
+          capsule,
+          provider.connection
+        );
+        const signed = await solanaSigner.signTransaction(transaction);
+        const signature = await provider.connection.sendRawTransaction(
+          signed.serialize()
+        );
+        return { signature, tokenPrice, numBaseTokens };
+      } else {
+        const signature = await wallet?.adapter.sendTransaction(
+          transaction,
+          provider.connection
+        );
+        return { signature, tokenPrice, numBaseTokens };
+      }
     },
     onSuccess: async ({ signature, tokenPrice, numBaseTokens }) => {
-      transactionToast(`Deposited quote: ${signature}`);
+      transactionToast(`Placed buy order: ${signature}`);
       queryClient.invalidateQueries({
         queryKey: ["market", "bids", { playerMintPK: marketPK }],
       });
@@ -793,7 +904,7 @@ export function usePlayerMarket() {
           bid.numBaseTokens === numBaseTokens
       );
     },
-    onError: () => toast.error("Failed to deposit quote"),
+    onError: () => toast.error("Failed to place buy order"),
   });
 
   const sell = useMutation({
@@ -807,7 +918,8 @@ export function usePlayerMarket() {
     }) => {
       const client = await ManifestClient.getClientForMarket(
         provider,
-        marketPK.data!
+        marketPK.data!,
+        wallet || undefined
       );
       const orderIx = client.placeOrderIx({
         numBaseTokens: numBaseTokens,
@@ -817,28 +929,35 @@ export function usePlayerMarket() {
         orderType: OrderType.Limit,
         clientOrderId: 0,
       });
-
+      const feePayer = publicKey ?? capsulePubkey.data!;
       const blockhash = await provider.connection.getLatestBlockhash();
       const transaction = new Transaction({
-        feePayer: capsulePubkey.data!,
+        feePayer,
         blockhash: blockhash.blockhash,
         lastValidBlockHeight: blockhash.lastValidBlockHeight,
       }).add(orderIx);
-      const solanaSigner = new CapsuleSolanaWeb3Signer(
-        capsule,
-        provider.connection
-      );
-      const signed = await solanaSigner.signTransaction(transaction);
-      const signature = await provider.connection.sendRawTransaction(
-        signed.serialize()
-      );
-      return signature;
+      if (!publicKey) {
+        const solanaSigner = new CapsuleSolanaWeb3Signer(
+          capsule,
+          provider.connection
+        );
+        const signed = await solanaSigner.signTransaction(transaction);
+        const signature = await provider.connection.sendRawTransaction(
+          signed.serialize()
+        );
+        return signature;
+      } else {
+        return wallet?.adapter.sendTransaction(
+          transaction,
+          provider.connection
+        );
+      }
     },
     onSuccess: (signature) => {
-      transactionToast(`Deposited quote: ${signature}`);
+      transactionToast(`Placed sell order: ${signature}`);
       return accounts.refetch();
     },
-    onError: () => toast.error("Failed to deposit quote"),
+    onError: () => toast.error("Failed to place sell order"),
   });
 
   const withdrawAll = useMutation({
@@ -846,27 +965,36 @@ export function usePlayerMarket() {
     mutationFn: async () => {
       const client = await ManifestClient.getClientForMarket(
         provider,
-        marketPK.data!
+        marketPK.data!,
+        wallet || undefined
       );
       const withdrawIx = await client.withdrawAllIx();
+      const feePayer = publicKey ?? capsulePubkey.data!;
       const blockhash = await provider.connection.getLatestBlockhash();
       const transaction = new Transaction({
-        feePayer: capsulePubkey.data!,
+        feePayer,
         blockhash: blockhash.blockhash,
         lastValidBlockHeight: blockhash.lastValidBlockHeight,
       }).add(...withdrawIx);
-      const solanaSigner = new CapsuleSolanaWeb3Signer(
-        capsule,
-        provider.connection
-      );
-      const signed = await solanaSigner.signTransaction(transaction);
-      const signature = await provider.connection.sendRawTransaction(
-        signed.serialize()
-      );
-      return signature;
+      if (!publicKey) {
+        const solanaSigner = new CapsuleSolanaWeb3Signer(
+          capsule,
+          provider.connection
+        );
+        const signed = await solanaSigner.signTransaction(transaction);
+        const signature = await provider.connection.sendRawTransaction(
+          signed.serialize()
+        );
+        return signature;
+      } else {
+        return wallet?.adapter.sendTransaction(
+          transaction,
+          provider.connection
+        );
+      }
     },
     onSuccess: (signature) => {
-      transactionToast(`Deposited quote: ${signature}`);
+      transactionToast(`Withdrew all: ${signature}`);
       queryClient.invalidateQueries({
         queryKey: ["market", "bids", { playerMintPK: marketPK }],
       });
@@ -875,7 +1003,7 @@ export function usePlayerMarket() {
       });
       return accounts.refetch();
     },
-    onError: () => toast.error("Failed to deposit quote"),
+    onError: () => toast.error("Failed to withdraw all"),
   });
 
   const printMarket = useMutation({
@@ -913,13 +1041,14 @@ export function usePlayerMarket() {
         ],
         program.programId
       )[0];
+      const feePayer = publicKey ?? capsulePubkey.data!;
       const playerTokenAccount = getAssociatedTokenAddressSync(
         player_token_mint,
-        capsulePubkey.data!
+        feePayer
       );
       const quoteTokenAccount = getAssociatedTokenAddressSync(
         quoteToken,
-        capsulePubkey.data!
+        feePayer
       );
 
       const playerStats = PublicKey.findProgramAddressSync(
@@ -936,13 +1065,13 @@ export function usePlayerMarket() {
         [
           Buffer.from("mint_record"),
           mintConfig.toBuffer(),
-          capsulePubkey.data!.toBuffer(),
+          feePayer.toBuffer(),
         ],
         program.programId
       )[0];
 
       const context = {
-        payer: capsulePubkey.data!,
+        payer: feePayer,
         quoteTokenMint: quoteToken,
         playerTokenMint: player_token_mint,
         vault,
@@ -962,19 +1091,29 @@ export function usePlayerMarket() {
         .instruction();
       const blockhash = await provider.connection.getLatestBlockhash();
       const transaction = new Transaction({
-        feePayer: capsulePubkey.data!,
+        feePayer,
         blockhash: blockhash.blockhash,
         lastValidBlockHeight: blockhash.lastValidBlockHeight,
       }).add(ix);
-      const solanaSigner = new CapsuleSolanaWeb3Signer(
-        capsule,
-        provider.connection
-      );
-      const signed = await solanaSigner.signTransaction(transaction);
-      const signature = await provider.connection.sendRawTransaction(
-        signed.serialize()
-      );
-      return signature;
+      if (!publicKey) {
+        const solanaSigner = new CapsuleSolanaWeb3Signer(
+          capsule,
+          provider.connection
+        );
+        const signed = await solanaSigner.signTransaction(transaction);
+        const signature = await provider.connection.sendRawTransaction(
+          signed.serialize()
+        );
+        return signature;
+      } else {
+        return await wallet!.adapter.sendTransaction(
+          transaction,
+          provider.connection,
+          {
+            skipPreflight: true,
+          }
+        );
+      }
     },
     onSuccess: (signature) => {
       transactionToast(signature);
@@ -1001,5 +1140,6 @@ export function usePlayerMarket() {
     playerTokenBalance,
     trades,
     lastTradePrice,
+    playerStatsAccount,
   };
 }

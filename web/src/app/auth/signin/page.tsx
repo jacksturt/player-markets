@@ -24,19 +24,10 @@ function SignInContent() {
     console.log("handleCapsuleSetup");
     try {
       const { data } = await capsule.userSetupAfterLogin();
-      console.log(data);
 
       const serializedSession = await capsule.exportSession();
-      const isFullyLoggedIn = await capsule.isFullyLoggedIn();
-      console.log("isFullyLoggedIn", isFullyLoggedIn, data);
       const email = capsule.getEmail();
       const capsulePublicKey = capsule.getAddress();
-      const wallets = capsule.getWallets();
-      console.log("email", email);
-      console.log("publicKey", publicKey);
-      console.log("wallets", wallets);
-      console.log("capsulePublicKey", capsulePublicKey);
-      debugger;
       if (!!publicKey || !!capsulePublicKey) {
         const signInKey = publicKey ?? capsulePublicKey;
         const result = await signIn("capsule", {

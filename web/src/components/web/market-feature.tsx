@@ -57,8 +57,15 @@ export default function MarketFeature({
   const [tradeData, setTradeData] = useState<{ date: number; price: number }[]>(
     []
   );
-  const { bids, asks, balances, playerTokenBalance, trades, lastTradePrice } =
-    usePlayerMarket();
+  const {
+    bids,
+    asks,
+    balances,
+    playerTokenBalance,
+    trades,
+    lastTradePrice,
+    playerStatsAccount,
+  } = usePlayerMarket();
   const { quoteTokenBalance } = useQuoteToken();
   const queryClient = useQueryClient();
   const utils = api.useUtils();
@@ -238,6 +245,20 @@ export default function MarketFeature({
             <h1>Current Price:</h1>
 
             {lastTradePrice.data && <h1>{lastTradePrice.data.toString()}</h1>}
+          </div>
+          <div>
+            <h1>Current Projection:</h1>
+
+            {playerStatsAccount.data && (
+              <h1>{playerStatsAccount.data.projectedPoints.toString()}</h1>
+            )}
+          </div>
+          <div>
+            <h1>Current Actual:</h1>
+
+            {playerStatsAccount.data && (
+              <h1>{playerStatsAccount.data.actualPoints.toString()}</h1>
+            )}
           </div>
           <h1 className="text-2xl font-bold">Trades</h1>
           <h2 className="text-lg font-bold">Bids</h2>
