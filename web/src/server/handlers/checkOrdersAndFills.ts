@@ -49,6 +49,7 @@ export async function checkOrdersAndFills() {
         PROGRAM_ID,
         {
           until: lastSignature.value,
+          limit: 10,
         },
         "finalized"
       );
@@ -60,15 +61,55 @@ export async function checkOrdersAndFills() {
     if (signatures.length <= 0) {
       return;
     }
-    const marketAddresses = (
+    console.log("$%$", signatures.length, signatures);
+    const transactions = await connection.getTransactions(
+      signatures.map((sig) => sig.signature),
+      {
+        maxSupportedTransactionVersion: 0,
+      }
+    );
+    const marketAddressesAndSignatures = transactions.map((tx, index) => {
+      return {
+        marketAddress: tx?.transaction.message.staticAccountKeys[2].toBase58(),
+        signature: signatures[index],
+      };
+    });
+    console.log(marketAddressesAndSignatures);
+    const validMarketAddresses = (
       await db.market.findMany({
         select: {
           address: true,
         },
       })
     ).map((market) => market.address);
-    const handleSignaturesPromiseArray = signatures.map((signature) =>
-      handleSignature(signature, marketAddresses)
+    const handleSignaturesPromiseArray = marketAddressesAndSignatures.map(
+      async (marketAddressAndSignature) => {
+        if (
+          marketAddressAndSignature.marketAddress &&
+          validMarketAddresses.includes(marketAddressAndSignature.marketAddress)
+        ) {
+          await handleSignature(
+            marketAddressAndSignature.signature,
+            validMarketAddresses
+          );
+        }
+        await db.keyValue.update({
+          where: {
+            key: "lastSlot",
+          },
+          data: {
+            value: marketAddressAndSignature.signature.slot.toString(),
+          },
+        });
+        await db.keyValue.update({
+          where: {
+            key: "lastSignature",
+          },
+          data: {
+            value: marketAddressAndSignature.signature.signature,
+          },
+        });
+      }
     );
 
     await Promise.all(handleSignaturesPromiseArray);
@@ -340,22 +381,6 @@ async function handleSignature(
     } else {
       continue;
     }
-    await db.keyValue.update({
-      where: {
-        key: "lastSlot",
-      },
-      data: {
-        value: signature.slot.toString(),
-      },
-    });
-    await db.keyValue.update({
-      where: {
-        key: "lastSignature",
-      },
-      data: {
-        value: signature.signature,
-      },
-    });
   }
 }
 

@@ -78,8 +78,8 @@ export function InitPlayerMint() {
 export function UpdateProjectionOracle() {
   const { updateProjectionOracle } = useMarkets();
   const playerId = "21831";
-  const projection = 15.69;
-  const timestamp = "1738629789018";
+  const projection = 0.02351;
+  const timestamp = "1738637430169";
   const isProjected = false;
   const setMintingDisabled = false;
   const setPayoutEnabled = true;
@@ -104,6 +104,27 @@ export function UpdateProjectionOracle() {
   );
 }
 
+export function CloseMintAccounts() {
+  const { closeMintAccounts } = useMarkets();
+  const playerId = "21831";
+  const timestamp = "1738637430169";
+
+  return (
+    <button
+      className="btn btn-xs lg:btn-md btn-primary"
+      onClick={() =>
+        closeMintAccounts.mutateAsync({
+          playerId,
+          timestamp,
+        })
+      }
+      disabled={closeMintAccounts.isPending}
+    >
+      Close Mint Accounts {closeMintAccounts.isPending && "..."}
+    </button>
+  );
+}
+
 export function MintPlayerTokens() {
   const { mint } = usePlayerMarket();
 
@@ -124,7 +145,7 @@ export function DepositBase() {
   return (
     <button
       className="btn btn-xs lg:btn-md btn-primary"
-      onClick={() => depositBase.mutateAsync(10000)}
+      onClick={() => depositBase.mutateAsync()}
       disabled={depositBase.isPending}
     >
       Deposit Player Tokens {depositBase.isPending && "..."}
@@ -138,7 +159,7 @@ export function DepositQuote() {
   return (
     <button
       className="btn btn-xs lg:btn-md btn-primary"
-      onClick={() => depositQuote.mutateAsync(5000)}
+      onClick={() => depositQuote.mutateAsync()}
       disabled={depositQuote.isPending}
     >
       Deposit Quote Tokens {depositQuote.isPending && "..."}

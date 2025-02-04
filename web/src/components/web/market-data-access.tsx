@@ -59,10 +59,9 @@ export function useQuoteToken() {
     queryFn: () => connection.getParsedAccountInfo(programId),
   });
 
-  let quoteTokenMint = PublicKey.findProgramAddressSync(
-    [Buffer.from("quote")],
-    program.programId
-  )[0];
+  let quoteTokenMint = new PublicKey(
+    "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"
+  );
 
   const quoteConfig = PublicKey.findProgramAddressSync(
     [Buffer.from("quoteConfig")],
@@ -308,7 +307,7 @@ export function useMarkets() {
                 description: playerName,
                 address: keyPair.toBase58(),
                 mintAddress: data.player_token_mint.toBase58(),
-                network: "DEVNET",
+                network: "MAINNET",
               },
               {
                 onSuccess: async () => {
@@ -407,11 +406,57 @@ export function useMarkets() {
     },
     onError: () => toast.error("Failed to initialize account"),
   });
+
+  const closeMintAccounts = useMutation({
+    mutationKey: ["markets", "close-mint-accounts", { cluster }],
+    mutationFn: async ({
+      playerId,
+      timestamp,
+    }: {
+      playerId: string;
+      timestamp: string;
+    }) => {
+      const mintConfig = PublicKey.findProgramAddressSync(
+        [Buffer.from("config"), Buffer.from(playerId), Buffer.from(timestamp)],
+        program.programId
+      )[0];
+      const playerStats = PublicKey.findProgramAddressSync(
+        [
+          Buffer.from("player_stats"),
+          Buffer.from(playerId),
+          Buffer.from(timestamp),
+        ],
+        program.programId
+      )[0];
+      const vault = getAssociatedTokenAddressSync(quoteToken, mintConfig, true);
+      const context = {
+        admin: provider.publicKey,
+        quoteTokenMint: quoteToken,
+        playerStats,
+        mintConfig,
+        vault,
+        tokenProgram: TOKEN_PROGRAM_ID,
+        associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
+        systemProgram: SystemProgram.programId,
+      };
+      const signature = await program.methods
+        .closeAccounts()
+        .accountsStrict(context)
+        .rpc();
+      return { signature, playerStats };
+    },
+    onSuccess: async (data: { signature: string; playerStats: PublicKey }) => {
+      transactionToast(data.signature);
+      return accounts.refetch();
+    },
+    onError: () => toast.error("Failed to initialize account"),
+  });
   return {
     markets,
     initialize: initializeMint,
     updateProjectionOracle,
     createTeam,
+    closeMintAccounts,
   };
 }
 
@@ -608,7 +653,8 @@ export function usePlayerMarket() {
         marketPK.data!,
         wallet || undefined
       );
-      const balances = await client.market.getBalances(capsulePubkey.data!);
+      const payer = publicKey ?? capsulePubkey.data!;
+      const balances = await client.market.getBalances(payer);
       return balances;
     },
   });
@@ -619,6 +665,7 @@ export function usePlayerMarket() {
       if (!playerId.data || !timestamp.data) {
         throw new Error("Player ID or timestamp not found");
       }
+      const quantity = new BN(1000 * 10 ** 6);
 
       if (!publicKey && !capsulePubkey.data) {
         throw new Error("No public key found");
@@ -653,7 +700,7 @@ export function usePlayerMarket() {
         )[0];
 
         const ix = await program.methods
-          .mintTokens(new BN(30000000000))
+          .mintTokens(quantity)
           .accountsStrict({
             payer: capsulePubkey.data!,
             quoteTokenMint: quoteToken,
@@ -704,7 +751,7 @@ export function usePlayerMarket() {
         )[0];
 
         const signature = await program.methods
-          .mintTokens(new BN(30000000000))
+          .mintTokens(quantity)
           .accountsStrict({
             payer: publicKey,
             quoteTokenMint: quoteToken,
@@ -742,13 +789,14 @@ export function usePlayerMarket() {
 
   const depositQuote = useMutation({
     mutationKey: ["market", "deposit-quote", { playerMintPK: marketPK }],
-    mutationFn: async (amount: number) => {
+    mutationFn: async () => {
       const client = await ManifestClient.getClientForMarket(
         provider,
         marketPK.data!,
         wallet || undefined
       );
       const feePayer = publicKey ?? capsulePubkey.data!;
+      const amount = 100;
       console.log("depositPK", feePayer);
       const depositIx = client.depositIx(feePayer, quoteToken, amount);
 
@@ -786,12 +834,13 @@ export function usePlayerMarket() {
 
   const depositBase = useMutation({
     mutationKey: ["market", "deposit-base", { playerMintPK: marketPK }],
-    mutationFn: async (amount: number) => {
+    mutationFn: async () => {
       const client = await ManifestClient.getClientForMarket(
         provider,
         marketPK.data!,
         wallet || undefined
       );
+      const amount = 100;
       const player_token_mint = PublicKey.findProgramAddressSync(
         [
           Buffer.from("mint"),

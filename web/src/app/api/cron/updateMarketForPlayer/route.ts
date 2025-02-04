@@ -199,7 +199,7 @@ function updateProjectionOracle(
   setMintingDisabled: boolean,
   setPayoutEnabled: boolean
 ) {
-  const connection = new Connection(process.env.ANCHOR_PROVIDER_URL!);
+  const connection = new Connection(process.env.RPC_URL!);
   const wallet = new EnvWallet();
   const provider = new AnchorProvider(connection, wallet);
   const programId = getTradetalkProgramId("devnet");
