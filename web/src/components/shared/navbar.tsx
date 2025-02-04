@@ -8,7 +8,7 @@ import { LogOut } from "lucide-react";
 
 export default function Navbar() {
   return (
-    <div className="relative w-full flex items-center justify-between px-8">
+    <div className="relative w-full h-[45px] flex items-center justify-between px-8">
       {/* logo */}
       <div className="flex items-center gap-2">
         <Image

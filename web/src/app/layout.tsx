@@ -32,9 +32,8 @@ export default function RootLayout({
               <SolanaProvider>
                 <TRPCReactProvider>
                   <Toaster />
-                  <main className="relative max-w-screen h-full flex flex-col gap-5">
+                  <main className="relative max-w-screen h-full flex flex-col">
                     <Banner />
-                    <Navbar />
                     <div className="flex-1 overflow-y-auto">{children}</div>
                   </main>
                 </TRPCReactProvider>

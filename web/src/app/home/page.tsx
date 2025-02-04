@@ -1,6 +1,6 @@
-import Filters from "@/components/home/filters";
 import PlayersList from "@/components/home/players-list";
 
+import Navbar from "@/components/shared/navbar";
 export type Player = {
   imageUrl: string;
   name: string;
@@ -107,8 +107,8 @@ const playerData: Player[] = [
 
 export default function Home() {
   return (
-    <div className="relative h-full flex flex-col gap-5 justify-center">
-      {/* <Filters /> */}
+    <div className="relative h-full flex flex-col gap-5 justify-center pt-5">
+      <Navbar />
       <div className="flex-1 overflow-y-auto">
         <PlayersList playerData={playerData} />
       </div>

@@ -70,8 +70,12 @@ const TokenPriceChart = ({ data }: { data: PriceDataPoint[] }) => {
         {["1m", "15m", "1H", "4H", "1D", "ALL"].map((range) => (
           <button
             key={range}
-            className={`px-4 py-2 rounded-full text-[10px] text-black 
-              ${range === timeRange ? "bg-[#E7E7E7]" : "hover:bg-[#E7E7E7]"}`}
+            className={`px-4 py-2 rounded-full text-[10px] text-white 
+              ${
+                range === timeRange
+                  ? "bg-[#353535] text-black"
+                  : "hover:bg-[#353535] text-black"
+              }`}
             onClick={() => setTimeRange(range)}
           >
             {range}
