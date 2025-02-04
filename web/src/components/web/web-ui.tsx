@@ -48,10 +48,10 @@ export function CreateTeam() {
       className="btn btn-xs lg:btn-md btn-primary"
       onClick={() =>
         createTeam.mutateAsync({
-          teamName: "Philadelphia Eagles",
+          teamName: "Kansas City Chiefs",
           teamImage:
             "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a2/Washington_Commanders_logo.svg/1200px-Washington_Commanders_logo.svg.png",
-          teamSportsdataId: "PHI",
+          teamSportsdataId: "KC",
         })
       }
     >
@@ -62,12 +62,27 @@ export function CreateTeam() {
 
 export function InitPlayerMint() {
   const { initialize } = useMarkets();
-  const playerId = "21831";
+  const playerId = "18890";
+  const playerName = "Patrick Mahomes";
+  const playerImage =
+    "https://www.google.com/images/branding/googlelogo/1x/googlelogo_color_272x92dp.png";
+  const playerPosition = "QB";
+  const teamId = "cm6qtbj7c0000rcmm8v7l5132";
+  const mintSymbol = "PATRICK";
 
   return (
     <button
       className="btn btn-xs lg:btn-md btn-primary"
-      onClick={() => initialize.mutateAsync(playerId)}
+      onClick={() =>
+        initialize.mutateAsync({
+          playerId,
+          playerName,
+          playerImage,
+          playerPosition,
+          teamId,
+          mintSymbol,
+        })
+      }
       disabled={initialize.isPending}
     >
       Initialize Player Mint ({playerId}) {initialize.isPending && "..."}
@@ -75,14 +90,39 @@ export function InitPlayerMint() {
   );
 }
 
+export function FinishCreatingMarket() {
+  const { finishCreatingMarket } = useMarkets();
+  const playerId = "18890";
+  const playerName = "Patrick Mahomes";
+
+  return (
+    <button
+      className="btn btn-xs lg:btn-md btn-primary"
+      onClick={() =>
+        finishCreatingMarket.mutateAsync({
+          playerId,
+          playerName,
+          address: "57v51gyrWB6DCnqXGQVUm4UsurRksFS7MCWNbaps5Urb",
+          mintAddress: "4q6sEqzCTv3h6wD16NhTCTWaP3ArwSWL4fFpTwQypWtc",
+          timestamp: "1738693738663",
+        })
+      }
+      disabled={finishCreatingMarket.isPending}
+    >
+      Finish Creating Market ({playerId}){" "}
+      {finishCreatingMarket.isPending && "..."}
+    </button>
+  );
+}
+
 export function UpdateProjectionOracle() {
   const { updateProjectionOracle } = useMarkets();
-  const playerId = "21831";
-  const projection = 0.02351;
-  const timestamp = "1738637430169";
-  const isProjected = false;
+  const playerId = "18890";
+  const projection = 20.86;
+  const timestamp = "1738693738663";
+  const isProjected = true;
   const setMintingDisabled = false;
-  const setPayoutEnabled = true;
+  const setPayoutEnabled = false;
 
   return (
     <button

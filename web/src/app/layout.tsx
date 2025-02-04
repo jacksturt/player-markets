@@ -23,7 +23,6 @@ import { useWallet } from "@solana/wallet-adapter-react";
 
 const links: { label: string; path: string }[] = [
   { label: "Account", path: "/account" },
-  { label: "Clusters", path: "/clusters" },
   { label: "Web Program", path: "/web" },
 ];
 
@@ -37,39 +36,37 @@ export default function RootLayout({
       <body className="bg-zinc-900">
         <SessionProvider>
           <ReactQueryProvider>
-            <ClusterProvider>
-              <SolanaProvider>
-                <TRPCReactProvider>
-                  <Toaster />
-                  <div className="navbar  text-neutral-content">
-                    <div className="flex-1">
-                      <Link
-                        className="btn btn-ghost normal-case text-xl"
-                        href="/"
-                      >
-                        {/* <img className="h-4 md:h-6" alt="Logo" src="/logo.png" /> */}
-                        TRADETALK
-                      </Link>
-                    </div>
-                    <div className="flex-none space-x-2">
-                      <AccountButtons />
-                    </div>
+            <SolanaProvider>
+              <TRPCReactProvider>
+                <Toaster />
+                <div className="navbar  text-neutral-content">
+                  <div className="flex-1">
+                    <Link
+                      className="btn btn-ghost normal-case text-xl"
+                      href="/"
+                    >
+                      {/* <img className="h-4 md:h-6" alt="Logo" src="/logo.png" /> */}
+                      TRADETALK
+                    </Link>
                   </div>
-                  <Suspense
-                    fallback={
-                      <div className="text-center my-32">
-                        <span className="loading loading-spinner loading-lg"></span>
-                      </div>
-                    }
-                  >
-                    <main className="relative  max-w-screen min-h-screen bg-background">
-                      {children}
-                    </main>
-                    <Footer />
-                  </Suspense>
-                </TRPCReactProvider>
-              </SolanaProvider>
-            </ClusterProvider>
+                  <div className="flex-none space-x-2">
+                    <AccountButtons />
+                  </div>
+                </div>
+                <Suspense
+                  fallback={
+                    <div className="text-center my-32">
+                      <span className="loading loading-spinner loading-lg"></span>
+                    </div>
+                  }
+                >
+                  <main className="relative  max-w-screen min-h-screen bg-background">
+                    {children}
+                  </main>
+                  <Footer />
+                </Suspense>
+              </TRPCReactProvider>
+            </SolanaProvider>
           </ReactQueryProvider>
         </SessionProvider>
       </body>
@@ -120,6 +117,11 @@ function AccountButtons() {
         Sign in
       </Button>
     );
+  }
+  try {
+    const pk = new PublicKey(capsule.getAddress()!);
+  } catch (e) {
+    return null;
   }
 
   const pk = new PublicKey(capsule.getAddress()!);

@@ -5,23 +5,19 @@ import { BN } from "@coral-xyz/anchor";
 import { useConnection, useWallet } from "@solana/wallet-adapter-react";
 import {
   Cluster,
-  Keypair,
   PublicKey,
   SendTransactionError,
   SystemProgram,
   Transaction,
-  TransactionInstruction,
 } from "@solana/web3.js";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import toast from "react-hot-toast";
-import { useCluster } from "../cluster/cluster-data-access";
 import { useAnchorProvider } from "../solana/solana-provider";
 import { useTransactionToast } from "../ui/ui-layout";
 import {
   ASSOCIATED_TOKEN_PROGRAM_ID,
   getAccount,
-  getAssociatedTokenAddress,
   getAssociatedTokenAddressSync,
   TOKEN_PROGRAM_ID,
 } from "@solana/spl-token";
@@ -32,30 +28,25 @@ import { capsule } from "@/lib/capsule";
 import { OrderType } from "manifest/src/manifest";
 import { Market } from "manifest/src";
 import { api } from "@/trpc/react";
-import { Position } from "@prisma/client";
 import { useParams } from "next/navigation";
 export function useQuoteToken() {
   const { connection } = useConnection();
-  const { cluster } = useCluster();
   const transactionToast = useTransactionToast();
   const provider = useAnchorProvider();
   const { publicKey } = useWallet();
-  const programId = useMemo(
-    () => getTradetalkProgramId(cluster.network as Cluster),
-    [cluster]
-  );
+  const programId = useMemo(() => getTradetalkProgramId("mainnet-beta"), []);
   const program = useMemo(
     () => getTradetalkProgram(provider, programId),
     [provider, programId]
   );
 
   const accounts = useQuery({
-    queryKey: ["markets", "all", { cluster }],
+    queryKey: ["markets", "all"],
     queryFn: () => program.account.playerMintConfig.all(),
   });
 
   const getProgramAccount = useQuery({
-    queryKey: ["get-program-account", { cluster }],
+    queryKey: ["get-program-account"],
     queryFn: () => connection.getParsedAccountInfo(programId),
   });
 
@@ -69,14 +60,15 @@ export function useQuoteToken() {
   )[0];
 
   const capsulePubkey = useQuery({
-    queryKey: ["capsule-pubkey", { cluster }],
+    queryKey: ["capsule-pubkey"],
     queryFn: () => new PublicKey(capsule.getAddress()!),
   });
 
   const quoteTokenAccount = useQuery({
-    queryKey: ["quote-token-account", { cluster }],
+    queryKey: ["quote-token-account"],
     queryFn: async () => {
       if (!publicKey) {
+        console.log("capsulePubkey.data!", capsulePubkey.data?.toBase58());
         return getAssociatedTokenAddressSync(
           quoteTokenMint,
           capsulePubkey.data!,
@@ -90,7 +82,7 @@ export function useQuoteToken() {
   });
 
   const initialize = useMutation({
-    mutationKey: ["quote-token", "initialize", { cluster }],
+    mutationKey: ["quote-token", "initialize"],
     mutationFn: () =>
       program.methods
         .initQuote()
@@ -111,7 +103,7 @@ export function useQuoteToken() {
   });
 
   const quoteTokenBalance = useQuery({
-    queryKey: ["quote-token-balance", { cluster, quoteTokenAccount }],
+    queryKey: ["quote-token-balance", { quoteTokenAccount }],
     queryFn: async () => {
       try {
         if (!quoteTokenAccount.data) return "loading...";
@@ -126,7 +118,7 @@ export function useQuoteToken() {
   });
 
   const faucetQuote = useMutation({
-    mutationKey: ["quote-token", "faucet", { cluster }],
+    mutationKey: ["quote-token", "faucet"],
     mutationFn: async () => {
       if (!publicKey) {
         const solanaSigner = new CapsuleSolanaWeb3Signer(
@@ -200,7 +192,6 @@ export function useQuoteToken() {
 }
 
 export function useMarkets() {
-  const { cluster } = useCluster();
   const transactionToast = useTransactionToast();
   const { program, accounts, quoteToken } = useQuoteToken();
   const provider = useAnchorProvider();
@@ -211,7 +202,7 @@ export function useMarkets() {
   const createMarketAPI = api.market.create.useMutation();
   const createTeamAPI = api.team.create.useMutation();
   const markets = useQuery({
-    queryKey: ["markets", "fetch", { cluster }],
+    queryKey: ["markets", "fetch"],
     queryFn: async () => {
       const markets = await program.account.playerMintConfig.all();
       return markets;
@@ -219,7 +210,7 @@ export function useMarkets() {
   });
 
   const createTeam = useMutation({
-    mutationKey: ["markets", "create-team", { cluster }],
+    mutationKey: ["markets", "create-team"],
     mutationFn: async ({
       teamName,
       teamImage,
@@ -241,8 +232,22 @@ export function useMarkets() {
   });
 
   const initializeMint = useMutation({
-    mutationKey: ["markets", "initialize", { cluster }],
-    mutationFn: async (playerId: string) => {
+    mutationKey: ["markets", "initialize"],
+    mutationFn: async ({
+      playerId,
+      playerName,
+      playerImage,
+      playerPosition,
+      teamId,
+      mintSymbol,
+    }: {
+      playerId: string;
+      playerName: string;
+      playerImage: string;
+      playerPosition: string;
+      teamId: string;
+      mintSymbol: string;
+    }) => {
       const timestamp = Date.now().toString();
       const player_token_mint = PublicKey.findProgramAddressSync(
         [Buffer.from("mint"), Buffer.from(playerId), Buffer.from(timestamp)],
@@ -269,27 +274,52 @@ export function useMarkets() {
       setPlayerId(playerId);
       setTimestamp(timestamp);
       setPlayerTokenMint(player_token_mint.toBase58());
-      return { signature, playerId, timestamp, player_token_mint, mintConfig };
+      return {
+        signature,
+        playerId,
+        timestamp,
+        player_token_mint,
+        mintConfig,
+        playerName,
+        playerImage,
+        playerPosition,
+        teamId,
+        mintSymbol,
+      };
     },
-    onSuccess: async (data) => {
+    onSuccess: async (data: {
+      signature: string;
+      playerId: string;
+      timestamp: string;
+      player_token_mint: PublicKey;
+      mintConfig: PublicKey;
+      playerName: string;
+      playerImage: string;
+      playerPosition: string;
+      teamId: string;
+      mintSymbol: string;
+    }) => {
       transactionToast(data.signature);
-      const playerName = "Jaylen Hurts";
       await createMint.mutateAsync(
         {
-          mintName: playerName,
-          mintSymbol: "JAYLEN",
-          mintImage:
-            "https://www.google.com/images/branding/googlelogo/1x/googlelogo_color_272x92dp.png",
+          mintName: data.playerName,
+          mintSymbol: data.mintSymbol,
+          mintImage: data.playerImage,
           mintSlug: data.playerId,
           timestamp: data.timestamp,
-          description: playerName,
+          description: data.playerName,
           baseMint: data.player_token_mint.toBase58(),
-          teamId: "cm6l90r8j0000rcxnu1blil7n",
-          position: "QB",
-          playerName: playerName,
+          teamId: data.teamId,
+          position: data.playerPosition as
+            | "QB"
+            | "RB"
+            | "WR"
+            | "TE"
+            | "K"
+            | "DEF",
+          playerName: data.playerName,
           playerSportsdataId: parseInt(data.playerId),
-          playerImage:
-            "https://www.google.com/images/branding/googlelogo/1x/googlelogo_color_272x92dp.png",
+          playerImage: data.playerImage,
         },
         {
           onSuccess: async () => {
@@ -303,8 +333,8 @@ export function useMarkets() {
 
             createMarketAPI.mutateAsync(
               {
-                marketName: playerName,
-                description: playerName,
+                marketName: data.playerName,
+                description: data.playerName,
                 address: keyPair.toBase58(),
                 mintAddress: data.player_token_mint.toBase58(),
                 network: "MAINNET",
@@ -352,8 +382,50 @@ export function useMarkets() {
     },
   });
 
+  const finishCreatingMarket = useMutation({
+    mutationKey: ["markets", "finish-creating-market"],
+    mutationFn: async (data: {
+      playerName: string;
+      address: string;
+      mintAddress: string;
+      playerId: string;
+      timestamp: string;
+    }) => {
+      const mintConfig = PublicKey.findProgramAddressSync(
+        [
+          Buffer.from("config"),
+          Buffer.from(data.playerId),
+          Buffer.from(data.timestamp),
+        ],
+        program.programId
+      )[0];
+      const playerStats = PublicKey.findProgramAddressSync(
+        [
+          Buffer.from("player_stats"),
+          Buffer.from(data.playerId),
+          Buffer.from(data.timestamp),
+        ],
+        program.programId
+      )[0];
+      return program.methods
+        .initProjectionOracle()
+        .accountsStrict({
+          payer: provider.publicKey,
+          config: mintConfig,
+          playerStats,
+          tokenProgram: TOKEN_PROGRAM_ID,
+          systemProgram: SystemProgram.programId,
+          associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
+        })
+        .rpc()
+        .then((signature) => {
+          transactionToast(signature);
+        });
+    },
+  });
+
   const updateProjectionOracle = useMutation({
-    mutationKey: ["markets", "update-projection-oracle", { cluster }],
+    mutationKey: ["markets", "update-projection-oracle"],
     mutationFn: async ({
       playerId,
       timestamp,
@@ -408,7 +480,7 @@ export function useMarkets() {
   });
 
   const closeMintAccounts = useMutation({
-    mutationKey: ["markets", "close-mint-accounts", { cluster }],
+    mutationKey: ["markets", "close-mint-accounts"],
     mutationFn: async ({
       playerId,
       timestamp,
@@ -457,11 +529,11 @@ export function useMarkets() {
     updateProjectionOracle,
     createTeam,
     closeMintAccounts,
+    finishCreatingMarket,
   };
 }
 
 export function usePlayerMarket() {
-  const { cluster } = useCluster();
   const transactionToast = useTransactionToast();
   const { program, accounts, quoteToken } = useQuoteToken();
   const provider = useAnchorProvider();
@@ -510,12 +582,12 @@ export function usePlayerMarket() {
   });
 
   const capsulePubkey = useQuery({
-    queryKey: ["capsule-pubkey", { cluster }],
+    queryKey: ["capsule-pubkey"],
     queryFn: () => new PublicKey(capsule.getAddress()!),
   });
 
   const playerTokenMint = useQuery({
-    queryKey: ["player-token-mint", { cluster }],
+    queryKey: ["player-token-mint"],
     queryFn: () => {
       if (!playerId.data || !timestamp.data) return;
       const player_token_mint = PublicKey.findProgramAddressSync(
@@ -532,9 +604,10 @@ export function usePlayerMarket() {
   });
 
   const playerStatsAccount = useQuery({
-    queryKey: ["player-stats-account", { cluster }],
+    queryKey: ["player-stats-account"],
     queryFn: () => {
       if (!playerId.data || !timestamp.data) return;
+
       const playerStats = PublicKey.findProgramAddressSync(
         [
           Buffer.from("player_stats"),
@@ -550,7 +623,7 @@ export function usePlayerMarket() {
   });
 
   const quoteTokenAccount = useQuery({
-    queryKey: ["quote-token-account", { cluster }],
+    queryKey: ["quote-token-account"],
     queryFn: async () => {
       if (!publicKey) {
         return getAssociatedTokenAddressSync(
@@ -580,7 +653,7 @@ export function usePlayerMarket() {
   });
 
   const playerTokenAccount = useQuery({
-    queryKey: ["player-token-account", { cluster }],
+    queryKey: ["player-token-account"],
     queryFn: async () => {
       if (!publicKey) {
         const playerTokenAccount = getAssociatedTokenAddressSync(
@@ -665,7 +738,7 @@ export function usePlayerMarket() {
       if (!playerId.data || !timestamp.data) {
         throw new Error("Player ID or timestamp not found");
       }
-      const quantity = new BN(1000 * 10 ** 6);
+      const quantity = new BN(1 * 10 ** 6);
 
       if (!publicKey && !capsulePubkey.data) {
         throw new Error("No public key found");
@@ -796,17 +869,14 @@ export function usePlayerMarket() {
         wallet || undefined
       );
       const feePayer = publicKey ?? capsulePubkey.data!;
-      const amount = 100;
-      console.log("depositPK", feePayer);
+      const amount = 10;
       const depositIx = client.depositIx(feePayer, quoteToken, amount);
-
       const blockhash = await provider.connection.getLatestBlockhash();
       const transaction = new Transaction({
         feePayer,
         blockhash: blockhash.blockhash,
         lastValidBlockHeight: blockhash.lastValidBlockHeight,
       }).add(depositIx);
-
       if (!publicKey) {
         const solanaSigner = new CapsuleSolanaWeb3Signer(
           capsule,
@@ -826,7 +896,7 @@ export function usePlayerMarket() {
     },
     onSuccess: (signature) => {
       console.log("deposited quote", signature);
-      transactionToast(`Deposited quote: ${signature}`);
+      transactionToast(`${signature}`);
       return accounts.refetch();
     },
     onError: () => toast.error("Failed to deposit quote"),
@@ -840,7 +910,7 @@ export function usePlayerMarket() {
         marketPK.data!,
         wallet || undefined
       );
-      const amount = 100;
+      const amount = 1;
       const player_token_mint = PublicKey.findProgramAddressSync(
         [
           Buffer.from("mint"),
@@ -876,7 +946,7 @@ export function usePlayerMarket() {
       }
     },
     onSuccess: (signature) => {
-      transactionToast(`Deposited quote: ${signature}`);
+      transactionToast(`${signature}`);
       return accounts.refetch();
     },
     onError: () => toast.error("Failed to deposit base"),
@@ -932,7 +1002,7 @@ export function usePlayerMarket() {
       }
     },
     onSuccess: async ({ signature, tokenPrice, numBaseTokens }) => {
-      transactionToast(`Placed buy order: ${signature}`);
+      transactionToast(`${signature}`);
       queryClient.invalidateQueries({
         queryKey: ["market", "bids", { playerMintPK: marketPK }],
       });
@@ -1003,7 +1073,7 @@ export function usePlayerMarket() {
       }
     },
     onSuccess: (signature) => {
-      transactionToast(`Placed sell order: ${signature}`);
+      transactionToast(`${signature}`);
       return accounts.refetch();
     },
     onError: () => toast.error("Failed to place sell order"),
@@ -1043,7 +1113,7 @@ export function usePlayerMarket() {
       }
     },
     onSuccess: (signature) => {
-      transactionToast(`Withdrew all: ${signature}`);
+      transactionToast(`${signature}`);
       queryClient.invalidateQueries({
         queryKey: ["market", "bids", { playerMintPK: marketPK }],
       });

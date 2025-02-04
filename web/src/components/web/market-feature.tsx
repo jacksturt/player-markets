@@ -1,9 +1,5 @@
 "use client";
 
-import { useWallet } from "@solana/wallet-adapter-react";
-import { WalletButton } from "../solana/solana-provider";
-import { AppHero, ellipsify } from "../ui/ui-layout";
-import { ExplorerLink } from "../cluster/cluster-ui";
 import {
   useMarkets,
   usePlayerMarket,

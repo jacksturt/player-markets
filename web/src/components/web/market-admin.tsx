@@ -8,6 +8,7 @@ import {
   UpdateProjectionOracle,
   CreateTeam,
   CloseMintAccounts,
+  FinishCreatingMarket,
 } from "./web-ui";
 import { PublicKey } from "@solana/web3.js";
 
@@ -36,6 +37,7 @@ export default function MarketAdmin() {
           <InitPlayerMint />
           <UpdateProjectionOracle />
           <CloseMintAccounts />
+          <FinishCreatingMarket />
         </div>
       </div>
     </div>

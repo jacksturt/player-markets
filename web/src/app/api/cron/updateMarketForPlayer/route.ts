@@ -202,7 +202,7 @@ function updateProjectionOracle(
   const connection = new Connection(process.env.RPC_URL!);
   const wallet = new EnvWallet();
   const provider = new AnchorProvider(connection, wallet);
-  const programId = getTradetalkProgramId("devnet");
+  const programId = getTradetalkProgramId("mainnet-beta");
   const program = getTradetalkProgram(provider, programId);
   const mintConfig = PublicKey.findProgramAddressSync(
     [Buffer.from("config"), Buffer.from(playerId), Buffer.from(timestamp)],
