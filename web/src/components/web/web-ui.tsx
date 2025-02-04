@@ -115,14 +115,27 @@ export function FinishCreatingMarket() {
   );
 }
 
+export function VaultsList() {
+  const { vaults } = useMarkets();
+  return (
+    <div>
+      {vaults.data?.map((vault) => (
+        <div key={vault.address.toString()}>
+          {vault.address.toString()}, {vault.amount.toString()}
+        </div>
+      ))}
+    </div>
+  );
+}
+
 export function UpdateProjectionOracle() {
   const { updateProjectionOracle } = useMarkets();
   const playerId = "18890";
   const projection = 20.86;
   const timestamp = "1738693738663";
-  const isProjected = true;
-  const setMintingDisabled = false;
-  const setPayoutEnabled = false;
+  const isProjected = false;
+  const setMintingDisabled = true;
+  const setPayoutEnabled = true;
 
   return (
     <button
@@ -144,10 +157,23 @@ export function UpdateProjectionOracle() {
   );
 }
 
+export function CancelAllOrders() {
+  const { cancelAllOrders } = usePlayerMarket();
+  return (
+    <button
+      className="btn btn-xs lg:btn-md btn-primary"
+      onClick={() => cancelAllOrders.mutateAsync()}
+      disabled={cancelAllOrders.isPending}
+    >
+      Cancel All Orders {cancelAllOrders.isPending && "..."}
+    </button>
+  );
+}
+
 export function CloseMintAccounts() {
   const { closeMintAccounts } = useMarkets();
-  const playerId = "21831";
-  const timestamp = "1738637430169";
+  const playerId = "18890";
+  const timestamp = "1738693738663";
 
   return (
     <button

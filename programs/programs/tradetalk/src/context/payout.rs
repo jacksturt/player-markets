@@ -72,16 +72,6 @@ impl<'info> Payout<'info> {
     }
 
     pub fn transfer_quote_tokens(&mut self) -> Result<()> {
-        // How much is left in the vault after all payouts are made
-        let vault_remaining = self.vault.amount
-            - (self.player_token_mint.supply as f64 * self.player_stats.actual_points) as u64;
-
-        // Percentage of the total deposited amount that is due to the minter
-        let percent_due = self.mint_record.deposited_amount as f64
-            / self.mint_config.total_deposited_amount as f64;
-
-        // How much is due to the minter
-        let minter_rewards = vault_remaining as f64 * percent_due;
         let cpi_program = self.token_program.to_account_info();
         let bump = self.mint_config.config_bump;
 
@@ -101,15 +91,32 @@ impl<'info> Payout<'info> {
         let signer_seeds = &[&seeds[..]];
 
         let cpi_ctx = CpiContext::new_with_signer(cpi_program, cpi_accounts, signer_seeds);
+        let amount_due: u64;
 
-        // How much is due based on player tokens the person owns
-        let amount = (self.player_stats.actual_points
-            * self.payer_player_token_account.amount as f64) as u64;
-        transfer_checked(
-            cpi_ctx,
-            amount + minter_rewards as u64,
-            self.quote_token_mint.decimals,
-        )?;
+        if self.player_token_mint.supply as f64 * self.player_stats.actual_points
+            >= self.vault.amount as f64
+        {
+            let percent_due = self.payer_player_token_account.amount as f64
+                / self.player_token_mint.supply as f64;
+            amount_due = (self.vault.amount as f64 * percent_due) as u64;
+        } else {
+            // How much is left in the vault after all payouts are made
+            let vault_remaining = self.vault.amount
+                - (self.player_token_mint.supply as f64 * self.player_stats.actual_points) as u64;
+
+            // Percentage of the total deposited amount that is due to the minter
+            let percent_due = self.mint_record.deposited_amount as f64
+                / self.mint_config.total_deposited_amount as f64;
+
+            // How much is due to the minter
+            let minter_rewards = vault_remaining as f64 * percent_due;
+
+            // How much is due based on player tokens the person owns
+            let amount = (self.player_stats.actual_points
+                * self.payer_player_token_account.amount as f64) as u64;
+            amount_due = amount + minter_rewards as u64;
+        }
+        transfer_checked(cpi_ctx, amount_due, self.quote_token_mint.decimals)?;
         self.mint_config.total_deposited_amount -= self.mint_record.deposited_amount;
         self.mint_record.deposited_amount = 0;
         Ok(())

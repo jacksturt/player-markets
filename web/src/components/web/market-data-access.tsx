@@ -209,6 +209,28 @@ export function useMarkets() {
     },
   });
 
+  const vaults = useQuery({
+    queryKey: ["vaults"],
+    queryFn: async () => {
+      const vaults = [];
+      for (const market of markets.data ?? []) {
+        const vaultAddress = getAssociatedTokenAddressSync(
+          quoteToken,
+          market.publicKey,
+          true
+        );
+        try {
+          const vault = await getAccount(provider.connection, vaultAddress);
+          vaults.push(vault);
+        } catch (error) {
+          console.error(error);
+        }
+      }
+      return vaults;
+    },
+    enabled: !!markets.data,
+  });
+
   const createTeam = useMutation({
     mutationKey: ["markets", "create-team"],
     mutationFn: async ({
@@ -530,6 +552,7 @@ export function useMarkets() {
     createTeam,
     closeMintAccounts,
     finishCreatingMarket,
+    vaults,
   };
 }
 
@@ -952,6 +975,45 @@ export function usePlayerMarket() {
     onError: () => toast.error("Failed to deposit base"),
   });
 
+  const cancelAllOrders = useMutation({
+    mutationKey: ["market", "cancel-all-orders", { playerMintPK: marketPK }],
+    mutationFn: async () => {
+      const client = await ManifestClient.getClientForMarket(
+        provider,
+        marketPK.data!,
+        wallet || undefined
+      );
+      const cancelAllOrdersIx = client.cancelAllIx();
+      const blockhash = await provider.connection.getLatestBlockhash();
+      const transaction = new Transaction({
+        feePayer: publicKey ?? capsulePubkey.data!,
+        blockhash: blockhash.blockhash,
+        lastValidBlockHeight: blockhash.lastValidBlockHeight,
+      }).add(cancelAllOrdersIx);
+      if (!publicKey) {
+        const solanaSigner = new CapsuleSolanaWeb3Signer(
+          capsule,
+          provider.connection
+        );
+        const signed = await solanaSigner.signTransaction(transaction);
+        const signature = await provider.connection.sendRawTransaction(
+          signed.serialize()
+        );
+        return signature;
+      } else {
+        return wallet?.adapter.sendTransaction(
+          transaction,
+          provider.connection
+        );
+      }
+    },
+    onSuccess: (signature) => {
+      transactionToast(`${signature}`);
+      return accounts.refetch();
+    },
+    onError: () => toast.error("Failed to cancel all orders"),
+  });
+
   const buy = useMutation({
     mutationKey: ["market", "buy-quote", { playerMintPK: marketPK }],
     mutationFn: async ({
@@ -1260,5 +1322,6 @@ export function usePlayerMarket() {
     trades,
     lastTradePrice,
     playerStatsAccount,
+    cancelAllOrders,
   };
 }

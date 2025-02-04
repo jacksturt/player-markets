@@ -122,7 +122,7 @@ describe("tradetalk", () => {
   )[0];
   const projection1 = 23.54;
   const projection2 = 31.65;
-  const actual = 29.39;
+  const actual = 100;
   let marketAddress: PublicKey;
   const confirm = async (signature: string): Promise<string> => {
     const block = await connection.getLatestBlockhash();
@@ -1166,9 +1166,13 @@ describe("tradetalk", () => {
     const mintRecordMakerAccount = await program.account.mintRecord.fetch(
       mintRecordMaker
     );
+    const makerPlayerBefore = await getAccount(connection, makerAtaPlayer);
+
     console.log(
       "mintRecordMakerAccount",
-      mintRecordMakerAccount.depositedAmount
+      mintRecordMakerAccount.depositedAmount.toString(),
+      "maker player token mint amount",
+      makerPlayerBefore.amount.toString()
     );
 
     const makerQuoteBefore = await getAccount(connection, makerAtaQuote);
@@ -1201,8 +1205,10 @@ describe("tradetalk", () => {
       .then(confirm)
       .then(log)
       .then(async () => {
-        // const makerQuote = await getAccount(connection, makerAtaQuote);
-        // console.log("maker quote amount after", makerQuote.amount);
+        const makerQuote = await getAccount(connection, makerAtaQuote);
+        console.log("maker quote amount after", makerQuote.amount);
+        const makerPaidOut = makerQuote.amount - makerQuoteBefore.amount;
+        console.log("maker paid out", makerPaidOut);
         try {
           const makerPlayer = await getAccount(connection, makerAtaPlayer);
           assert(false, "maker player account should not exist");
@@ -1239,6 +1245,12 @@ describe("tradetalk", () => {
       mintRecordTakerAccount.depositedAmount
     );
 
+    const takerPlayerBefore = await getAccount(connection, takerAtaPlayer);
+    console.log("taker player before", takerPlayerBefore.amount);
+
+    const takerQuoteBefore = await getAccount(connection, takerAtaQuote);
+    console.log("taker quote before", takerQuoteBefore.amount);
+
     const context = {
       payer: taker.publicKey,
       quoteTokenMint: quote_token_mint,
@@ -1268,6 +1280,8 @@ describe("tradetalk", () => {
       .then(async () => {
         const takerQuote = await getAccount(connection, takerAtaQuote);
         console.log("taker quote amount after", takerQuote.amount);
+        const takerPaidOut = takerQuote.amount - takerQuoteBefore.amount;
+        console.log("taker paid out", takerPaidOut);
         try {
           const takerPlayer = await getAccount(connection, takerAtaPlayer);
           assert(false, "taker player account should not exist");
@@ -1304,6 +1318,17 @@ describe("tradetalk", () => {
       mintRecordThirdPartyAccount.depositedAmount
     );
 
+    const thirdPartyPlayerBefore = await getAccount(
+      connection,
+      thirdPartyAtaPlayer
+    );
+    console.log("third party player before", thirdPartyPlayerBefore.amount);
+    const thirdPartyQuoteBefore = await getAccount(
+      connection,
+      thirdPartyAtaQuote
+    );
+    console.log("third party quote before", thirdPartyQuoteBefore.amount);
+
     const context = {
       payer: thirdParty.publicKey,
       quoteTokenMint: quote_token_mint,
@@ -1336,6 +1361,9 @@ describe("tradetalk", () => {
           thirdPartyAtaQuote
         );
         console.log("thirdParty quote amount after", thirdPartyQuote.amount);
+        const thirdPartyPaidOut =
+          thirdPartyQuote.amount - thirdPartyQuoteBefore.amount;
+        console.log("third party paid out", thirdPartyPaidOut);
         try {
           const thirdPartyPlayer = await getAccount(
             connection,

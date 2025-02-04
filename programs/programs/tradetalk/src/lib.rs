@@ -9,7 +9,7 @@ use crate::constants::*;
 use crate::context::*;
 use crate::errors::*;
 
-declare_id!("131iREZN7gtrQ7Tdg2jGTmVsywQ1puq9iN85KAZGwzML");
+declare_id!("AMNTpN6ykSqt6VUs5tnypD433naSCNbjS8fsEJLVHSsh");
 
 #[program]
 pub mod tradetalk {

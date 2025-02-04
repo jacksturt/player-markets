@@ -5,7 +5,7 @@ resolution = true
 skip-lint = false
 
 [programs.mainnet]
-tradetalk = "131iREZN7gtrQ7Tdg2jGTmVsywQ1puq9iN85KAZGwzML"
+tradetalk = "AMNTpN6ykSqt6VUs5tnypD433naSCNbjS8fsEJLVHSsh"
 
 [registry]
 url = "https://quaint-hardworking-fire.solana-mainnet.quiknode.pro/5229b2c3c59e9aea2a1c583bafb9ad2d334d751a"
