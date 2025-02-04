@@ -77,9 +77,12 @@ export function InitPlayerMint() {
 
 export function UpdateProjectionOracle() {
   const { updateProjectionOracle } = useMarkets();
-  const playerId = "23235";
-  const projection = 13.371;
-  const timestamp = "1737625327577";
+  const playerId = "21831";
+  const projection = 0.02351;
+  const timestamp = "1738637430169";
+  const isProjected = false;
+  const setMintingDisabled = false;
+  const setPayoutEnabled = true;
 
   return (
     <button
@@ -89,11 +92,35 @@ export function UpdateProjectionOracle() {
           playerId,
           timestamp,
           projection,
+          isProjected,
+          setMintingDisabled,
+          setPayoutEnabled,
         })
       }
       disabled={updateProjectionOracle.isPending}
     >
       Update Projection Oracle {updateProjectionOracle.isPending && "..."}
+    </button>
+  );
+}
+
+export function CloseMintAccounts() {
+  const { closeMintAccounts } = useMarkets();
+  const playerId = "21831";
+  const timestamp = "1738637430169";
+
+  return (
+    <button
+      className="btn btn-xs lg:btn-md btn-primary"
+      onClick={() =>
+        closeMintAccounts.mutateAsync({
+          playerId,
+          timestamp,
+        })
+      }
+      disabled={closeMintAccounts.isPending}
+    >
+      Close Mint Accounts {closeMintAccounts.isPending && "..."}
     </button>
   );
 }
@@ -118,7 +145,7 @@ export function DepositBase() {
   return (
     <button
       className="btn btn-xs lg:btn-md btn-primary"
-      onClick={() => depositBase.mutateAsync(10000)}
+      onClick={() => depositBase.mutateAsync()}
       disabled={depositBase.isPending}
     >
       Deposit Player Tokens {depositBase.isPending && "..."}
@@ -132,7 +159,7 @@ export function DepositQuote() {
   return (
     <button
       className="btn btn-xs lg:btn-md btn-primary"
-      onClick={() => depositQuote.mutateAsync(5000)}
+      onClick={() => depositQuote.mutateAsync()}
       disabled={depositQuote.isPending}
     >
       Deposit Quote Tokens {depositQuote.isPending && "..."}

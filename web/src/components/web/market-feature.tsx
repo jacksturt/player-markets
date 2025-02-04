@@ -17,6 +17,7 @@ import {
   DepositQuote,
   Trade,
   WithdrawAll,
+  QuoteTokenFaucet,
 } from "./web-ui";
 import { PublicKey } from "@solana/web3.js";
 import { minimizePubkey } from "@/utils/web3";
@@ -33,6 +34,8 @@ import { useSession } from "next-auth/react";
 import { capsule } from "@/lib/capsule";
 import ChartComponent from "@/components/player-data/chart";
 import { PlaceOrderLogResult } from "@/lib/types";
+import { useQueryClient } from "@tanstack/react-query";
+import { api } from "@/trpc/react";
 
 const sb = SendbirdChat.init({
   appId: "434D4E2C-4EEF-41DB-AE99-30D00B5AFF1D",
@@ -51,16 +54,40 @@ export default function MarketFeature({
       sender: string;
     }[]
   >([]);
-  const { bids, asks, balances, playerTokenBalance, trades } =
-    usePlayerMarket();
+  const [tradeData, setTradeData] = useState<{ date: number; price: number }[]>(
+    []
+  );
+  const {
+    bids,
+    asks,
+    balances,
+    playerTokenBalance,
+    trades,
+    lastTradePrice,
+    playerStatsAccount,
+  } = usePlayerMarket();
   const { quoteTokenBalance } = useQuoteToken();
-
+  const queryClient = useQueryClient();
+  const utils = api.useUtils();
   useEffect(() => {
     async function checkCapsuleSession() {
       const isActive = await capsule.isSessionActive();
     }
     checkCapsuleSession();
   }, []);
+
+  useEffect(() => {
+    if (trades.data) {
+      if (trades.data.length > tradeData.length) {
+        setTradeData(
+          trades.data.map((trade) => ({
+            date: trade.createdAt.getTime(),
+            price: Number(trade.price),
+          }))
+        );
+      }
+    }
+  }, [trades.data]);
 
   useEffect(() => {
     const feedUrl = "wss://fillfeed-production.up.railway.app";
@@ -90,12 +117,41 @@ export default function MarketFeature({
             data: PlaceOrderLogResult;
           } = JSON.parse(message.data);
       if (event.type === "fill") {
-        console.log("fill", event.data);
+        console.log("fill", event.data, Date.now());
+        setTradeData((prevData) => [
+          ...prevData,
+          {
+            date: Date.now(),
+            price: Number(event.data.priceAtoms),
+          },
+        ]);
+        queryClient.invalidateQueries({
+          queryKey: ["market", "bids", { marketAddress }],
+        });
+        queryClient.invalidateQueries({
+          queryKey: ["market", "asks", { marketAddress }],
+        });
+        utils.trade.readForMarket.invalidate({
+          marketAddress: marketAddress,
+        });
       } else if (event.type === "placeOrder") {
+        queryClient.invalidateQueries({
+          queryKey: ["market", "bids", { marketAddress }],
+        });
+        queryClient.invalidateQueries({
+          queryKey: ["market", "asks", { marketAddress }],
+        });
+        utils.trade.readForMarket.invalidate({
+          marketAddress: marketAddress,
+        });
         console.log("placeOrder", event.data);
       }
     };
-  }, [marketAddress]);
+
+    // return () => {
+    //   ws.close();
+    // };
+  }, [marketAddress, queryClient, utils]);
 
   const connectToChat = async () => {
     const user = await sb.connect(username);
@@ -150,7 +206,7 @@ export default function MarketFeature({
   const isAdmin = true;
   return (
     <div className="w-screen px-[10%] flex items-center justify-center">
-      <div className="w-full grid grid-cols-2 gap-4 mt-20">
+      <div className="w-full grid grid-cols-3 gap-4 mt-20">
         <div>
           <h1>Your Balances</h1>
           <div className="flex flex-col gap-2">
@@ -184,6 +240,25 @@ export default function MarketFeature({
               <div>Player Token On Open Orders</div>
               <div>{balances.data?.baseOpenOrdersBalanceTokens.toString()}</div>
             </div>
+          </div>
+          <div>
+            <h1>Current Price:</h1>
+
+            {lastTradePrice.data && <h1>{lastTradePrice.data.toString()}</h1>}
+          </div>
+          <div>
+            <h1>Current Projection:</h1>
+
+            {playerStatsAccount.data && (
+              <h1>{playerStatsAccount.data.projectedPoints.toString()}</h1>
+            )}
+          </div>
+          <div>
+            <h1>Current Actual:</h1>
+
+            {playerStatsAccount.data && (
+              <h1>{playerStatsAccount.data.actualPoints.toString()}</h1>
+            )}
           </div>
           <h1 className="text-2xl font-bold">Trades</h1>
           <h2 className="text-lg font-bold">Bids</h2>
@@ -228,7 +303,10 @@ export default function MarketFeature({
               </>
             ))}
           </div>
-          <h1 className="text-2xl font-bold">Trades</h1>
+        </div>
+        <div>
+          {trades && <ChartComponent data={tradeData} />}
+          <h1 className="text-2xl font-bold">Chat</h1>
           <div>
             <input
               type="text"
@@ -247,16 +325,9 @@ export default function MarketFeature({
               </div>
             ))}
           </div>
-          {trades && trades.data && (
-            <ChartComponent
-              data={trades.data?.map((trade) => ({
-                date: parseInt(trade.baseMint.timestamp),
-                price: Number(trade.price),
-              }))}
-            />
-          )}
         </div>
         <div className="flex flex-col gap-4">
+          <QuoteTokenFaucet />
           <MintPlayerTokens />
           <DepositBase />
           <DepositQuote />

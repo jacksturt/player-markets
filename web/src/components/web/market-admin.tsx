@@ -7,6 +7,7 @@ import {
   InitPlayerMint,
   UpdateProjectionOracle,
   CreateTeam,
+  CloseMintAccounts,
 } from "./web-ui";
 import { PublicKey } from "@solana/web3.js";
 
@@ -17,7 +18,11 @@ export default function MarketAdmin() {
     return <div>Loading...</div>;
   }
 
-  if (session.user.email !== "jack@sturt.io") {
+  if (
+    !session.user.wallets.includes(
+      "BuxU7uwwkoobF8p4Py7nRoTgxWRJfni8fc4U3YKGEXKs"
+    )
+  ) {
     return <div>You are not authorized to access this page</div>;
   }
 
@@ -30,6 +35,7 @@ export default function MarketAdmin() {
           <CreateTeam />
           <InitPlayerMint />
           <UpdateProjectionOracle />
+          <CloseMintAccounts />
         </div>
       </div>
     </div>

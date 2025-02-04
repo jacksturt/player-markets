@@ -4,6 +4,8 @@ model Market {
     description    String
     address        String  @unique
     lastTradePrice Decimal @default(0)
+    hasGameStarted Boolean @default(false)
+    network        Network @default(DEVNET)
 
     baseMint   Mint   @relation(fields: [baseMintId], references: [id], onDelete: Cascade)
     baseMintId String @unique
@@ -18,4 +20,9 @@ model Market {
     updatedAt DateTime @updatedAt
     orders    Order[]
     trades    Trade[]
+}
+
+enum Network {
+    DEVNET
+    MAINNET
 }

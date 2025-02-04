@@ -8,6 +8,7 @@ use crate::{
 #[derive(Accounts)]
 pub struct UpdateProjectionOracle<'info> {
     #[account(
+        mut,
         seeds = [b"config", config.player_id.as_ref(), config.timestamp.as_ref()],
         bump,
     )]
@@ -23,7 +24,8 @@ pub struct UpdateProjectionOracle<'info> {
 impl<'info> UpdateProjectionOracle<'info> {
     pub fn update_projection_oracle(
         &mut self,
-        projected_points: f64,
+        points: f64,
+        is_projected: bool,
         set_mint_disabled: bool,
         set_payout_enabled: bool,
     ) -> Result<()> {
@@ -32,12 +34,15 @@ impl<'info> UpdateProjectionOracle<'info> {
                 || self.authority.key().to_string() == ADMIN_PUBKEY,
             OracleError::UnauthorizedAuthority
         );
+        msg!("set_mint_disabled: {}", set_mint_disabled);
+        msg!("set_payout_enabled: {}", set_payout_enabled);
 
         if set_mint_disabled {
             require!(
                 self.authority.key().to_string() == ADMIN_PUBKEY,
                 OracleError::AdminOnlyUnlock
             );
+            msg!("Disabling minting");
             self.config.minting_enabled = false;
         }
 
@@ -50,7 +55,11 @@ impl<'info> UpdateProjectionOracle<'info> {
         }
 
         // Update player statistics
-        self.player_stats.projected_points = projected_points;
+        if is_projected {
+            self.player_stats.projected_points = points;
+        } else {
+            self.player_stats.actual_points = points;
+        }
         self.player_stats.last_updated = Clock::get()?.unix_timestamp;
 
         Ok(())

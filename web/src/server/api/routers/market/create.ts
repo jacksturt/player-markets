@@ -10,6 +10,7 @@ export const createMarket = protectedProcedure
       description: z.string(),
       address: z.string(),
       mintAddress: z.string(),
+      network: z.enum(["MAINNET", "DEVNET"]),
     })
   )
   .mutation(async ({ input }) => {
@@ -62,6 +63,7 @@ export const createMarket = protectedProcedure
           name: input.marketName,
           description: input.description,
           address: input.address,
+          network: input.network,
           baseMint: {
             connect: {
               id: mint.id,

@@ -4,14 +4,14 @@
 resolution = true
 skip-lint = false
 
-[programs.devnet]
-tradetalk = "BuxU7uwwkoobF8p4Py7nRoTgxWRJfni8fc4U3YKGEXKs"
+[programs.mainnet]
+tradetalk = "131iREZN7gtrQ7Tdg2jGTmVsywQ1puq9iN85KAZGwzML"
 
 [registry]
-url = "https://api.apr.dev"
+url = "https://quaint-hardworking-fire.solana-mainnet.quiknode.pro/5229b2c3c59e9aea2a1c583bafb9ad2d334d751a"
 
 [provider]
-cluster = "localnet"
+cluster = "https://quaint-hardworking-fire.solana-mainnet.quiknode.pro/5229b2c3c59e9aea2a1c583bafb9ad2d334d751a"
 wallet = "~/.config/solana/id.json"
 
 [scripts]
@@ -24,7 +24,7 @@ upgradeable = false
 
 [test.validator]
 bind_address = "0.0.0.0"
-url = "https://devnet.helius-rpc.com/?api-key=d4943793-a5a1-4d4e-872c-1cdd2a0267f2"
+url = "https://quaint-hardworking-fire.solana-mainnet.quiknode.pro/5229b2c3c59e9aea2a1c583bafb9ad2d334d751a"
 ledger = ".anchor/test-ledger"
 rpc_port = 8899
 

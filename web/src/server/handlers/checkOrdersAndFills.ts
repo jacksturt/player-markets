@@ -2,7 +2,6 @@ import { PlayerProjection } from "@/lib/types/sportsdata";
 import { db } from "@/server/db";
 import { program } from "@coral-xyz/anchor/dist/cjs/native/system";
 import { ConfirmedSignatureInfo, Connection, PublicKey } from "@solana/web3.js";
-import { NextResponse } from "next/server";
 import { getTradetalkProgram, getTradetalkProgramId } from "@project/anchor";
 import { AnchorProvider } from "@coral-xyz/anchor";
 import { EnvWallet } from "@/lib/envWallet";
@@ -32,24 +31,15 @@ export async function checkOrdersAndFills() {
   );
 
   if (!process.env.RPC_URL) {
-    return NextResponse.json(
-      { success: false, error: "RPC_URL not found" },
-      { status: 404 }
-    );
+    throw new Error("RPC_URL not found");
   }
 
   if (!lastSignature) {
-    return NextResponse.json(
-      { success: false, error: "Last signature not found" },
-      { status: 404 }
-    );
+    throw new Error("Last signature not found");
   }
 
   if (!lastSlot) {
-    return NextResponse.json(
-      { success: false, error: "Last slot not found" },
-      { status: 404 }
-    );
+    throw new Error("Last slot not found");
   }
 
   try {
@@ -59,6 +49,7 @@ export async function checkOrdersAndFills() {
         PROGRAM_ID,
         {
           until: lastSignature.value,
+          limit: 10,
         },
         "finalized"
       );
@@ -68,17 +59,57 @@ export async function checkOrdersAndFills() {
 
     // If there is only 1, do not use it because it could get stuck on the same sig.
     if (signatures.length <= 0) {
-      return NextResponse.json({ success: true });
+      return;
     }
-    const marketAddresses = (
+    console.log("$%$", signatures.length, signatures);
+    const transactions = await connection.getTransactions(
+      signatures.map((sig) => sig.signature),
+      {
+        maxSupportedTransactionVersion: 0,
+      }
+    );
+    const marketAddressesAndSignatures = transactions.map((tx, index) => {
+      return {
+        marketAddress: tx?.transaction.message.staticAccountKeys[2].toBase58(),
+        signature: signatures[index],
+      };
+    });
+    console.log(marketAddressesAndSignatures);
+    const validMarketAddresses = (
       await db.market.findMany({
         select: {
           address: true,
         },
       })
     ).map((market) => market.address);
-    const handleSignaturesPromiseArray = signatures.map((signature) =>
-      handleSignature(signature, marketAddresses)
+    const handleSignaturesPromiseArray = marketAddressesAndSignatures.map(
+      async (marketAddressAndSignature) => {
+        if (
+          marketAddressAndSignature.marketAddress &&
+          validMarketAddresses.includes(marketAddressAndSignature.marketAddress)
+        ) {
+          await handleSignature(
+            marketAddressAndSignature.signature,
+            validMarketAddresses
+          );
+        }
+        await db.keyValue.update({
+          where: {
+            key: "lastSlot",
+          },
+          data: {
+            value: marketAddressAndSignature.signature.slot.toString(),
+          },
+        });
+        await db.keyValue.update({
+          where: {
+            key: "lastSignature",
+          },
+          data: {
+            value: marketAddressAndSignature.signature.signature,
+          },
+        });
+      }
     );
 
     await Promise.all(handleSignaturesPromiseArray);
@@ -265,6 +296,15 @@ async function handleSignature(
         });
         console.log("Created trade", trade);
       }
+
+      await db.market.update({
+        where: {
+          id: market?.id,
+        },
+        data: {
+          lastTradePrice: fillData.priceAtoms,
+        },
+      });
     } else if (buffer.subarray(0, 8).equals(placeOrderDiscriminant)) {
       const maybeOrder = await db.order.findUnique({
         where: {
@@ -341,22 +381,6 @@ async function handleSignature(
     } else {
       continue;
     }
-    await db.keyValue.update({
-      where: {
-        key: "lastSlot",
-      },
-      data: {
-        value: signature.slot.toString(),
-      },
-    });
-    await db.keyValue.update({
-      where: {
-        key: "lastSignature",
-      },
-      data: {
-        value: signature.signature,
-      },
-    });
   }
 }
 

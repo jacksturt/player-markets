@@ -14,7 +14,7 @@ model Player {
     team   Team   @relation(fields: [teamId], references: [id])
     teamId String
 
-    projections   PlayerProjection?
+    projections   PlayerStatsAndProjection?
     projectionsId String?
 
     trades Trade[]
@@ -29,28 +29,47 @@ enum Position {
     DEF
 }
 
-model PlayerProjection {
+model PlayerStatsAndProjection {
     id String @id @default(cuid())
 
     playerId String @unique
     player   Player @relation(fields: [playerId], references: [id], onDelete: Cascade)
 
-    rushingAttempts              Float
-    rushingYards                 Float
-    rushingTouchdowns            Float
-    fumblesLost                  Float
-    catches                      Float
-    receivingYards               Float
-    receivingTouchdowns          Float
-    passingInterceptions         Float
-    passingYards                 Float
-    passingTouchdowns            Float
-    passingSacks                 Float
-    fieldGoalsMade               Float
-    fieldGoalsMissed             Float
-    extraPointKickingConversions Float
-    extraPointKickingMisses      Float
-    fantasyPointsHalfPpr         Float
-    fantasyPointsPpr             Float
-    fantasyPointsNonPpr          Float
+    projectedRushingAttempts              Float
+    projectedRushingYards                 Float
+    projectedRushingTouchdowns            Float
+    projectedFumblesLost                  Float
+    projectedCatches                      Float
+    projectedReceivingYards               Float
+    projectedReceivingTouchdowns          Float
+    projectedPassingInterceptions         Float
+    projectedPassingYards                 Float
+    projectedPassingTouchdowns            Float
+    projectedPassingSacks                 Float
+    projectedFieldGoalsMade               Float
+    projectedFieldGoalsMissed             Float
+    projectedExtraPointKickingConversions Float
+    projectedExtraPointKickingMisses      Float
+    projectedFantasyPointsHalfPpr         Float
+    projectedFantasyPointsPpr             Float
+    projectedFantasyPointsNonPpr          Float
+
+    actualRushingAttempts              Float @default(0)
+    actualRushingYards                 Float @default(0)
+    actualRushingTouchdowns            Float @default(0)
+    actualFumblesLost                  Float @default(0)
+    actualCatches                      Float @default(0)
+    actualReceivingYards               Float @default(0)
+    actualReceivingTouchdowns          Float @default(0)
+    actualPassingInterceptions         Float @default(0)
+    actualPassingYards                 Float @default(0)
+    actualPassingTouchdowns            Float @default(0)
+    actualPassingSacks                 Float @default(0)
+    actualFieldGoalsMade               Float @default(0)
+    actualFieldGoalsMissed             Float @default(0)
+    actualExtraPointKickingConversions Float @default(0)
+    actualExtraPointKickingMisses      Float @default(0)
+    actualFantasyPointsHalfPpr         Float @default(0)
+    actualFantasyPointsPpr             Float @default(0)
+    actualFantasyPointsNonPpr          Float @default(0)
 }

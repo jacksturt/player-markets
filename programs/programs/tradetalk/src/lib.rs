@@ -9,7 +9,7 @@ use crate::constants::*;
 use crate::context::*;
 use crate::errors::*;
 
-declare_id!("D9DoDBNem1Lz4c8MEk2YhrTaBXSDTFjSBMezm9MwLyA3");
+declare_id!("131iREZN7gtrQ7Tdg2jGTmVsywQ1puq9iN85KAZGwzML");
 
 #[program]
 pub mod tradetalk {
@@ -37,11 +37,7 @@ pub mod tradetalk {
         Ok(())
     }
 
-    pub fn init_projection_oracle(
-        ctx: Context<InitializeProjectionOracle>,
-        player_id: String,
-        timestamp: String,
-    ) -> Result<()> {
+    pub fn init_projection_oracle(ctx: Context<InitializeProjectionOracle>) -> Result<()> {
         ctx.accounts
             .initialize_projection_oracle(&ctx.bumps)
             .unwrap();
@@ -60,13 +56,19 @@ pub mod tradetalk {
 
     pub fn update_projection_oracle(
         ctx: Context<UpdateProjectionOracle>,
-        projected_points: f64,
+        points: f64,
+        is_projected: bool,
         set_mint_disabled: bool,
         set_payout_enabled: bool,
     ) -> Result<()> {
         ctx.accounts
-            .update_projection_oracle(projected_points, set_mint_disabled, set_payout_enabled)
+            .update_projection_oracle(points, is_projected, set_mint_disabled, set_payout_enabled)
             .unwrap();
+        Ok(())
+    }
+
+    pub fn close_accounts(ctx: Context<CloseMintAccounts>) -> Result<()> {
+        ctx.accounts.close_accounts().unwrap();
         Ok(())
     }
 }
