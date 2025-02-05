@@ -63,18 +63,18 @@ export function CreateTeam() {
 
 export function InitPlayerMint() {
   const { initialize } = useMarkets();
-  const playerId = "19063";
-  const playerName = "George Kittle";
+  const playerId = "24423";
+  const playerName = "Jake Moody";
   const playerImage =
     "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a2/Washington_Commanders_logo.svg/1200px-Washington_Commanders_logo.svg.png";
-  const playerPosition = "TE";
+  const playerPosition = "K";
   // SF
   const teamId = "cm6shjtv90004mrscl6knr8xt";
-  const mintSymbol = "George";
+  const mintSymbol = "JAKE";
   const season = "2023POST";
   const week = "3";
   const network = "MAINNET";
-  const projection = 12.88;
+  const projection = 9.22;
 
   return (
     <button

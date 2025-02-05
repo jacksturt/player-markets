@@ -36,6 +36,9 @@ export async function GET(request: Request) {
         market: true,
       },
     });
+    if (player.market?.season === "2023POST") {
+      return NextResponse.json({ success: true });
+    }
 
     try {
       if (player.market?.hasGameStarted) {
