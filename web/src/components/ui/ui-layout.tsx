@@ -8,8 +8,6 @@ import toast, { Toaster } from "react-hot-toast";
 import { capsule } from "@/lib/capsule";
 import { IconCopy } from "@tabler/icons-react";
 
-import { AccountChecker } from "../account/account-ui";
-
 import { WalletButton } from "../solana/solana-provider";
 import { Button } from "./button";
 import { PublicKey } from "@solana/web3.js";

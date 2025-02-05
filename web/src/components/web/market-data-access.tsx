@@ -408,41 +408,63 @@ export function useMarkets() {
     mutationKey: ["markets", "finish-creating-market"],
     mutationFn: async (data: {
       playerName: string;
-      address: string;
       mintAddress: string;
       playerId: string;
       timestamp: string;
     }) => {
+      const player_token_mint = PublicKey.findProgramAddressSync(
+        [Buffer.from("mint"), Buffer.from(playerId), Buffer.from(timestamp)],
+        program.programId
+      )[0];
       const mintConfig = PublicKey.findProgramAddressSync(
-        [
-          Buffer.from("config"),
-          Buffer.from(data.playerId),
-          Buffer.from(data.timestamp),
-        ],
+        [Buffer.from("config"), Buffer.from(playerId), Buffer.from(timestamp)],
         program.programId
       )[0];
-      const playerStats = PublicKey.findProgramAddressSync(
-        [
-          Buffer.from("player_stats"),
-          Buffer.from(data.playerId),
-          Buffer.from(data.timestamp),
-        ],
-        program.programId
-      )[0];
-      return program.methods
-        .initProjectionOracle()
-        .accountsStrict({
-          payer: provider.publicKey,
-          config: mintConfig,
-          playerStats,
-          tokenProgram: TOKEN_PROGRAM_ID,
-          systemProgram: SystemProgram.programId,
-          associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
-        })
-        .rpc()
-        .then((signature) => {
-          transactionToast(signature);
-        });
+      const keyPair = await createMarketTX(
+        provider.connection,
+        provider,
+        quoteToken,
+        player_token_mint
+      );
+
+      createMarketAPI.mutateAsync(
+        {
+          marketName: data.playerName,
+          description: data.playerName,
+          address: keyPair.toBase58(),
+          mintAddress: player_token_mint.toBase58(),
+          network: "MAINNET",
+        },
+        {
+          onSuccess: async () => {
+            const playerStats = PublicKey.findProgramAddressSync(
+              [
+                Buffer.from("player_stats"),
+                Buffer.from(data.playerId),
+                Buffer.from(data.timestamp),
+              ],
+              program.programId
+            )[0];
+            return program.methods
+              .initProjectionOracle()
+              .accountsStrict({
+                payer: provider.publicKey,
+                config: mintConfig,
+                playerStats,
+                tokenProgram: TOKEN_PROGRAM_ID,
+                systemProgram: SystemProgram.programId,
+                associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
+              })
+              .rpc()
+              .then((signature) => {
+                transactionToast(signature);
+              });
+          },
+          onError: async (error) => {
+            toast.error(error.message);
+          },
+        }
+      );
     },
   });
 
@@ -892,7 +914,7 @@ export function usePlayerMarket() {
         wallet || undefined
       );
       const feePayer = publicKey ?? capsulePubkey.data!;
-      const amount = 10;
+      const amount = 11.43;
       const depositIx = client.depositIx(feePayer, quoteToken, amount);
       const blockhash = await provider.connection.getLatestBlockhash();
       const transaction = new Transaction({

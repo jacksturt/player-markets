@@ -2,9 +2,7 @@
 
 import { useWallet } from "@solana/wallet-adapter-react";
 import { WalletButton } from "../solana/solana-provider";
-import { AppHero, ellipsify } from "../ui/ui-layout";
-import { ExplorerLink } from "../cluster/cluster-ui";
-import { useMarkets, usePlayerMarket } from "./market-data-access";
+import { useMarkets } from "./market-data-access";
 import { minimizePubkey } from "@/utils/web3";
 import { timeAgo } from "@/lib/utils";
 import Link from "next/link";

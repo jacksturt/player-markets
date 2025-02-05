@@ -102,9 +102,8 @@ export function FinishCreatingMarket() {
         finishCreatingMarket.mutateAsync({
           playerId,
           playerName,
-          address: "57v51gyrWB6DCnqXGQVUm4UsurRksFS7MCWNbaps5Urb",
-          mintAddress: "4q6sEqzCTv3h6wD16NhTCTWaP3ArwSWL4fFpTwQypWtc",
-          timestamp: "1738693738663",
+          mintAddress: "2ZJ3gjGJ5bYtnjGbfp2USuH1mpPGhRK9hzKJUhygmauQ",
+          timestamp: "1738715534348",
         })
       }
       disabled={finishCreatingMarket.isPending}
@@ -132,10 +131,10 @@ export function UpdateProjectionOracle() {
   const { updateProjectionOracle } = useMarkets();
   const playerId = "18890";
   const projection = 20.86;
-  const timestamp = "1738693738663";
-  const isProjected = false;
-  const setMintingDisabled = true;
-  const setPayoutEnabled = true;
+  const timestamp = "1738716012254";
+  const isProjected = true;
+  const setMintingDisabled = false;
+  const setPayoutEnabled = false;
 
   return (
     <button
@@ -173,7 +172,7 @@ export function CancelAllOrders() {
 export function CloseMintAccounts() {
   const { closeMintAccounts } = useMarkets();
   const playerId = "18890";
-  const timestamp = "1738693738663";
+  const timestamp = "1738715534348";
 
   return (
     <button

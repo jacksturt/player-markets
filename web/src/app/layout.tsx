@@ -1,7 +1,6 @@
 "use client";
 
 import "./globals.css";
-import { ClusterProvider } from "@/components/cluster/cluster-data-access";
 import {
   SolanaProvider,
   WalletButton,

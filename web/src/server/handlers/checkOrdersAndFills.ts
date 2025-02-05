@@ -11,46 +11,43 @@ import { bs58 } from "@coral-xyz/anchor/dist/cjs/utils/bytes";
 import { PlaceOrderLogResult } from "@/lib/types/manifest";
 import { FillLogResult } from "@/lib/types/manifest";
 import { convertU128 } from "manifest/src/utils/numbers";
-import { OrderType } from "@prisma/client";
+import { Market, Mint, OrderType, Player, Team } from "@prisma/client";
 
-export async function checkOrdersAndFills() {
-  const lastSignature = await db.keyValue.findUnique({
+export async function checkOrdersAndFills(marketAddress: string) {
+  const market = await db.market.findUnique({
     where: {
-      key: "lastSignature",
+      address: marketAddress,
+    },
+    include: {
+      baseMint: true,
+      player: true,
+      team: true,
     },
   });
-
-  const lastSlot = parseInt(
-    (
-      await db.keyValue.findUnique({
-        where: {
-          key: "lastSlot",
-        },
-      })
-    )?.value ?? "0"
-  );
+  const lastSignature = market?.lastSignature;
 
   if (!process.env.RPC_URL) {
     throw new Error("RPC_URL not found");
   }
 
-  if (!lastSignature) {
-    throw new Error("Last signature not found");
-  }
-
-  if (!lastSlot) {
-    throw new Error("Last slot not found");
+  if (!market) {
+    throw new Error("Market not found");
   }
 
   try {
     const connection = new Connection(process.env.RPC_URL);
+    const params = lastSignature
+      ? {
+          until: lastSignature,
+          limit: 10,
+        }
+      : {
+          limit: 10,
+        };
     const signatures: ConfirmedSignatureInfo[] =
       await connection.getSignaturesForAddress(
-        PROGRAM_ID,
-        {
-          until: lastSignature.value,
-          limit: 10,
-        },
+        new PublicKey(marketAddress),
+        params,
         "finalized"
       );
     console.log("Got", signatures.length, "signatures", signatures);
@@ -61,54 +58,9 @@ export async function checkOrdersAndFills() {
     if (signatures.length <= 0) {
       return;
     }
-    console.log("$%$", signatures.length, signatures);
-    const transactions = await connection.getTransactions(
-      signatures.map((sig) => sig.signature),
-      {
-        maxSupportedTransactionVersion: 0,
-      }
-    );
-    const marketAddressesAndSignatures = transactions.map((tx, index) => {
-      return {
-        marketAddress: tx?.transaction.message.staticAccountKeys[2].toBase58(),
-        signature: signatures[index],
-      };
-    });
-    console.log(marketAddressesAndSignatures);
-    const validMarketAddresses = (
-      await db.market.findMany({
-        select: {
-          address: true,
-        },
-      })
-    ).map((market) => market.address);
-    const handleSignaturesPromiseArray = marketAddressesAndSignatures.map(
+    const handleSignaturesPromiseArray = signatures.map(
       async (marketAddressAndSignature) => {
-        if (
-          marketAddressAndSignature.marketAddress &&
-          validMarketAddresses.includes(marketAddressAndSignature.marketAddress)
-        ) {
-          await handleSignature(
-            marketAddressAndSignature.signature,
-            validMarketAddresses
-          );
-        }
-        await db.keyValue.update({
-          where: {
-            key: "lastSlot",
-          },
-          data: {
-            value: marketAddressAndSignature.signature.slot.toString(),
-          },
-        });
-        await db.keyValue.update({
-          where: {
-            key: "lastSignature",
-          },
-          data: {
-            value: marketAddressAndSignature.signature.signature,
-          },
-        });
+        await handleSignature(marketAddressAndSignature, market);
       }
     );
 
@@ -139,7 +91,11 @@ function genAccDiscriminator(accName: string) {
 
 async function handleSignature(
   signature: ConfirmedSignatureInfo,
-  marketAddresses: string[]
+  market: Market & {
+    player: Player | null;
+    team: Team | null;
+    baseMint: Mint;
+  }
 ) {
   console.log("Handling", signature.signature, "slot", signature.slot);
   const connection = new Connection(process.env.RPC_URL!);
@@ -191,26 +147,6 @@ async function handleSignature(
         signature.signature
       );
       console.log("Got a fill", fillData);
-
-      if (!marketAddresses.includes(fillData.market)) {
-        console.log("Skipping fill for non-trade-talk market", fillData.market);
-        continue;
-      }
-
-      const market = await db.market.findFirst({
-        where: {
-          address: fillData.market,
-        },
-        include: {
-          baseMint: true,
-          player: true,
-          team: true,
-        },
-      });
-
-      if (!market) {
-        throw new Error("Market not found");
-      }
 
       const makerWallet = await db.wallet.findFirst({
         where: {
@@ -303,6 +239,8 @@ async function handleSignature(
         },
         data: {
           lastTradePrice: fillData.priceAtoms,
+          lastSlot: signature.slot,
+          lastSignature: signature.signature,
         },
       });
     } else if (buffer.subarray(0, 8).equals(placeOrderDiscriminant)) {
@@ -324,29 +262,12 @@ async function handleSignature(
       );
       console.log("Got an order", orderData);
 
-      if (!marketAddresses.includes(orderData.market)) {
-        console.log(
-          "Skipping order for non-trade-talk market",
-          orderData.market
-        );
-        continue;
-      }
-
       const wallet = await db.wallet.findFirst({
         where: {
           address: orderData.trader,
         },
         include: {
           user: true,
-        },
-      });
-
-      const market = await db.market.findFirst({
-        where: {
-          address: orderData.market,
-        },
-        include: {
-          baseMint: true,
         },
       });
 
@@ -376,6 +297,15 @@ async function handleSignature(
               id: market?.id,
             },
           },
+        },
+      });
+      await db.market.update({
+        where: {
+          id: market?.id,
+        },
+        data: {
+          lastSlot: signature.slot,
+          lastSignature: signature.signature,
         },
       });
     } else {

@@ -4,6 +4,8 @@ model Market {
     description    String
     address        String  @unique
     lastTradePrice Decimal @default(0)
+    lastSlot       Int?
+    lastSignature  String?
     hasGameStarted Boolean @default(false)
     network        Network @default(DEVNET)
 

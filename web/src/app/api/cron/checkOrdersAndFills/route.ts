@@ -11,7 +11,15 @@ export async function GET(request: Request) {
     );
   }
   try {
-    await checkOrdersAndFills();
+    const { searchParams } = new URL(request.url);
+    const marketAddress = searchParams.get("marketAddress");
+    if (!marketAddress) {
+      return NextResponse.json(
+        { success: false, error: "Market address is required" },
+        { status: 400 }
+      );
+    }
+    await checkOrdersAndFills(marketAddress);
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error(error);
