@@ -66,8 +66,8 @@ export default function MarketFeature({
     playerStatsAccount,
     cancelOrder,
     capsulePubkey,
+    myOrders,
   } = usePlayerMarket();
-
   const { publicKey } = useWallet();
   const { quoteTokenBalance } = useQuoteToken();
   const queryClient = useQueryClient();
@@ -93,119 +93,119 @@ export default function MarketFeature({
     }
   }, [trades.data]);
 
-  useEffect(() => {
-    const feedUrl = "wss://fillfeed-production.up.railway.app";
-    if (!feedUrl) {
-      toast.error("NEXT_PUBLIC_FEED_URL not set");
-      throw new Error("NEXT_PUBLIC_FEED_URL not set");
-    }
-    const ws = new WebSocket(feedUrl);
+  // useEffect(() => {
+  //   const feedUrl = "wss://fillfeed-production.up.railway.app";
+  //   if (!feedUrl) {
+  //     toast.error("NEXT_PUBLIC_FEED_URL not set");
+  //     throw new Error("NEXT_PUBLIC_FEED_URL not set");
+  //   }
+  //   const ws = new WebSocket(feedUrl);
 
-    ws.onopen = () => {
-      console.log("Connected to server");
-    };
+  //   ws.onopen = () => {
+  //     console.log("Connected to server");
+  //   };
 
-    ws.onclose = (event) => {
-      console.log("Disconnected from server", event);
-    };
+  //   ws.onclose = (event) => {
+  //     console.log("Disconnected from server", event);
+  //   };
 
-    ws.onmessage = async (message): Promise<void> => {
-      console.log("message", message);
-      const event:
-        | {
-            type: "fill";
-            data: FillLogResult;
-          }
-        | {
-            type: "placeOrder";
-            data: PlaceOrderLogResult;
-          } = JSON.parse(message.data);
-      if (event.type === "fill") {
-        console.log("fill", event.data, Date.now());
-        setTradeData((prevData) => [
-          ...prevData,
-          {
-            date: Date.now(),
-            price: Number(event.data.priceAtoms),
-          },
-        ]);
-        queryClient.invalidateQueries({
-          queryKey: ["market", "bids", { marketAddress }],
-        });
-        queryClient.invalidateQueries({
-          queryKey: ["market", "asks", { marketAddress }],
-        });
-        utils.trade.readForMarket.invalidate({
-          marketAddress: marketAddress,
-        });
-      } else if (event.type === "placeOrder") {
-        queryClient.invalidateQueries({
-          queryKey: ["market", "bids", { marketAddress }],
-        });
-        queryClient.invalidateQueries({
-          queryKey: ["market", "asks", { marketAddress }],
-        });
-        utils.trade.readForMarket.invalidate({
-          marketAddress: marketAddress,
-        });
-        console.log("placeOrder", event.data);
-      }
-    };
+  //   ws.onmessage = async (message): Promise<void> => {
+  //     console.log("message", message);
+  //     const event:
+  //       | {
+  //           type: "fill";
+  //           data: FillLogResult;
+  //         }
+  //       | {
+  //           type: "placeOrder";
+  //           data: PlaceOrderLogResult;
+  //         } = JSON.parse(message.data);
+  //     if (event.type === "fill") {
+  //       console.log("fill", event.data, Date.now());
+  //       setTradeData((prevData) => [
+  //         ...prevData,
+  //         {
+  //           date: Date.now(),
+  //           price: Number(event.data.priceAtoms),
+  //         },
+  //       ]);
+  //       queryClient.invalidateQueries({
+  //         queryKey: ["market", "bids", { marketAddress }],
+  //       });
+  //       queryClient.invalidateQueries({
+  //         queryKey: ["market", "asks", { marketAddress }],
+  //       });
+  //       utils.trade.readForMarket.invalidate({
+  //         marketAddress: marketAddress,
+  //       });
+  //     } else if (event.type === "placeOrder") {
+  //       queryClient.invalidateQueries({
+  //         queryKey: ["market", "bids", { marketAddress }],
+  //       });
+  //       queryClient.invalidateQueries({
+  //         queryKey: ["market", "asks", { marketAddress }],
+  //       });
+  //       utils.trade.readForMarket.invalidate({
+  //         marketAddress: marketAddress,
+  //       });
+  //       console.log("placeOrder", event.data);
+  //     }
+  //   };
 
-    // return () => {
-    //   ws.close();
-    // };
-  }, [marketAddress, queryClient, utils]);
+  //   // return () => {
+  //   //   ws.close();
+  //   // };
+  // }, [marketAddress, queryClient, utils]);
 
-  const connectToChat = async () => {
-    const user = await sb.connect(username);
-    const open_channel_params = {
-      channelUrl: "market",
-      name: "Market",
-    };
-    // const channel = await sb.openChannel.createChannel(open_channel_params);
-    sb.openChannel.getChannel("market").then(async (channel) => {
-      channel.enter();
-      const chat_params = {
-        // UserMessageCreateParams can be imported from @sendbird/chat/message.
-        message: "Hello2",
-      };
-      const params = {
-        prevResultSize: 100,
-        nextResultSize: 100,
-      };
-      const ts = Date.now() - 1000 * 60 * 60 * 24;
-      const messages = await channel.getMessagesByTimestamp(ts, params);
-      setMessages(
-        messages.map((message) => {
-          const sender = message.isUserMessage() ? message.sender : null;
-          const senderName = sender
-            ? sender.nickname !== ""
-              ? sender.nickname
-              : sender.userId
-            : null;
-          return {
-            message: message.message,
-            sender: senderName ?? "Market",
-          };
-        })
-      );
+  // const connectToChat = async () => {
+  //   const user = await sb.connect(username);
+  //   const open_channel_params = {
+  //     channelUrl: "market",
+  //     name: "Market",
+  //   };
+  //   // const channel = await sb.openChannel.createChannel(open_channel_params);
+  //   sb.openChannel.getChannel("market").then(async (channel) => {
+  //     channel.enter();
+  //     const chat_params = {
+  //       // UserMessageCreateParams can be imported from @sendbird/chat/message.
+  //       message: "Hello2",
+  //     };
+  //     const params = {
+  //       prevResultSize: 100,
+  //       nextResultSize: 100,
+  //     };
+  //     const ts = Date.now() - 1000 * 60 * 60 * 24;
+  //     const messages = await channel.getMessagesByTimestamp(ts, params);
+  //     setMessages(
+  //       messages.map((message) => {
+  //         const sender = message.isUserMessage() ? message.sender : null;
+  //         const senderName = sender
+  //           ? sender.nickname !== ""
+  //             ? sender.nickname
+  //             : sender.userId
+  //           : null;
+  //         return {
+  //           message: message.message,
+  //           sender: senderName ?? "Market",
+  //         };
+  //       })
+  //     );
 
-      channel
-        .sendUserMessage(chat_params)
-        .onPending((message) => {
-          // The pending message for the message being sent has been created.
-          // The pending message has the same reqId value as the corresponding failed/succeeded message.
-        })
-        .onFailed((err, message) => {
-          console.log(err);
-        })
-        .onSucceeded((message) => {
-          // The message is successfully sent to the channel.
-          // The current user can receive messages from other users through the onMessageReceived() method of an event handler.
-        });
-    });
-  };
+  //     channel
+  //       .sendUserMessage(chat_params)
+  //       .onPending((message) => {
+  //         // The pending message for the message being sent has been created.
+  //         // The pending message has the same reqId value as the corresponding failed/succeeded message.
+  //       })
+  //       .onFailed((err, message) => {
+  //         console.log(err);
+  //       })
+  //       .onSucceeded((message) => {
+  //         // The message is successfully sent to the channel.
+  //         // The current user can receive messages from other users through the onMessageReceived() method of an event handler.
+  //       });
+  //   });
+  // };
 
   const isAdmin = true;
   return (
@@ -286,11 +286,19 @@ export default function MarketFeature({
                 <div>{bid.sequenceNumber.toString()}</div>
                 {bid.trader.toBase58() === myKey.toBase58() && (
                   <button
-                    onClick={() =>
+                    onClick={() => {
+                      console.log("myOrders", myOrders.data);
+                      const clientOrderId =
+                        myOrders.data?.find(
+                          (order) =>
+                            order.sequenceNumber?.toString() ===
+                            bid.sequenceNumber.toString()
+                        )?.clientOrderId ?? 0;
+                      console.log("clientOrderId", clientOrderId);
                       cancelOrder.mutate({
-                        orderId: bid.sequenceNumber,
-                      })
-                    }
+                        clientOrderId: clientOrderId,
+                      });
+                    }}
                   >
                     Cancel
                   </button>
@@ -331,7 +339,7 @@ export default function MarketFeature({
               value={username}
               onChange={(e) => setUsername(e.target.value)}
             />
-            <button onClick={connectToChat}>Connect</button>
+            {/* <button onClick={connectToChat}>Connect</button> */}
           </div>
           <div>
             {messages.map((message, index) => (

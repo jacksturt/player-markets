@@ -26,7 +26,7 @@ import { ManifestClient } from "manifest/src/client";
 import { CapsuleSolanaWeb3Signer } from "@usecapsule/solana-web3.js-v1-integration";
 import { capsule } from "@/lib/capsule";
 import { OrderType } from "manifest/src/manifest";
-import { Market } from "manifest/src";
+import { Market, Wrapper } from "manifest/src";
 import { api } from "@/trpc/react";
 import { useParams } from "next/navigation";
 import { bignum } from "@metaplex-foundation/beet";
@@ -585,6 +585,7 @@ export function usePlayerMarket() {
   const provider = useAnchorProvider();
   const { publicKey, wallet } = useWallet();
   const queryClient = useQueryClient();
+  const createOrder = api.order.create.useMutation();
   const { marketAddress: marketAddressParam } = useParams();
   const marketAddress =
     typeof marketAddressParam === "string"
@@ -627,6 +628,15 @@ export function usePlayerMarket() {
     enabled: !!market.data,
   });
 
+  const lastOrderId = api.order.getLastOrderIdForUser.useQuery(
+    {
+      marketAddress: marketAddress,
+    },
+    {
+      enabled: !!marketAddress,
+    }
+  );
+
   const capsulePubkey = useQuery({
     queryKey: ["capsule-pubkey"],
     queryFn: () => new PublicKey(capsule.getAddress()!),
@@ -667,6 +677,15 @@ export function usePlayerMarket() {
     },
     enabled: !!playerId.data && !!timestamp.data,
   });
+
+  const myOrders = api.order.readOrdersForUserByMarket.useQuery(
+    {
+      marketAddress: marketAddress,
+    },
+    {
+      enabled: !!marketAddress,
+    }
+  );
 
   const quoteTokenAccount = useQuery({
     queryKey: ["quote-token-account"],
@@ -972,13 +991,14 @@ export function usePlayerMarket() {
         quoteToken,
         tokenPrice * numBaseTokens
       );
+      const clientOrderId = (lastOrderId.data ?? 0) + 1;
       const orderIx = client.placeOrderIx({
         numBaseTokens: numBaseTokens,
         tokenPrice: tokenPrice,
         isBid: true,
         lastValidSlot: 0,
         orderType: OrderType.Limit,
-        clientOrderId: 0,
+        clientOrderId,
       });
       const blockhash = await provider.connection.getLatestBlockhash();
       const transaction = new Transaction({
@@ -995,16 +1015,38 @@ export function usePlayerMarket() {
         const signature = await provider.connection.sendRawTransaction(
           signed.serialize()
         );
-        return signature;
+        return {
+          signature,
+          numBaseTokens,
+          tokenPrice,
+          isBid: true,
+          clientOrderId,
+        };
       } else {
-        return wallet?.adapter.sendTransaction(
+        const signature = await wallet?.adapter.sendTransaction(
           transaction,
           provider.connection
         );
+        return {
+          signature,
+          numBaseTokens,
+          tokenPrice,
+          isBid: true,
+          clientOrderId,
+        };
       }
     },
-    onSuccess: (signature) => {
+    onSuccess: ({ signature, numBaseTokens, tokenPrice, clientOrderId }) => {
       console.log("deposited quote", signature);
+      createOrder.mutate({
+        marketAddress: marketPK.data!.toBase58(),
+        signature: signature!,
+        numBaseTokens: numBaseTokens,
+        numQuoteTokens: numBaseTokens * tokenPrice,
+        price: tokenPrice,
+        isBid: true,
+        clientOrderId,
+      });
       transactionToast(`${signature}`);
       return accounts.refetch();
     },
@@ -1102,14 +1144,14 @@ export function usePlayerMarket() {
 
   const cancelOrder = useMutation({
     mutationKey: ["market", "cancel-order", { playerMintPK: marketPK }],
-    mutationFn: async ({ orderId }: { orderId: bignum }) => {
+    mutationFn: async ({ clientOrderId }: { clientOrderId: number }) => {
       const client = await ManifestClient.getClientForMarket(
         provider,
         marketPK.data!,
         wallet || undefined
       );
       const cancelOrderIx = client.cancelOrderIx({
-        clientOrderId: orderId,
+        clientOrderId,
       });
       const blockhash = await provider.connection.getLatestBlockhash();
       const transaction = new Transaction({
@@ -1453,5 +1495,6 @@ export function usePlayerMarket() {
     cancelOrder,
     capsulePubkey,
     depositAndPlaceBuyOrder,
+    myOrders,
   };
 }

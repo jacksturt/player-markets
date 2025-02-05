@@ -249,7 +249,7 @@ async function handleSignature(
           signature: signature.signature,
         },
       });
-      if (maybeOrder) {
+      if (maybeOrder?.sequenceNumber) {
         console.log("Skipping already processed order", signature.signature);
         continue;
       }
@@ -271,32 +271,12 @@ async function handleSignature(
         },
       });
 
-      const numBaseTokens = parseInt(orderData.baseAtoms);
-
-      const order = await db.order.create({
+      const order = await db.order.update({
+        where: {
+          id: maybeOrder?.id,
+        },
         data: {
-          type: orderTypeMap[orderData.orderType as keyof typeof orderTypeMap],
-          price: orderData.price,
-          isBid: orderData.isBid,
-          numBaseTokens: numBaseTokens,
-          numQuoteTokens: numBaseTokens * orderData.price,
           sequenceNumber: parseInt(orderData.orderSequenceNumber),
-          signature: orderData.signature,
-          baseMint: {
-            connect: {
-              id: market?.baseMint.id,
-            },
-          },
-          user: {
-            connect: {
-              id: wallet?.user.id,
-            },
-          },
-          market: {
-            connect: {
-              id: market?.id,
-            },
-          },
         },
       });
       await db.market.update({
