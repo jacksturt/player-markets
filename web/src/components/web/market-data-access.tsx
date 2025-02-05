@@ -29,6 +29,7 @@ import { OrderType } from "manifest/src/manifest";
 import { Market } from "manifest/src";
 import { api } from "@/trpc/react";
 import { useParams } from "next/navigation";
+import { bignum } from "@metaplex-foundation/beet";
 export function useQuoteToken() {
   const { connection } = useConnection();
   const transactionToast = useTransactionToast();
@@ -1036,6 +1037,47 @@ export function usePlayerMarket() {
     onError: () => toast.error("Failed to cancel all orders"),
   });
 
+  const cancelOrder = useMutation({
+    mutationKey: ["market", "cancel-order", { playerMintPK: marketPK }],
+    mutationFn: async ({ orderId }: { orderId: bignum }) => {
+      const client = await ManifestClient.getClientForMarket(
+        provider,
+        marketPK.data!,
+        wallet || undefined
+      );
+      const cancelOrderIx = client.cancelOrderIx({
+        clientOrderId: orderId,
+      });
+      const blockhash = await provider.connection.getLatestBlockhash();
+      const transaction = new Transaction({
+        feePayer: publicKey ?? capsulePubkey.data!,
+        blockhash: blockhash.blockhash,
+        lastValidBlockHeight: blockhash.lastValidBlockHeight,
+      }).add(cancelOrderIx);
+      if (!publicKey) {
+        const solanaSigner = new CapsuleSolanaWeb3Signer(
+          capsule,
+          provider.connection
+        );
+        const signed = await solanaSigner.signTransaction(transaction);
+        const signature = await provider.connection.sendRawTransaction(
+          signed.serialize()
+        );
+        return signature;
+      } else {
+        return wallet?.adapter.sendTransaction(
+          transaction,
+          provider.connection
+        );
+      }
+    },
+    onSuccess: (signature) => {
+      transactionToast(`${signature}`);
+      return accounts.refetch();
+    },
+    onError: () => toast.error("Failed to cancel order"),
+  });
+
   const buy = useMutation({
     mutationKey: ["market", "buy-quote", { playerMintPK: marketPK }],
     mutationFn: async ({
@@ -1345,5 +1387,7 @@ export function usePlayerMarket() {
     lastTradePrice,
     playerStatsAccount,
     cancelAllOrders,
+    cancelOrder,
+    capsulePubkey,
   };
 }

@@ -33,6 +33,7 @@ import ChartComponent from "@/components/player-data/chart";
 import { PlaceOrderLogResult } from "@/lib/types";
 import { useQueryClient } from "@tanstack/react-query";
 import { api } from "@/trpc/react";
+import { useWallet } from "@solana/wallet-adapter-react";
 
 const sb = SendbirdChat.init({
   appId: "434D4E2C-4EEF-41DB-AE99-30D00B5AFF1D",
@@ -62,10 +63,15 @@ export default function MarketFeature({
     trades,
     lastTradePrice,
     playerStatsAccount,
+    cancelOrder,
+    capsulePubkey,
   } = usePlayerMarket();
+
+  const { publicKey } = useWallet();
   const { quoteTokenBalance } = useQuoteToken();
   const queryClient = useQueryClient();
   const utils = api.useUtils();
+  const myKey = publicKey ?? capsulePubkey.data!;
   useEffect(() => {
     async function checkCapsuleSession() {
       const isActive = await capsule.isSessionActive();
@@ -276,6 +282,18 @@ export default function MarketFeature({
                 <div key={"quantity-" + bid.trader.toBase58()}>
                   {bid.numBaseTokens.toString()}
                 </div>
+                <div>{bid.sequenceNumber.toString()}</div>
+                {bid.trader.toBase58() === myKey.toBase58() && (
+                  <button
+                    onClick={() =>
+                      cancelOrder.mutate({
+                        orderId: bid.sequenceNumber,
+                      })
+                    }
+                  >
+                    Cancel
+                  </button>
+                )}
               </>
             ))}
           </div>
