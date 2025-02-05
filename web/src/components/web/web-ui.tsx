@@ -102,9 +102,21 @@ export function InitPlayerMint() {
 
 export function FinishCreatingMarket() {
   const { finishCreatingMarket } = useMarkets();
-  const playerId = "18890";
-  const playerName = "Patrick Mahomes";
-
+  const playerId = "19063";
+  const playerName = "George Kittle";
+  const playerImage =
+    "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a2/Washington_Commanders_logo.svg/1200px-Washington_Commanders_logo.svg.png";
+  const playerPosition = "TE";
+  // SF
+  const teamId = "cm6shjtv90004mrscl6knr8xt";
+  const mintSymbol = "George";
+  const season = "2023POST";
+  const week = "3";
+  const network = "MAINNET";
+  const projection = 12.88;
+  const timestamp = "1738795137840";
+  const marketAddress = "4KCNsaKKvFSqroMwk1iAhdLtmX954hhvC98STCeEcKCA";
+  const mintAddress = "9nqdVyXub3rp5LXLYy1EkzxRVqafZcvwbe38RhtEyASt";
   return (
     <button
       className="btn btn-xs lg:btn-md btn-primary"
@@ -112,8 +124,12 @@ export function FinishCreatingMarket() {
         finishCreatingMarket.mutateAsync({
           playerId,
           playerName,
-          mintAddress: "2ZJ3gjGJ5bYtnjGbfp2USuH1mpPGhRK9hzKJUhygmauQ",
-          timestamp: "1738715534348",
+          marketAddress,
+          mintAddress,
+          mintTimestamp: timestamp,
+          season,
+          week,
+          projection,
         })
       }
       disabled={finishCreatingMarket.isPending}

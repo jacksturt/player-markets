@@ -9,6 +9,15 @@
         "path": "/api/cron/updatePlayerStats?playerId=17922",
         "schedule": "* */1 * * *"
       },
+
+      {
+        "path": "/api/cron/updatePlayerStats?playerId=18877",
+        "schedule": "* */1 * * *"
+      },
+      {
+        "path": "/api/cron/updatePlayerStats?playerId=19063",
+        "schedule": "* */1 * * *"
+      },
       {
         "path": "/api/cron/checkOrdersAndFills?marketAddress=CrojKuiFj4WHWcYejoHscTDKJySCtK2oCf9hoRUG26y6",
         "schedule": "* * * * *"
