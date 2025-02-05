@@ -49,10 +49,10 @@ export function CreateTeam() {
       className="btn btn-xs lg:btn-md btn-primary"
       onClick={() =>
         createTeam.mutateAsync({
-          teamName: "Detroit Lions",
+          teamName: "San Francisco 49ers",
           teamImage:
             "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a2/Washington_Commanders_logo.svg/1200px-Washington_Commanders_logo.svg.png",
-          teamSportsdataId: "DET",
+          teamSportsdataId: "SF",
         })
       }
     >
@@ -63,18 +63,18 @@ export function CreateTeam() {
 
 export function InitPlayerMint() {
   const { initialize } = useMarkets();
-  const playerId = "17922";
-  const playerName = "Jared Goff";
+  const playerId = "19063";
+  const playerName = "George Kittle";
   const playerImage =
     "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a2/Washington_Commanders_logo.svg/1200px-Washington_Commanders_logo.svg.png";
-  const playerPosition = "QB";
-  // DET
-  const teamId = "cm6sge5rn0000mr87qls2slbh";
-  const mintSymbol = "JARED";
+  const playerPosition = "TE";
+  // SF
+  const teamId = "cm6shjtv90004mrscl6knr8xt";
+  const mintSymbol = "George";
   const season = "2023POST";
   const week = "3";
   const network = "MAINNET";
-  const projection = 19.76;
+  const projection = 12.88;
 
   return (
     <button
