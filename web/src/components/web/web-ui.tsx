@@ -5,12 +5,13 @@ import {
   usePlayerMarket,
   useQuoteToken,
 } from "./market-data-access";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
+import { placeOrderInstructionDiscriminator } from "manifest/src/ui_wrapper";
 
 export function QuoteTokenCreate() {
   const { initialize } = useQuoteToken();
@@ -370,6 +371,132 @@ export const Trade = () => {
             } text-white font-medium py-2 px-4 rounded-lg transition-colors`}
           >
             {orderType === "buy" ? "Place Buy Order" : "Place Sell Order"}
+          </Button>
+        </form>
+      </CardContent>
+    </Card>
+  );
+};
+
+export const Trade2 = () => {
+  const [orderType, setOrderType] = useState("buy");
+  const [price, setPrice] = useState("");
+  const [quantity, setQuantity] = useState("");
+  const { quoteTokenBalance } = useQuoteToken();
+  const { depositAndPlaceBuyOrder, sell } = usePlayerMarket();
+  const [placeOrderError, setPlaceOrderError] = useState("");
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (orderType === "buy") {
+      depositAndPlaceBuyOrder.mutateAsync({
+        numBaseTokens: parseFloat(quantity),
+        tokenPrice: parseFloat(price),
+      });
+    } else {
+      sell.mutateAsync({
+        numBaseTokens: parseFloat(quantity),
+        tokenPrice: parseFloat(price),
+      });
+    }
+  };
+
+  useEffect(() => {
+    console.log(quoteTokenBalance.data);
+    console.log(parseFloat(quantity) * parseFloat(price) * 10 ** 6);
+    if (
+      quoteTokenBalance.data &&
+      parseFloat(quantity) * parseFloat(price) * 10 ** 6 >
+        parseFloat(quoteTokenBalance.data)
+    ) {
+      setPlaceOrderError("Insufficient quote tokens");
+    } else {
+      setPlaceOrderError("");
+    }
+  }, [quoteTokenBalance.data, quantity, price]);
+
+  return (
+    <Card className="w-full max-w-md mx-auto">
+      <CardHeader>
+        <CardTitle className="text-2xl font-bold text-center">
+          Place Order
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        <form onSubmit={handleSubmit} className="space-y-6">
+          <div className="flex items-center justify-between p-4 bg-gray-100 rounded-lg">
+            <Label htmlFor="order-type" className="text-lg font-medium">
+              {orderType === "buy" ? "Buy" : "Sell"}
+            </Label>
+            <Switch
+              id="order-type"
+              checked={orderType === "sell"}
+              onCheckedChange={(checked) =>
+                setOrderType(checked ? "sell" : "buy")
+              }
+              className="data-[state=checked]:bg-red-500 data-[state=unchecked]:bg-green-500"
+            />
+          </div>
+
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="price" className="block mb-2">
+                Price
+              </Label>
+              <Input
+                id="price"
+                type="number"
+                step="0.000001"
+                min="0"
+                value={price}
+                onChange={(e) => setPrice(e.target.value)}
+                className="w-full"
+                placeholder="Enter price"
+                required
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="quantity" className="block mb-2">
+                Quantity
+              </Label>
+              <Input
+                id="quantity"
+                type="number"
+                step="0.000001"
+                min="0.000001"
+                value={quantity}
+                onChange={(e) => setQuantity(e.target.value)}
+                className="w-full"
+                placeholder="Enter quantity"
+                required
+              />
+            </div>
+
+            {price && quantity && (
+              <div className="p-4 bg-gray-100 rounded-lg">
+                <p className="text-lg font-medium">
+                  Total: $
+                  {(parseFloat(price) * parseFloat(quantity)).toFixed(2)}
+                </p>
+              </div>
+            )}
+          </div>
+
+          <Button
+            type="submit"
+            className={`w-full ${
+              placeOrderError
+                ? "bg-gray-500 hover:bg-gray-600"
+                : orderType === "buy"
+                ? "bg-green-500 hover:bg-green-600"
+                : "bg-red-500 hover:bg-red-600"
+            } text-white font-medium py-2 px-4 rounded-lg transition-colors`}
+          >
+            {placeOrderError
+              ? placeOrderError
+              : orderType === "buy"
+              ? "Place Buy Order"
+              : "Place Sell Order"}
           </Button>
         </form>
       </CardContent>

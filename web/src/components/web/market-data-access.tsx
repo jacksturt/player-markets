@@ -948,6 +948,69 @@ export function usePlayerMarket() {
     onError: () => toast.error("Failed to deposit quote"),
   });
 
+  const depositAndPlaceBuyOrder = useMutation({
+    mutationKey: [
+      "market",
+      "deposit-and-place-buy-order",
+      { playerMintPK: marketPK },
+    ],
+    mutationFn: async ({
+      numBaseTokens,
+      tokenPrice,
+    }: {
+      numBaseTokens: number;
+      tokenPrice: number;
+    }) => {
+      const client = await ManifestClient.getClientForMarket(
+        provider,
+        marketPK.data!,
+        wallet || undefined
+      );
+      const feePayer = publicKey ?? capsulePubkey.data!;
+      const depositIx = client.depositIx(
+        feePayer,
+        quoteToken,
+        tokenPrice * numBaseTokens
+      );
+      const orderIx = client.placeOrderIx({
+        numBaseTokens: numBaseTokens,
+        tokenPrice: tokenPrice,
+        isBid: true,
+        lastValidSlot: 0,
+        orderType: OrderType.Limit,
+        clientOrderId: 0,
+      });
+      const blockhash = await provider.connection.getLatestBlockhash();
+      const transaction = new Transaction({
+        feePayer,
+        blockhash: blockhash.blockhash,
+        lastValidBlockHeight: blockhash.lastValidBlockHeight,
+      }).add(depositIx, orderIx);
+      if (!publicKey) {
+        const solanaSigner = new CapsuleSolanaWeb3Signer(
+          capsule,
+          provider.connection
+        );
+        const signed = await solanaSigner.signTransaction(transaction);
+        const signature = await provider.connection.sendRawTransaction(
+          signed.serialize()
+        );
+        return signature;
+      } else {
+        return wallet?.adapter.sendTransaction(
+          transaction,
+          provider.connection
+        );
+      }
+    },
+    onSuccess: (signature) => {
+      console.log("deposited quote", signature);
+      transactionToast(`${signature}`);
+      return accounts.refetch();
+    },
+    onError: () => toast.error("Failed to deposit quote"),
+  });
+
   const depositBase = useMutation({
     mutationKey: ["market", "deposit-base", { playerMintPK: marketPK }],
     mutationFn: async () => {
@@ -1389,5 +1452,6 @@ export function usePlayerMarket() {
     cancelAllOrders,
     cancelOrder,
     capsulePubkey,
+    depositAndPlaceBuyOrder,
   };
 }
