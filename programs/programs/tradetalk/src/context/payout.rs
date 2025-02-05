@@ -96,17 +96,27 @@ impl<'info> Payout<'info> {
         if self.player_token_mint.supply as f64 * self.player_stats.actual_points
             >= self.vault.amount as f64
         {
-            let percent_due = self.payer_player_token_account.amount as f64
-                / self.player_token_mint.supply as f64;
+            let percent_due;
+            if self.mint_record.deposited_amount == 0 {
+                percent_due = 0.0;
+            } else {
+                percent_due = self.payer_player_token_account.amount as f64
+                    / self.player_token_mint.supply as f64;
+            }
             amount_due = (self.vault.amount as f64 * percent_due) as u64;
         } else {
             // How much is left in the vault after all payouts are made
             let vault_remaining = self.vault.amount
                 - (self.player_token_mint.supply as f64 * self.player_stats.actual_points) as u64;
-
+            let percent_due;
             // Percentage of the total deposited amount that is due to the minter
-            let percent_due = self.mint_record.deposited_amount as f64
-                / self.mint_config.total_deposited_amount as f64;
+
+            if self.mint_record.deposited_amount == 0 {
+                percent_due = 0.0;
+            } else {
+                percent_due = self.payer_player_token_account.amount as f64
+                    / self.player_token_mint.supply as f64;
+            }
 
             // How much is due to the minter
             let minter_rewards = vault_remaining as f64 * percent_due;
