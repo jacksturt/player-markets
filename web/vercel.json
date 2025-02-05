@@ -1,7 +1,12 @@
 {
     "crons": [
       {
-        "path": "/api/cron/updateMarketForPlayer?playerId=21831",
+        "path": "/api/cron/updatePlayerStats?playerId=21831",
+        "schedule": "* */1 * * *"
+      },
+
+      {
+        "path": "/api/cron/updatePlayerStats?playerId=17922",
         "schedule": "* */1 * * *"
       },
       {

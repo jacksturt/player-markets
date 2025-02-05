@@ -263,6 +263,10 @@ export function useMarkets() {
       playerPosition,
       teamId,
       mintSymbol,
+      season,
+      week,
+      network,
+      projection,
     }: {
       playerId: string;
       playerName: string;
@@ -270,6 +274,10 @@ export function useMarkets() {
       playerPosition: string;
       teamId: string;
       mintSymbol: string;
+      season: string;
+      week: string;
+      network: string;
+      projection: number;
     }) => {
       const timestamp = Date.now().toString();
       const player_token_mint = PublicKey.findProgramAddressSync(
@@ -308,6 +316,10 @@ export function useMarkets() {
         playerPosition,
         teamId,
         mintSymbol,
+        season,
+        week,
+        network,
+        projection,
       };
     },
     onSuccess: async (data: {
@@ -315,12 +327,16 @@ export function useMarkets() {
       playerId: string;
       timestamp: string;
       player_token_mint: PublicKey;
-      mintConfig: PublicKey;
       playerName: string;
       playerImage: string;
       playerPosition: string;
       teamId: string;
       mintSymbol: string;
+      season: string;
+      week: string;
+      network: string;
+      projection: number;
+      mintConfig: PublicKey;
     }) => {
       transactionToast(data.signature);
       await createMint.mutateAsync(
@@ -360,7 +376,9 @@ export function useMarkets() {
                 description: data.playerName,
                 address: keyPair.toBase58(),
                 mintAddress: data.player_token_mint.toBase58(),
-                network: "MAINNET",
+                network: data.network as "MAINNET" | "DEVNET",
+                season: data.season,
+                week: data.week,
               },
               {
                 onSuccess: async () => {
@@ -372,7 +390,7 @@ export function useMarkets() {
                     ],
                     program.programId
                   )[0];
-                  return program.methods
+                  const initSignature = await program.methods
                     .initProjectionOracle()
                     .accountsStrict({
                       payer: provider.publicKey,
@@ -382,10 +400,18 @@ export function useMarkets() {
                       systemProgram: SystemProgram.programId,
                       associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
                     })
-                    .rpc()
-                    .then((signature) => {
-                      transactionToast(signature);
-                    });
+                    .rpc();
+                  transactionToast(initSignature);
+
+                  const updateSignature = await program.methods
+                    .updateProjectionOracle(data.projection, true, false, false)
+                    .accountsStrict({
+                      authority: provider.publicKey,
+                      config: data.mintConfig,
+                      playerStats,
+                    })
+                    .rpc();
+                  transactionToast(updateSignature);
                 },
                 onError: async (error) => {
                   toast.error(error.message);
@@ -435,6 +461,8 @@ export function useMarkets() {
           address: keyPair.toBase58(),
           mintAddress: player_token_mint.toBase58(),
           network: "MAINNET",
+          season: "2024POST",
+          week: "4",
         },
         {
           onSuccess: async () => {

@@ -24,8 +24,6 @@ export async function GET(request: Request) {
       { status: 400 }
     );
   }
-  const season = "2024POST";
-  const week = "4";
   try {
     const player = await db.player.findUniqueOrThrow({
       where: {
@@ -41,7 +39,7 @@ export async function GET(request: Request) {
 
     try {
       if (player.market?.hasGameStarted) {
-        const url = `https://api.sportsdata.io/v3/nfl/stats/json/PlayerGameStatsByTeam/${season}/${week}/${player?.team?.sportsDataId}?key=${process.env.SPORTSDATA_API_KEY}`;
+        const url = `https://api.sportsdata.io/v3/nfl/stats/json/PlayerGameStatsByTeam/${player.market?.season}/${player.market?.week}/${player?.team?.sportsDataId}?key=${process.env.SPORTSDATA_API_KEY}`;
         const response = await fetch(url, {
           headers: {
             Authorization: `Bearer ${process.env.ORACLE_API_KEY}`,
@@ -89,7 +87,7 @@ export async function GET(request: Request) {
           );
         }
       } else {
-        const url = `https://api.sportsdata.io/v3/nfl/projections/json/PlayerGameProjectionStatsByTeam/${season}/${week}/${player?.team?.sportsDataId}?key=${process.env.SPORTSDATA_API_KEY}`;
+        const url = `https://api.sportsdata.io/v3/nfl/projections/json/PlayerGameProjectionStatsByTeam/${player.market?.season}/${player.market?.week}/${player?.team?.sportsDataId}?key=${process.env.SPORTSDATA_API_KEY}`;
 
         const response = await fetch(url, {
           headers: {

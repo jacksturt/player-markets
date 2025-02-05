@@ -35,6 +35,7 @@ import { PlaceOrderLogResult } from "@/lib/types";
 import { useQueryClient } from "@tanstack/react-query";
 import { api } from "@/trpc/react";
 import { useWallet } from "@solana/wallet-adapter-react";
+import Image from "next/image";
 
 const sb = SendbirdChat.init({
   appId: "434D4E2C-4EEF-41DB-AE99-30D00B5AFF1D",
@@ -369,10 +370,12 @@ export default function MarketFeature({
           <div>
             {messages.map((message, index) => (
               <div key={"message-" + index} className="flex flex-row">
-                <img
+                <Image
                   src={message.image}
                   alt="profile"
                   className="w-10 h-10 rounded-full"
+                  width={40}
+                  height={40}
                 />
                 <div>{message.sender}</div>
                 <div>{message.message}</div>
@@ -381,10 +384,10 @@ export default function MarketFeature({
           </div>
         </div>
         <div className="flex flex-col gap-4">
-          <QuoteTokenFaucet />
+          {/* <QuoteTokenFaucet />
           <MintPlayerTokens />
           <DepositBase />
-          <DepositQuote />
+          <DepositQuote /> */}
           <Trade2 />
           <CancelAllOrders />
           <WithdrawAll />

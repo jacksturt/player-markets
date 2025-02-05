@@ -49,10 +49,10 @@ export function CreateTeam() {
       className="btn btn-xs lg:btn-md btn-primary"
       onClick={() =>
         createTeam.mutateAsync({
-          teamName: "Kansas City Chiefs",
+          teamName: "Detroit Lions",
           teamImage:
             "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a2/Washington_Commanders_logo.svg/1200px-Washington_Commanders_logo.svg.png",
-          teamSportsdataId: "KC",
+          teamSportsdataId: "DET",
         })
       }
     >
@@ -63,13 +63,18 @@ export function CreateTeam() {
 
 export function InitPlayerMint() {
   const { initialize } = useMarkets();
-  const playerId = "18890";
-  const playerName = "Patrick Mahomes";
+  const playerId = "17922";
+  const playerName = "Jared Goff";
   const playerImage =
-    "https://www.google.com/images/branding/googlelogo/1x/googlelogo_color_272x92dp.png";
+    "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a2/Washington_Commanders_logo.svg/1200px-Washington_Commanders_logo.svg.png";
   const playerPosition = "QB";
-  const teamId = "cm6qtbj7c0000rcmm8v7l5132";
-  const mintSymbol = "PATRICK";
+  // DET
+  const teamId = "cm6sge5rn0000mr87qls2slbh";
+  const mintSymbol = "JARED";
+  const season = "2023POST";
+  const week = "3";
+  const network = "MAINNET";
+  const projection = 19.76;
 
   return (
     <button
@@ -82,6 +87,10 @@ export function InitPlayerMint() {
           playerPosition,
           teamId,
           mintSymbol,
+          season,
+          week,
+          network,
+          projection,
         })
       }
       disabled={initialize.isPending}
@@ -392,6 +401,7 @@ export const Trade2 = () => {
   const [placeOrderError, setPlaceOrderError] = useState("");
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    console.log("placing order");
     if (orderType === "buy") {
       depositAndPlaceBuyOrder.mutateAsync({
         numBaseTokens: parseFloat(quantity),
