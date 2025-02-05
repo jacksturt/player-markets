@@ -5,7 +5,7 @@
         "schedule": "*/10 * * * *"
       },
       {
-        "path": "/api/cron/checkOrdersAndFills",
+        "path": "/api/cron/checkOrdersAndFills?marketAddress=CrojKuiFj4WHWcYejoHscTDKJySCtK2oCf9hoRUG26y6",
         "schedule": "* * * * *"
       }
     ]
