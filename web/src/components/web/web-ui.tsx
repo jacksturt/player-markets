@@ -130,7 +130,7 @@ export function VaultsList() {
 export function UpdateProjectionOracle() {
   const { updateProjectionOracle } = useMarkets();
   const playerId = "18890";
-  const projection = 20.86;
+  const projection = 19.32;
   const timestamp = "1738716012254";
   const isProjected = true;
   const setMintingDisabled = false;

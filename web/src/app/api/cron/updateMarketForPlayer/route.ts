@@ -29,7 +29,7 @@ export async function GET(request: Request) {
   try {
     const player = await db.player.findUniqueOrThrow({
       where: {
-        id: playerId,
+        sportsDataId: parseInt(playerId),
       },
       include: {
         team: true,
@@ -47,12 +47,21 @@ export async function GET(request: Request) {
             Authorization: `Bearer ${process.env.ORACLE_API_KEY}`,
           },
         });
-        const playerActualData: PlayerGameStats = await response.json();
-        console.log("data", playerActualData);
+        const playerActualDataList: PlayerGameStats[] = await response.json();
+
+        if (!playerActualDataList) {
+          return NextResponse.json(
+            { success: false, error: "Player projection not found" },
+            { status: 404 }
+          );
+        }
+        const playerActualData = playerActualDataList.find(
+          (data) => data.PlayerID === parseInt(playerId)
+        );
 
         if (!playerActualData) {
           return NextResponse.json(
-            { success: false, error: "Player projection not found" },
+            { success: false, error: "Player actual data not found" },
             { status: 404 }
           );
         }
@@ -80,15 +89,19 @@ export async function GET(request: Request) {
           );
         }
       } else {
-        const url = `https://baker-api.sportsdata.io/baker/v2/nfl/projections/players/${season}/${week}/team/${player?.team?.sportsDataId}/avg?key=${process.env.SPORTSDATA_API_KEY}`;
+        const url = `https://api.sportsdata.io/v3/nfl/projections/json/PlayerGameProjectionStatsByTeam/${season}/${week}/${player?.team?.sportsDataId}?key=${process.env.SPORTSDATA_API_KEY}`;
 
         const response = await fetch(url, {
           headers: {
             Authorization: `Bearer ${process.env.ORACLE_API_KEY}`,
           },
         });
-        const playerProjectionData: PlayerProjection = await response.json();
-        console.log("data", playerProjectionData);
+        const playerProjectionDataList: PlayerGameStats[] =
+          await response.json();
+
+        const playerProjectionData = playerProjectionDataList.find(
+          (data) => data.PlayerID === parseInt(playerId)
+        );
 
         if (!playerProjectionData) {
           return NextResponse.json(
@@ -98,7 +111,7 @@ export async function GET(request: Request) {
         }
 
         const camelCaseData =
-          convertPlayerProjectionToCamelCase(playerProjectionData);
+          convertPlayerGameStatsToProjected(playerProjectionData);
         if (
           player.projections?.projectedFantasyPointsPpr !==
           camelCaseData.projectedFantasyPointsPpr
@@ -118,7 +131,7 @@ export async function GET(request: Request) {
           await updateProjectionOracle(
             player.sportsDataId.toString(),
             player.mint!.timestamp,
-            playerProjectionData.fantasy_points_ppr,
+            camelCaseData.projectedFantasyPointsPpr,
             true,
             false,
             false
@@ -142,27 +155,29 @@ export async function GET(request: Request) {
   }
 }
 
-function convertPlayerProjectionToCamelCase(projection: PlayerProjection) {
+function convertPlayerGameStatsToProjected(actual: PlayerGameStats) {
   return {
-    projectedRushingAttempts: projection.rushing_attempts,
-    projectedRushingYards: projection.rushing_yards,
-    projectedRushingTouchdowns: projection.rushing_touchdowns,
-    projectedFumblesLost: projection.fumbles_lost,
-    projectedCatches: projection.catches,
-    projectedReceivingYards: projection.receiving_yards,
-    projectedReceivingTouchdowns: projection.receiving_touchdowns,
-    projectedPassingInterceptions: projection.passing_interceptions,
-    projectedPassingYards: projection.passing_yards,
-    projectedPassingTouchdowns: projection.passing_touchdowns,
-    projectedPassingSacks: projection.passing_sacks,
-    projectedFieldGoalsMade: projection.field_goals_made,
-    projectedFieldGoalsMissed: projection.field_goals_missed,
-    projectedExtraPointKickingConversions:
-      projection.extra_point_kicking_conversions,
-    projectedExtraPointKickingMisses: projection.extra_point_kicking_misses,
-    projectedFantasyPointsHalfPpr: projection.fantasy_points_half_ppr,
-    projectedFantasyPointsPpr: projection.fantasy_points_ppr,
-    projectedFantasyPointsNonPpr: projection.fantasy_points_non_ppr,
+    projectedRushingAttempts: actual.RushingAttempts,
+    projectedRushingYards: actual.RushingYards,
+    projectedRushingTouchdowns: actual.RushingTouchdowns,
+    projectedFumblesLost: actual.FumblesLost,
+    projectedCatches: actual.Receptions,
+    projectedReceivingYards: actual.ReceivingYards,
+    projectedReceivingTouchdowns: actual.ReceivingTouchdowns,
+    projectedPassingInterceptions: actual.PassingInterceptions,
+    projectedPassingYards: actual.PassingYards,
+    projectedPassingTouchdowns: actual.PassingTouchdowns,
+    projectedPassingSacks: actual.PassingSacks,
+    projectedFieldGoalsMade: actual.FieldGoalsMade,
+    projectedFieldGoalsMissed:
+      actual.FieldGoalsAttempted - actual.FieldGoalsMade,
+    projectedExtraPointKickingConversions: actual.ExtraPointsMade,
+    projectedExtraPointKickingMisses:
+      actual.ExtraPointsAttempted - actual.ExtraPointsMade,
+    projectedFantasyPointsHalfPpr:
+      (actual.FantasyPointsPPR + actual.FantasyPoints) / 2,
+    projectedFantasyPointsPpr: actual.FantasyPointsPPR,
+    projectedFantasyPointsNonPpr: actual.FantasyPoints,
   };
 }
 
