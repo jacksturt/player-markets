@@ -382,8 +382,13 @@ export const Trade2 = () => {
   const [orderType, setOrderType] = useState("buy");
   const [price, setPrice] = useState("");
   const [quantity, setQuantity] = useState("");
+  const [mintCost, setMintCost] = useState(0);
   const { quoteTokenBalance } = useQuoteToken();
-  const { depositAndPlaceBuyOrder, sell } = usePlayerMarket();
+  const {
+    depositAndPlaceBuyOrder,
+    maybeMintDepositAndSell,
+    playerStatsAccount,
+  } = usePlayerMarket();
   const [placeOrderError, setPlaceOrderError] = useState("");
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -393,7 +398,7 @@ export const Trade2 = () => {
         tokenPrice: parseFloat(price),
       });
     } else {
-      sell.mutateAsync({
+      maybeMintDepositAndSell.mutateAsync({
         numBaseTokens: parseFloat(quantity),
         tokenPrice: parseFloat(price),
       });
@@ -401,16 +406,39 @@ export const Trade2 = () => {
   };
 
   useEffect(() => {
-    console.log(quoteTokenBalance.data);
-    console.log(parseFloat(quantity) * parseFloat(price) * 10 ** 6);
-    if (
-      quoteTokenBalance.data &&
-      parseFloat(quantity) * parseFloat(price) * 10 ** 6 >
-        parseFloat(quoteTokenBalance.data)
-    ) {
-      setPlaceOrderError("Insufficient quote tokens");
+    console.log(
+      quoteTokenBalance.data,
+      playerStatsAccount.data?.projectedPoints!
+    );
+    console.log(
+      parseFloat(quantity) * playerStatsAccount.data?.projectedPoints! * 2.5
+    );
+    if (orderType === "buy") {
+      if (
+        quoteTokenBalance.data &&
+        parseFloat(quantity) * parseFloat(price) * 10 ** 6 >
+          parseFloat(quoteTokenBalance.data)
+      ) {
+        setPlaceOrderError("Insufficient quote tokens");
+      } else {
+        setPlaceOrderError("");
+      }
     } else {
-      setPlaceOrderError("");
+      if (
+        quoteTokenBalance.data &&
+        2.5 *
+          playerStatsAccount.data?.projectedPoints! *
+          parseFloat(quantity) *
+          10 ** 6 >
+          parseFloat(quoteTokenBalance.data)
+      ) {
+        setPlaceOrderError("Insufficient quote tokens");
+      } else {
+        setPlaceOrderError("");
+        setMintCost(
+          2.5 * playerStatsAccount.data?.projectedPoints! * parseFloat(quantity)
+        );
+      }
     }
   }, [quoteTokenBalance.data, quantity, price]);
 
@@ -478,6 +506,11 @@ export const Trade2 = () => {
                   Total: $
                   {(parseFloat(price) * parseFloat(quantity)).toFixed(2)}
                 </p>
+                {orderType === "sell" && (
+                  <p className="text-lg font-medium">
+                    Mint Cost: ${mintCost.toFixed(2)}
+                  </p>
+                )}
               </div>
             )}
           </div>

@@ -283,7 +283,6 @@ export default function MarketFeature({
                 <div key={"quantity-" + bid.trader.toBase58()}>
                   {bid.numBaseTokens.toString()}
                 </div>
-                <div>{bid.sequenceNumber.toString()}</div>
                 {bid.trader.toBase58() === myKey.toBase58() && (
                   <button
                     onClick={() => {
@@ -324,6 +323,25 @@ export default function MarketFeature({
                 <div key={"quantity-" + ask.trader.toBase58()}>
                   {ask.numBaseTokens.toString()}
                 </div>
+                {ask.trader.toBase58() === myKey.toBase58() && (
+                  <button
+                    onClick={() => {
+                      console.log("myOrders", myOrders.data);
+                      const clientOrderId =
+                        myOrders.data?.find(
+                          (order) =>
+                            order.sequenceNumber?.toString() ===
+                            ask.sequenceNumber.toString()
+                        )?.clientOrderId ?? 0;
+                      console.log("clientOrderId", clientOrderId);
+                      cancelOrder.mutate({
+                        clientOrderId: clientOrderId,
+                      });
+                    }}
+                  >
+                    Cancel
+                  </button>
+                )}
               </>
             ))}
           </div>

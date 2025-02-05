@@ -1053,6 +1053,177 @@ export function usePlayerMarket() {
     onError: () => toast.error("Failed to deposit quote"),
   });
 
+  const maybeMintDepositAndSell = useMutation({
+    mutationKey: [
+      "market",
+      "maybe-mint-deposit-and-sell",
+      { playerMintPK: marketPK },
+    ],
+    mutationFn: async ({
+      numBaseTokens,
+      tokenPrice,
+    }: {
+      numBaseTokens: number;
+      tokenPrice: number;
+    }) => {
+      if (!playerId.data || !timestamp.data) {
+        throw new Error("Player ID or timestamp not found");
+      }
+      const quantity = new BN(numBaseTokens * 10 ** 6);
+
+      if (!publicKey && !capsulePubkey.data) {
+        throw new Error("No public key found");
+      }
+      const client = await ManifestClient.getClientForMarket(
+        provider,
+        marketPK.data!,
+        wallet || undefined
+      );
+      const mintConfig = PublicKey.findProgramAddressSync(
+        [
+          Buffer.from("config"),
+          Buffer.from(playerId.data),
+          Buffer.from(timestamp.data),
+        ],
+        program.programId
+      )[0];
+      const playerStats = PublicKey.findProgramAddressSync(
+        [
+          Buffer.from("player_stats"),
+          Buffer.from(playerId.data ?? ""),
+          Buffer.from(timestamp.data ?? ""),
+        ],
+        program.programId
+      )[0];
+      const vault = getAssociatedTokenAddressSync(quoteToken, mintConfig, true);
+      if (!publicKey) {
+        const mintRecord = PublicKey.findProgramAddressSync(
+          [
+            Buffer.from("mint_record"),
+            mintConfig.toBuffer(),
+            capsulePubkey.data!.toBuffer(),
+          ],
+          program.programId
+        )[0];
+
+        const ix = await program.methods
+          .mintTokens(quantity)
+          .accountsStrict({
+            payer: capsulePubkey.data!,
+            quoteTokenMint: quoteToken,
+            vault,
+            playerTokenMint: playerTokenMint.data!,
+            destination: playerTokenAccount.data!,
+            config: mintConfig,
+            tokenProgram: TOKEN_PROGRAM_ID,
+            systemProgram: SystemProgram.programId,
+            associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
+            playerStats,
+            mintRecord,
+            payerAtaQuote: quoteTokenAccount.data!,
+          })
+          .instruction();
+        const depositIx = client.depositIx(
+          capsulePubkey.data!,
+          playerTokenMint.data!,
+          numBaseTokens
+        );
+        const clientOrderId = (lastOrderId.data ?? 0) + 1;
+        const orderIx = client.placeOrderIx({
+          numBaseTokens: numBaseTokens,
+          tokenPrice: tokenPrice,
+          isBid: false,
+          lastValidSlot: 0,
+          orderType: OrderType.Limit,
+          clientOrderId,
+        });
+        const blockhash = await provider.connection.getLatestBlockhash();
+        const transaction = new Transaction({
+          feePayer: capsulePubkey.data!,
+          blockhash: blockhash.blockhash,
+          lastValidBlockHeight: blockhash.lastValidBlockHeight,
+        }).add(ix, depositIx, orderIx);
+        const solanaSigner = new CapsuleSolanaWeb3Signer(
+          capsule,
+          provider.connection
+        );
+        const signed = await solanaSigner.signTransaction(transaction);
+        const signature = await provider.connection.sendRawTransaction(
+          signed.serialize()
+        );
+        return { signature, numBaseTokens, tokenPrice, clientOrderId };
+      } else {
+        const mintRecord = PublicKey.findProgramAddressSync(
+          [
+            Buffer.from("mint_record"),
+            mintConfig.toBuffer(),
+            publicKey.toBuffer(),
+          ],
+          program.programId
+        )[0];
+
+        const mintIx = await program.methods
+          .mintTokens(quantity)
+          .accountsStrict({
+            payer: publicKey,
+            quoteTokenMint: quoteToken,
+            vault,
+            playerTokenMint: playerTokenMint.data!,
+            destination: playerTokenAccount.data!,
+            config: mintConfig,
+            tokenProgram: TOKEN_PROGRAM_ID,
+            systemProgram: SystemProgram.programId,
+            associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
+            playerStats,
+            mintRecord,
+            payerAtaQuote: quoteTokenAccount.data!,
+          })
+          .instruction();
+        const depositIx = client.depositIx(
+          publicKey,
+          playerTokenMint.data!,
+          numBaseTokens
+        );
+        const clientOrderId = (lastOrderId.data ?? 0) + 1;
+        const orderIx = client.placeOrderIx({
+          numBaseTokens: numBaseTokens,
+          tokenPrice: tokenPrice,
+          isBid: false,
+          lastValidSlot: 0,
+          orderType: OrderType.Limit,
+          clientOrderId,
+        });
+        const blockhash = await provider.connection.getLatestBlockhash();
+        const transaction = new Transaction({
+          feePayer: publicKey,
+          blockhash: blockhash.blockhash,
+          lastValidBlockHeight: blockhash.lastValidBlockHeight,
+        }).add(mintIx, depositIx, orderIx);
+        const signature = await wallet?.adapter.sendTransaction(
+          transaction,
+          provider.connection
+        );
+        return { signature, numBaseTokens, tokenPrice, clientOrderId };
+      }
+    },
+
+    onSuccess: ({ signature, numBaseTokens, tokenPrice, clientOrderId }) => {
+      console.log("deposited quote", signature);
+      createOrder.mutate({
+        marketAddress: marketPK.data!.toBase58(),
+        signature: signature!,
+        numBaseTokens: numBaseTokens,
+        numQuoteTokens: numBaseTokens * tokenPrice,
+        price: tokenPrice,
+        isBid: false,
+        clientOrderId,
+      });
+      transactionToast(`${signature}`);
+      return accounts.refetch();
+    },
+    onError: () => toast.error("Failed to deposit quote"),
+  });
+
   const depositBase = useMutation({
     mutationKey: ["market", "deposit-base", { playerMintPK: marketPK }],
     mutationFn: async () => {
@@ -1495,6 +1666,7 @@ export function usePlayerMarket() {
     cancelOrder,
     capsulePubkey,
     depositAndPlaceBuyOrder,
+    maybeMintDepositAndSell,
     myOrders,
   };
 }
