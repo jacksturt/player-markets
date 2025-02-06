@@ -13,6 +13,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import TrendDownIcon from "../icons/trend-down";
 import TrendUpIcon from "../icons/trend-up";
+import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 
 export function QuoteTokenCreate() {
   const { initialize } = useQuoteToken();
@@ -411,7 +412,7 @@ export const Trade = () => {
 
 export const ProfileCard = () => {
   return (
-    <Card className="w-[400px] bg-black/50 border-[#2B2B2B] rounded-[30px] !p-0">
+    <Card className="w-[450px] bg-black/50 border-[#2B2B2B] rounded-[30px] !p-0">
       <CardHeader>
         <CardTitle className="sr-only text-2xl font-bold text-center">
           Profile
@@ -440,6 +441,15 @@ export const ProfileCard = () => {
             TODO: NFL team dropdown
           </p>
         </div>
+        {/* network */}
+        <div className="flex items-center gap-5 justify-center">
+          <p className="text-white font-clashGroteskMed text-[22px] leading-[21px]">
+            139 <span className="text-[#B8B5B5] text-xs">Followers</span>
+          </p>
+          <p className="text-white font-clashGroteskMed text-[22px] leading-[21px]">
+            139 <span className="text-[#B8B5B5] text-xs">Following</span>
+          </p>
+        </div>
         {/* actions */}
         <div className="w-full flex flex-col gap-2">
           <div className="w-full flex gap-2">
@@ -456,5 +466,79 @@ export const ProfileCard = () => {
         </div>
       </CardContent>
     </Card>
+  );
+};
+
+export const UserStats = () => {
+  const balanceData = {
+    "24h_pct_change": 10,
+    "24h_amount_change": 100,
+  };
+  return (
+    <div className="w-full h-[215px] flex items-center gap-[9px]">
+      <div className="w-full rounded-[53.75px] bg-[#232323] h-full flex flex-col items-center justify-center">
+        <p className="text-[#B8B5B5] text-lg">Volume</p>
+        <p className="text-white font-clashMed text-[36px] leading-[36px]">
+          $13669.02
+        </p>
+      </div>
+      <div className="w-full rounded-[53.75px] bg-[#232323] h-full flex flex-col items-center justify-center">
+        <p className="text-[#B8B5B5] text-lg">P&L</p>
+        <p
+          className={`font-clashMed text-[36px] leading-[36px] ${
+            balanceData["24h_amount_change"] > 0
+              ? "text-[#44E865]"
+              : "text-red-500"
+          }`}
+        >
+          {`${balanceData["24h_amount_change"] > 0 ? "+" : "-"}$${
+            balanceData["24h_amount_change"]
+          }`}
+        </p>
+      </div>
+      <div className="w-full rounded-[53.75px] bg-[#232323] h-full flex flex-col items-center justify-center">
+        <p className="text-[#B8B5B5] text-lg">Avg. Trade Size</p>
+        <p className="text-[#676767] font-clashMed text-[36px] leading-[36px]">
+          $369.12
+        </p>
+      </div>
+    </div>
+  );
+};
+
+export const Position = ({
+  image,
+  ticker,
+  amount,
+  usdValue,
+}: {
+  image: string;
+  ticker: string;
+  amount: number;
+  usdValue: number;
+}) => {
+  return (
+    <div className="w-full h-[41px] flex items-center justify-between">
+      <div className="flex items-center gap-3">
+        <Avatar>
+          <AvatarImage src={image} />
+          <AvatarFallback>
+            <Image
+              src="/player-temp/diggs.webp"
+              alt="player"
+              width={30}
+              height={30}
+            />
+          </AvatarFallback>
+        </Avatar>
+        <p className="text-white font-clashGroteskMed text-[15px] leading-[15px]">
+          <span className="font-clashGroteskMed text-[#6A6A6A]">{amount}</span>{" "}
+          {ticker}
+        </p>
+      </div>
+      <p className="text-white font-clashMed text-[20px] leading-[20px]">
+        ${usdValue}
+      </p>
+    </div>
   );
 };

@@ -8,7 +8,7 @@ import TrendUp from "@/components/icons/trend-up";
 import { cn } from "@/lib/utils";
 import Navbar from "@/components/shared/navbar";
 import { Button } from "@/components/ui/button";
-import { ProfileCard } from "@/components/web/web-ui";
+import { Position, ProfileCard, UserStats } from "@/components/web/web-ui";
 
 const balanceData = {
   "24h_pct_change": 10,
@@ -22,7 +22,7 @@ export default async function WalletPage() {
       {/* two columns */}
       <div className="w-full h-full flex items-start gap-[70px] px-[120px] pt-8">
         {/* left column - balance, stats, positions etc */}
-        <div className="w-full flex flex-col gap-[58px]">
+        <div className="w-full flex flex-col gap-[58px] pb-20">
           <div className="flex items-end justify-between">
             {/* balance */}
             <div className="flex flex-col gap-2">
@@ -53,14 +53,79 @@ export default async function WalletPage() {
                 </div>
               </div>
             </div>
-            {/* cash out */}
             <Button className="bg-white text-black font-clashMed rounded-full py-[17px] px-[28px] hover:bg-white/80">
               Cashout Balance
             </Button>
           </div>
+          <UserStats />
+          {/* current positions */}
+          <div className="w-full flex flex-col">
+            <p className="text-2xl text-white font-clashMed">Positions</p>
+            <div className="flex items-center justify-between">
+              <p className="text-[#6A6A6A] text-[13px]">
+                These are your active positions. You can sell or cash out at any
+                time.
+              </p>
+              <Button>Close all</Button>
+            </div>
+            {/* TODO: positions.map */}
+            <div className="w-full flex flex-col gap-3 pt-7">
+              <Position
+                image="/player-temp/diggs.webp"
+                ticker="MAHOMES"
+                amount={190}
+                usdValue={869.0}
+              />
+              <Position
+                image="/player-temp/diggs.webp"
+                ticker="BARKLEY"
+                amount={427}
+                usdValue={169.98}
+              />
+              <Position
+                image="/player-temp/diggs.webp"
+                ticker="HURTS"
+                amount={3112}
+                usdValue={13669.34}
+              />
+            </div>
+          </div>
+          {/* open orders */}
+          <div className="w-full flex flex-col">
+            <p className="text-2xl text-white font-clashMed">Open Orders</p>
+            <div className="flex items-center justify-between">
+              <p className="text-[#6A6A6A] text-[13px]">
+                Here are your buy and sell orders that are currently
+                outstanding.
+              </p>
+              <Button>Cancel all</Button>
+            </div>
+            {/* TODO: open orders.map */}
+            <div className="w-full flex flex-col pt-7">
+              <p className="text-white font-clashMed text-[15px] leading-[15px]">
+                COMING SOON
+              </p>
+            </div>
+          </div>
+          {/* trade history */}
+          <div className="w-full flex flex-col">
+            <p className="text-2xl text-white font-clashMed">Trade History</p>
+            <div className="flex items-center justify-between">
+              <p className="text-[#6A6A6A] text-[13px]">
+                These are your past trades. Embarrassed yet?
+              </p>
+            </div>
+            {/* TODO: trade history.map */}
+            <div className="w-full flex flex-col pt-7">
+              <p className="text-white font-clashMed text-[15px] leading-[15px]">
+                COMING SOON
+              </p>
+            </div>
+          </div>
         </div>
         <ProfileCard />
       </div>
+
       {/* </div>
       <div className="px-5">
         <PnL />
