@@ -4,6 +4,7 @@ import Image from "next/image";
 import {
   useMarkets,
   usePlayerMarket,
+  usePlayerMarketWithParams,
   useQuoteToken,
 } from "./market-data-access";
 import { Payout, Trade, WithdrawAll, QuoteTokenFaucet } from "./web-ui";
@@ -78,7 +79,7 @@ export default function MarketFeatureNew({
     trades,
     lastTradePrice,
     playerStatsAccount,
-  } = usePlayerMarket({});
+  } = usePlayerMarketWithParams();
   const { quoteTokenBalance } = useQuoteToken();
   const queryClient = useQueryClient();
   const utils = api.useUtils();

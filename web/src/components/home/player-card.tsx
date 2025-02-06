@@ -20,7 +20,7 @@ export default function PlayerCard({ market }: { market: any }) {
   // const { bookmarkedPlayers, setBookmarkedPlayers } = useFiltersStore();
 
   const { market: offChainMarket } = usePlayerMarket({
-    activePlayerMarket: market.publicKey.toBase58(),
+    marketAddress: market.publicKey.toBase58(),
   });
   const baseMint = offChainMarket?.data?.baseMint;
   const playerData = offChainMarket?.data?.player;

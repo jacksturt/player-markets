@@ -3,6 +3,7 @@
 import {
   useMarkets,
   usePlayerMarket,
+  usePlayerMarketWithParams,
   useQuoteToken,
 } from "./market-data-access";
 import {
@@ -70,7 +71,7 @@ export default function MarketFeature({
     maybeMintDepositAndSell,
     market,
     currentMinterRewards,
-  } = usePlayerMarket({ activePlayerMarket: marketAddress });
+  } = usePlayerMarketWithParams();
   const { publicKey } = useWallet();
   const { quoteTokenBalance } = useQuoteToken();
   const queryClient = useQueryClient();

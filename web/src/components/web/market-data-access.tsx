@@ -618,30 +618,13 @@ export function useMarkets() {
   };
 }
 
-export function usePlayerMarket({
-  activePlayerMarket,
-}: {
-  activePlayerMarket?: string;
-}) {
+export function usePlayerMarket({ marketAddress }: { marketAddress: string }) {
   const transactionToast = useTransactionToast();
   const { program, accounts, quoteToken } = useQuoteToken();
   const createOrder = api.order.create.useMutation();
   const provider = useAnchorProvider();
   const { publicKey, wallet } = useWallet();
   const queryClient = useQueryClient();
-  const { marketAddressParam } = useParams();
-
-  let marketAddress = "";
-  if (activePlayerMarket) {
-    marketAddress = activePlayerMarket;
-  } else {
-    if (marketAddressParam) {
-      marketAddress =
-        typeof marketAddressParam === "string"
-          ? marketAddressParam
-          : marketAddressParam[0];
-    }
-  }
 
   const market = api.market.read.useQuery(
     {
@@ -1553,4 +1536,13 @@ export function usePlayerMarket({
     trades,
     currentMinterRewards,
   };
+}
+
+export function usePlayerMarketWithParams() {
+  const { marketAddress: marketAddressParam } = useParams();
+  const marketAddress =
+    typeof marketAddressParam === "string"
+      ? marketAddressParam
+      : marketAddressParam[0];
+  return usePlayerMarket({ marketAddress: marketAddress! });
 }

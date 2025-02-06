@@ -5,6 +5,7 @@ import Image from "next/image";
 import {
   useMarkets,
   usePlayerMarket,
+  usePlayerMarketWithParams,
   useQuoteToken,
 } from "./market-data-access";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -24,9 +25,8 @@ export const Trade = ({
   const [orderType, setOrderType] = useState(defaultOrderType);
   const [price, setPrice] = useState("");
   const [quantity, setQuantity] = useState("");
-  const { depositAndPlaceBuyOrder, maybeMintDepositAndSell } = usePlayerMarket(
-    {}
-  );
+  const { depositAndPlaceBuyOrder, maybeMintDepositAndSell } =
+    usePlayerMarketWithParams();
 
   // TODO: use actual balanaces
   const TEMP_BALANCE = 1000;
@@ -234,7 +234,7 @@ export const Trade2 = () => {
     balances,
     playerTokenBalance,
     market,
-  } = usePlayerMarket({});
+  } = usePlayerMarketWithParams();
   const [placeOrderError, setPlaceOrderError] = useState("");
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -590,7 +590,7 @@ export function UpdateProjectionOracle() {
 }
 
 export function CancelAllOrders() {
-  const { cancelAllOrders } = usePlayerMarket({});
+  const { cancelAllOrders } = usePlayerMarketWithParams();
   return (
     <button
       className="btn btn-xs lg:btn-md btn-primary"
@@ -624,7 +624,7 @@ export function CloseMintAccounts() {
 }
 
 export function WithdrawAll() {
-  const { withdrawAll } = usePlayerMarket({});
+  const { withdrawAll } = usePlayerMarketWithParams();
 
   return (
     <button
@@ -638,7 +638,7 @@ export function WithdrawAll() {
 }
 
 export function Payout() {
-  const { payout } = usePlayerMarket({});
+  const { payout } = usePlayerMarketWithParams();
 
   return (
     <button
