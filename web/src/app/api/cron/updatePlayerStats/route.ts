@@ -125,7 +125,11 @@ export async function GET(request: Request) {
               ...camelCaseData,
             },
             create: {
-              playerId: player.id,
+              player: {
+                connect: {
+                  id: player.id,
+                },
+              },
               ...camelCaseData,
             },
           });

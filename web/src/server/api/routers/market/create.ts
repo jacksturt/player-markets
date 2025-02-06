@@ -32,6 +32,7 @@ export const createMarket = protectedProcedure
           address: input.address,
           season: input.season,
           week: input.week,
+          network: input.network,
           baseMint: {
             connect: {
               id: mint.id,
@@ -58,6 +59,7 @@ export const createMarket = protectedProcedure
         },
         data: {
           marketId: market.id,
+          mintId: mint.id,
         },
       });
     } else if (mint?.teamId) {
@@ -95,6 +97,7 @@ export const createMarket = protectedProcedure
         },
         data: {
           marketId: market.id,
+          mintId: mint.id,
         },
       });
     }
