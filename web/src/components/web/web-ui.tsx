@@ -211,8 +211,12 @@ export function Payout() {
   );
 }
 
-export const Trade = () => {
-  const [orderType, setOrderType] = useState("buy");
+export const Trade = ({
+  defaultOrderType = "buy",
+}: {
+  defaultOrderType?: "buy" | "sell";
+}) => {
+  const [orderType, setOrderType] = useState(defaultOrderType);
   const [price, setPrice] = useState("");
   const [quantity, setQuantity] = useState("");
   const { buy, sell } = usePlayerMarket();

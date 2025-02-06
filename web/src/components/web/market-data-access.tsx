@@ -34,6 +34,7 @@ import { Market } from "manifest/src";
 import { api } from "@/trpc/react";
 import { Position } from "@prisma/client";
 import { useParams } from "next/navigation";
+import { useActivePlayerMarketStore } from "@/lib/zustand";
 export function useQuoteToken() {
   const { connection } = useConnection();
   const { cluster } = useCluster();
@@ -210,6 +211,7 @@ export function useMarkets() {
   const createMint = api.mint.create.useMutation();
   const createMarketAPI = api.market.create.useMutation();
   const createTeamAPI = api.team.create.useMutation();
+
   const markets = useQuery({
     queryKey: ["markets", "fetch", { cluster }],
     queryFn: async () => {
@@ -467,11 +469,17 @@ export function usePlayerMarket() {
   const provider = useAnchorProvider();
   const { publicKey, wallet } = useWallet();
   const queryClient = useQueryClient();
-  const { marketAddress: marketAddressParam } = useParams();
-  const marketAddress =
-    typeof marketAddressParam === "string"
-      ? marketAddressParam
-      : marketAddressParam[0];
+  const { activePlayerMarket } = useActivePlayerMarketStore();
+  let marketAddress;
+  const { marketAddressParam } = useParams();
+  if (marketAddressParam) {
+    marketAddress =
+      typeof marketAddressParam === "string"
+        ? marketAddressParam
+        : marketAddressParam[0];
+  } else {
+    marketAddress = activePlayerMarket;
+  }
 
   const market = api.market.read.useQuery(
     {
