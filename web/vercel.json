@@ -17,7 +17,7 @@
         "schedule": "* */1 * * *"
       },
       {
-        "path": "/api/cron/updatePlayerStats?playerId=19063",
+        "path": "/api/cron/updatePlayerStats?playerId=24423",
         "schedule": "* */1 * * *"
       },
       {
