@@ -268,6 +268,7 @@ async function handleSignature(
         },
       });
     } else if (buffer.subarray(0, 8).equals(placeOrderDiscriminant)) {
+      continue;
       const maybeOrder = await db.order.findUnique({
         where: {
           signature: signature.signature,

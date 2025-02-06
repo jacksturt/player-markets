@@ -21,11 +21,8 @@ model Order {
     market   Market @relation(fields: [marketId], references: [id])
     marketId String
 
-    buyTrade   Trade?  @relation("buyOrder")
-    buyTradeId String?
-
-    sellTrade   Trade?  @relation("sellOrder")
-    sellTradeId String?
+    buyTrades  Trade[] @relation("buyOrder")
+    sellTrades Trade[] @relation("sellOrder")
 
     @@unique([marketId, sequenceNumber, userId, price, type, isBid, numBaseTokens, numQuoteTokens])
 }

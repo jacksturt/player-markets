@@ -395,12 +395,13 @@ export default function MarketFeature({
             ))}
           </div>
           <h1 className="text-2xl font-bold">Trades</h1>
-          <div className="grid grid-cols-4 gap-4 mb-4">
+          <div className="grid grid-cols-5 gap-4 mb-4">
             <>
               <h3>Buyer</h3>
               <h3>Seller</h3>
               <h3>Price</h3>
               <h3>Quantity</h3>
+              <h3>Signature</h3>
             </>
             {trades.data?.map((trade) => (
               <>
@@ -415,6 +416,9 @@ export default function MarketFeature({
                 <div key={"price-" + trade.id}>{trade.price.toString()}</div>
                 <div key={"quantity-" + trade.id}>
                   {parseFloat(trade.quantity.toString()) / 10 ** 6}
+                </div>
+                <div key={"signature-" + trade.id}>
+                  {shortenAddress(trade.signature.toString())}
                 </div>
               </>
             ))}

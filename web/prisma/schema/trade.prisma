@@ -16,7 +16,7 @@ model Trade {
     teamId String?
     team   Team?   @relation(fields: [teamId], references: [id])
 
-    buyOrderId String? @unique
+    buyOrderId String?
     buyOrder   Order?  @relation("buyOrder", fields: [buyOrderId], references: [id])
 
     buyerId String
@@ -25,7 +25,7 @@ model Trade {
     buyerWalletId String
     buyerWallet   Wallet @relation("buyerWallet", fields: [buyerWalletId], references: [id])
 
-    sellOrderId String? @unique
+    sellOrderId String?
     sellOrder   Order?  @relation("sellOrder", fields: [sellOrderId], references: [id])
 
     sellerId String
