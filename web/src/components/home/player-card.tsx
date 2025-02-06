@@ -9,6 +9,7 @@ import { Button } from "../ui/button";
 import { Trade } from "../web/web-ui";
 import { useQuery } from "@tanstack/react-query";
 import { readMarket } from "@/server/api/routers/market/read";
+import { usePlayerMarket } from "../web/market-data-access";
 
 enum CardView {
   FRONT = "front",
@@ -17,6 +18,10 @@ enum CardView {
 
 export default function PlayerCard({ market }: { market: any }) {
   // const { bookmarkedPlayers, setBookmarkedPlayers } = useFiltersStore();
+
+  const { market: offChainMarket } = usePlayerMarket({
+    activePlayerMarket: market.publicKey.toBase58(),
+  });
 
   const [cardView, setCardView] = useState<CardView>(CardView.FRONT);
   const [selectedOrderType, setSelectedOrderType] = useState<
@@ -43,7 +48,7 @@ export default function PlayerCard({ market }: { market: any }) {
               <div
                 className="absolute inset-0"
                 style={{
-                  backgroundImage: `url(${playerData.imageUrl})`,
+                  backgroundImage: `url(${offChainMarket?.baseMint?.image})`,
                   backgroundSize: "cover",
                   backgroundPosition: "center",
                 }}
@@ -113,39 +118,6 @@ export default function PlayerCard({ market }: { market: any }) {
           </div>
         </div>
       </div>
-      {/* <div className="w-full flex items-center justify-between px-3">
-        <div className="flex items-center gap-5">
-          <div className="flex items-center gap-1">
-            <Comments size={20} />
-            <p className="text-xs">{playerData.numComments}</p>
-          </div>
-          <div className="flex items-center gap-1">
-            <Volume size={20} />
-            <p className="text-xs">{playerData.volume}</p>
-          </div>
-        </div>
-        <button
-          onClick={() => {
-            if (bookmarkedPlayers.includes(playerData.name)) {
-              setBookmarkedPlayers(
-                bookmarkedPlayers.filter((player) => player !== playerData.name)
-              );
-            } else {
-              setBookmarkedPlayers([...bookmarkedPlayers, playerData.name]);
-            }
-          }}
-        >
-          <Bookmark
-            size={20}
-            strokeWidth={1.5}
-            fill={
-              bookmarkedPlayers.includes(playerData.name)
-                ? "#000"
-                : "transparent"
-            }
-          />
-        </button>
-      </div> */}
     </div>
   );
 }

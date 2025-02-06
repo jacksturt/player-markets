@@ -2,10 +2,9 @@
 
 import React from "react";
 import PlayerCard from "./player-card";
-import { Player } from "@/app/home/page";
 import { useMarkets } from "../web/market-data-access";
 
-export default function PlayersList({ playerData }: { playerData: Player[] }) {
+export default function PlayersList() {
   const { markets } = useMarkets();
 
   return (

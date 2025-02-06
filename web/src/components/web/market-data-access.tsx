@@ -462,23 +462,28 @@ export function useMarkets() {
   };
 }
 
-export function usePlayerMarket() {
+export function usePlayerMarket({
+  activePlayerMarket,
+}: {
+  activePlayerMarket?: string;
+}) {
   const { cluster } = useCluster();
   const transactionToast = useTransactionToast();
   const { program, accounts, quoteToken } = useQuoteToken();
   const provider = useAnchorProvider();
   const { publicKey, wallet } = useWallet();
   const queryClient = useQueryClient();
-  const { activePlayerMarket } = useActivePlayerMarketStore();
-  let marketAddress;
-  const { marketAddressParam } = useParams();
-  if (marketAddressParam) {
-    marketAddress =
-      typeof marketAddressParam === "string"
-        ? marketAddressParam
-        : marketAddressParam[0];
-  } else {
+  let marketAddress = "";
+  if (activePlayerMarket) {
     marketAddress = activePlayerMarket;
+  } else {
+    const { marketAddressParam } = useParams();
+    if (marketAddressParam) {
+      marketAddress =
+        typeof marketAddressParam === "string"
+          ? marketAddressParam
+          : marketAddressParam[0];
+    }
   }
 
   const market = api.market.read.useQuery(
