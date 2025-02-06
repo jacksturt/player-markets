@@ -198,36 +198,60 @@ async function handleSignature(
         console.warn("Taker order not found");
       }
       if (market.player) {
+        const buyAndSellData = fillData.takerIsBuy
+          ? {
+              buyOrderId: takerOrder?.id,
+              buyerId: takerWallet?.user.id,
+              buyerWalletId: takerWallet?.id,
+              sellOrderId: makerOrder?.id,
+              sellerId: makerWallet?.user.id,
+              sellerWalletId: makerWallet?.id,
+            }
+          : {
+              buyOrderId: makerOrder?.id,
+              buyerId: makerWallet?.user.id,
+              buyerWalletId: makerWallet?.id,
+              sellOrderId: takerOrder?.id,
+              sellerId: takerWallet?.user.id,
+              sellerWalletId: takerWallet?.id,
+            };
         const trade = await db.trade.create({
           data: {
             marketId: market?.id,
             baseMintId: market?.baseMint.id,
             playerId: market?.player.id,
-            buyOrderId: makerOrder?.id,
-            buyerId: makerWallet?.user.id,
-            buyerWalletId: makerWallet?.id,
-            sellOrderId: takerOrder?.id,
-            sellerId: takerWallet?.user.id,
-            sellerWalletId: takerWallet?.id,
             signature: signature.signature,
             price: fillData.priceAtoms,
+            ...buyAndSellData,
           },
         });
         console.log("Created trade", trade);
       } else if (market.team) {
+        const buyAndSellData = fillData.takerIsBuy
+          ? {
+              buyOrderId: takerOrder?.id,
+              buyerId: takerWallet?.user.id,
+              buyerWalletId: takerWallet?.id,
+              sellOrderId: makerOrder?.id,
+              sellerId: makerWallet?.user.id,
+              sellerWalletId: makerWallet?.id,
+            }
+          : {
+              buyOrderId: makerOrder?.id,
+              buyerId: makerWallet?.user.id,
+              buyerWalletId: makerWallet?.id,
+              sellOrderId: takerOrder?.id,
+              sellerId: takerWallet?.user.id,
+              sellerWalletId: takerWallet?.id,
+            };
         const trade = await db.trade.create({
           data: {
             marketId: market?.id,
             baseMintId: market?.baseMint.id,
             teamId: market?.team.id,
-            buyOrderId: makerOrder?.id,
-            buyerId: makerWallet?.user.id,
-            buyerWalletId: makerWallet?.id,
-            sellOrderId: takerOrder?.id,
-            sellerId: takerWallet?.user.id,
-            sellerWalletId: takerWallet?.id,
             signature: signature.signature,
             price: fillData.priceAtoms,
+            ...buyAndSellData,
           },
         });
         console.log("Created trade", trade);
