@@ -555,6 +555,7 @@ export function useMarkets() {
         data.playerStats
       );
       console.log("playerStatsAccount", playerStatsAccount);
+
       return accounts.refetch();
     },
     onError: () => toast.error("Failed to initialize account"),

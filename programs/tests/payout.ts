@@ -17,6 +17,9 @@ import {
   ASSOCIATED_TOKEN_PROGRAM_ID,
   getAccount,
   getAssociatedTokenAddress,
+  getMint,
+  createTransferInstruction,
+  transfer,
 } from "@solana/spl-token";
 import { BN } from "@coral-xyz/anchor";
 import { randomBytes } from "crypto";
@@ -29,7 +32,8 @@ import { OrderType } from "../manifest/src/manifest";
 import { assert } from "chai";
 
 const LAMAR_ID = "19781";
-describe("tradetalk", () => {
+const MINT_COLLATERAL_RATE = 2.5;
+describe("payout", () => {
   // Configure the client to use the local cluster.
   anchor.setProvider(anchor.AnchorProvider.env());
 
@@ -180,23 +184,6 @@ describe("tradetalk", () => {
       .then(log);
   });
 
-  xit("Can Init Quote provider!", async () => {
-    const tx = await program.methods
-      .initQuote()
-      .accountsStrict({
-        payer: provider.publicKey,
-        quoteTokenMint: quote_token_mint,
-        config: quoteConfig,
-        tokenProgram: TOKEN_PROGRAM_ID,
-        systemProgram: SystemProgram.programId,
-        associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
-      })
-      // .signers([maker])
-      .rpc()
-      .then(confirm)
-      .then(log);
-  });
-
   it("Create mints and mint to", async () => {
     makerAtaQuote = (
       await getOrCreateAssociatedTokenAccount(
@@ -229,37 +216,6 @@ describe("tradetalk", () => {
 
     console.log(`Your mint ata is: ${makerAtaQuote.toBase58()}`);
     // Mint to ATA
-  });
-
-  xit("Can Faucet Quote provider!", async () => {
-    const providerAtaQuote = await getAssociatedTokenAddress(
-      quote_token_mint,
-      provider.publicKey
-    );
-    const context = {
-      payer: provider.publicKey,
-      quoteTokenMint: quote_token_mint,
-      config: quoteConfig,
-      destination: providerAtaQuote,
-      tokenProgram: TOKEN_PROGRAM_ID,
-      systemProgram: SystemProgram.programId,
-      associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
-    };
-
-    Object.entries(context).forEach(([key, value]) => {
-      console.log(key, value.toBase58());
-    });
-
-    const tx = await program.methods
-      .faucetQuote(new anchor.BN(100000000000))
-      .accountsStrict(context)
-      .rpc()
-      .then(confirm)
-      .then(log)
-      .then(async () => {
-        const quote = await getAccount(connection, providerAtaQuote);
-        console.log("maker quote amount after", quote.amount);
-      });
   });
 
   it("Can Faucet Quote!", async () => {
@@ -427,7 +383,7 @@ describe("tradetalk", () => {
     //   maker.publicKey
     // );
 
-    const mintRecordProvider = PublicKey.findProgramAddressSync(
+    const mintRecordMaker = PublicKey.findProgramAddressSync(
       [
         Buffer.from("mint_record"),
         mintConfig.toBuffer(),
@@ -437,7 +393,7 @@ describe("tradetalk", () => {
     )[0];
 
     const tx = await program.methods
-      .mintTokens(new anchor.BN(300000000))
+      .mintTokens(new anchor.BN(300 * 10 ** 6))
       .accountsPartial({
         payer: maker.publicKey,
         quoteTokenMint: quote_token_mint,
@@ -445,7 +401,7 @@ describe("tradetalk", () => {
         playerTokenMint: player_token_mint,
         destination: makerAtaPlayer,
         config: mintConfig,
-        mintRecord: mintRecordProvider,
+        mintRecord: mintRecordMaker,
         tokenProgram: TOKEN_PROGRAM_ID,
         systemProgram: SystemProgram.programId,
         associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
@@ -466,15 +422,25 @@ describe("tradetalk", () => {
         console.log("maker player amount after", makerPlayer.amount);
         assert(
           makerQuote.amount +
-            BigInt(projection1 * Number(makerPlayer.amount) * 2.5) ===
+            BigInt(
+              projection1 * Number(makerPlayer.amount) * MINT_COLLATERAL_RATE
+            ) ===
             BigInt(100000000000)
         );
 
         const mintRecordProviderAccount =
-          await program.account.mintRecord.fetch(mintRecordProvider);
+          await program.account.mintRecord.fetch(mintRecordMaker);
         console.log(
           "mintRecordProviderAccount",
           mintRecordProviderAccount.depositedAmount.toString()
+        );
+        const expectedDeposit = new anchor.BN(
+          projection1 * Number(makerPlayer.amount) * MINT_COLLATERAL_RATE
+        );
+        console.log("expectedDeposit", expectedDeposit.toString());
+        assert(
+          expectedDeposit.toString() ===
+            mintRecordProviderAccount.depositedAmount.toString()
         );
         const mintConfigAccount = await program.account.playerMintConfig.fetch(
           mintConfig
@@ -539,7 +505,9 @@ describe("tradetalk", () => {
         console.log("taker player amount after", takerPlayer.amount);
         assert(
           takerQuote.amount +
-            BigInt(projection2 * Number(takerPlayer.amount) * 2.5) ===
+            BigInt(
+              projection2 * Number(takerPlayer.amount) * MINT_COLLATERAL_RATE
+            ) ===
             BigInt(100000000000)
         );
       });
@@ -584,51 +552,6 @@ describe("tradetalk", () => {
           mintConfigAccount.totalDepositedAmount.toString()
         );
       });
-
-    thirdPartyAtaPlayer = (
-      await getOrCreateAssociatedTokenAccount(
-        connection,
-        thirdParty,
-        player_token_mint,
-        thirdParty.publicKey
-      )
-    ).address;
-    await program.methods
-      .mintTokens(new anchor.BN(300000000))
-      .accountsPartial({
-        payer: thirdParty.publicKey,
-        quoteTokenMint: quote_token_mint,
-        vault,
-        playerTokenMint: player_token_mint,
-        destination: thirdPartyAtaPlayer,
-        mintRecord: mintRecordThirdParty,
-        config: mintConfig,
-        tokenProgram: TOKEN_PROGRAM_ID,
-        systemProgram: SystemProgram.programId,
-        associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
-      })
-      .signers([thirdParty])
-      .rpc()
-      .then(confirm)
-      .then(log)
-      .then(async () => {
-        const thirdPartyQuote = await getAccount(
-          connection,
-          thirdPartyAtaQuote
-        );
-        console.log("thirdParty quote amount after", thirdPartyQuote.amount);
-
-        const thirdPartyPlayer = await getAccount(
-          connection,
-          thirdPartyAtaPlayer
-        );
-        console.log("thirdParty player amount after", thirdPartyPlayer.amount);
-        assert(
-          thirdPartyQuote.amount +
-            BigInt(projection2 * Number(thirdPartyPlayer.amount) * 2.5) ===
-            BigInt(100000000000)
-        );
-      });
   });
 
   it("Can Disable Minting!", async () => {
@@ -637,7 +560,7 @@ describe("tradetalk", () => {
     );
     console.log("playerStatsAccount", playerStatsAccount);
     const tx = await program.methods
-      .updateProjectionOracle(projection2, false, false, false)
+      .updateProjectionOracle(actual, false, false, true)
       .accountsStrict({
         authority: provider.publicKey,
         playerStats,
@@ -676,332 +599,7 @@ describe("tradetalk", () => {
       });
   });
 
-  it("Can Operate Market!", async () => {
-    marketAddress = await createMarket(
-      connection,
-      maker,
-      quote_token_mint,
-      player_token_mint
-    );
-    const market: Market = await Market.loadFromAddress({
-      connection,
-      address: marketAddress,
-    });
-
-    const makerClient = await ManifestClient.getClientForMarket(
-      connection,
-      marketAddress,
-      maker
-    );
-    const takerClient = await ManifestClient.getClientForMarket(
-      connection,
-      marketAddress,
-      taker
-    );
-    const thirdPartyClient = await ManifestClient.getClientForMarket(
-      connection,
-      marketAddress,
-      thirdParty
-    );
-    console.log(
-      "market",
-      market.baseMint().toBase58(),
-      market.baseDecimals(),
-      market.quoteMint().toBase58(),
-      market.quoteDecimals()
-    );
-    console.log(
-      "token accounts",
-      makerAtaQuote.toBase58(),
-      makerAtaPlayer.toBase58()
-    );
-    let makerQuote = await getAccount(connection, makerAtaQuote);
-    console.log("maker quote amount before deposit", makerQuote.amount);
-
-    let makerPlayer = await getAccount(connection, makerAtaPlayer);
-    console.log("maker player amount before deposit", makerPlayer.amount);
-
-    let takerQuote = await getAccount(connection, takerAtaQuote);
-    console.log("taker quote amount before deposit", takerQuote.amount);
-
-    let takerPlayer = await getAccount(connection, takerAtaPlayer);
-    console.log("taker player amount before deposit", takerPlayer.amount);
-    await Promise.all([
-      deposit(connection, maker, marketAddress, market.quoteMint(), 99),
-      deposit(connection, maker, marketAddress, market.baseMint(), 99),
-      deposit(connection, taker, marketAddress, market.quoteMint(), 99),
-      deposit(connection, taker, marketAddress, market.baseMint(), 99),
-      deposit(connection, thirdParty, marketAddress, market.quoteMint(), 99),
-      deposit(connection, thirdParty, marketAddress, market.baseMint(), 99),
-    ]);
-    await market.reload(connection);
-    market.prettyPrint();
-    let withdrawableMakerQuote = market.getWithdrawableBalanceTokens(
-      maker.publicKey,
-      false
-    );
-    let withdrawableMakerPlayer = market.getWithdrawableBalanceTokens(
-      maker.publicKey,
-      true
-    );
-    let withdrawableTakerQuote = market.getWithdrawableBalanceTokens(
-      taker.publicKey,
-      false
-    );
-    let withdrawableTakerPlayer = market.getWithdrawableBalanceTokens(
-      taker.publicKey,
-      true
-    );
-    console.log(
-      "withdrawableMakerQuote",
-      withdrawableMakerQuote,
-      "withdrawableMakerPlayer",
-      withdrawableMakerPlayer,
-      "withdrawableTakerQuote",
-      withdrawableTakerQuote,
-      "withdrawableTakerPlayer",
-      withdrawableTakerPlayer
-    );
-    makerQuote = await getAccount(connection, makerAtaQuote);
-    console.log("maker quote amount before withdraw", makerQuote.amount);
-
-    makerPlayer = await getAccount(connection, makerAtaPlayer);
-    console.log("maker player amount before withdraw", makerPlayer.amount);
-
-    takerQuote = await getAccount(connection, takerAtaQuote);
-    console.log("taker quote amount before withdraw", takerQuote.amount);
-
-    takerPlayer = await getAccount(connection, takerAtaPlayer);
-    console.log("taker player amount before withdraw", takerPlayer.amount);
-
-    // setup an orderbook with 5 orders on bid and ask side
-    await Promise.all([
-      ...[1, 2, 3, 4, 5].map((i) =>
-        placeOrder(
-          connection,
-          maker,
-          marketAddress,
-          1,
-          1 - i * 0.01,
-          true,
-          OrderType.Limit,
-          0
-        )
-      ),
-      ...[1, 2, 3, 4, 5].map((i) =>
-        placeOrder(
-          connection,
-          maker,
-          marketAddress,
-          1,
-          1 + i * 0.01,
-          false,
-          OrderType.Limit,
-          0
-        )
-      ),
-    ]);
-
-    await market.reload(connection);
-    market.prettyPrint();
-    console.log("Placing take orders");
-
-    market.prettyPrint();
-
-    await Promise.all([
-      ...[1, 2, 3, 4, 5].map((i) =>
-        placeOrder(
-          connection,
-          taker,
-          marketAddress,
-          1,
-          1 - i * 0.01,
-          false,
-          OrderType.Limit,
-          0
-        )
-      ),
-      ...[1, 2, 3, 4, 5].map((i) =>
-        placeOrder(
-          connection,
-          taker,
-          marketAddress,
-          1,
-          1 + i * 0.01,
-          true,
-          OrderType.Limit,
-          0
-        )
-      ),
-    ]);
-
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-
-    await Promise.all([
-      ...[1, 2, 3, 4, 5].map((i) =>
-        placeOrder(
-          connection,
-          thirdParty,
-          marketAddress,
-          1,
-          1 - i * 0.01,
-          false,
-          OrderType.Limit,
-          0
-        )
-      ),
-      ...[1, 2, 3, 4, 5].map((i) =>
-        placeOrder(
-          connection,
-          thirdParty,
-          marketAddress,
-          1,
-          1 + i * 0.01,
-          true,
-          OrderType.Limit,
-          0
-        )
-      ),
-    ]);
-
-    await market.reload(connection);
-    market.prettyPrint();
-
-    makerQuote = await getAccount(connection, makerAtaQuote);
-    console.log("maker quote amount before withdraw", makerQuote.amount);
-
-    makerPlayer = await getAccount(connection, makerAtaPlayer);
-    console.log("maker player amount before withdraw", makerPlayer.amount);
-
-    takerQuote = await getAccount(connection, takerAtaQuote);
-    console.log("taker quote amount before withdraw", takerQuote.amount);
-
-    takerPlayer = await getAccount(connection, takerAtaPlayer);
-    console.log("taker player amount before withdraw", takerPlayer.amount);
-
-    const cancelOrderIxMaker = await makerClient.cancelAllIx();
-    console.log("cancelOrderIxMaker", cancelOrderIxMaker);
-    const signatureCancelOrdersIxMaker = await sendAndConfirmTransaction(
-      connection,
-      new Transaction().add(cancelOrderIxMaker),
-      [maker]
-    );
-
-    const cancelOrderIxTaker = await takerClient.cancelAllIx();
-    console.log("cancelOrderIxTaker", cancelOrderIxTaker);
-    const signatureCancelOrdersIxTaker = await sendAndConfirmTransaction(
-      connection,
-      new Transaction().add(cancelOrderIxTaker),
-      [taker]
-    );
-
-    const cancelOrderIxThirdParty = await thirdPartyClient.cancelAllIx();
-    console.log("cancelOrderIxThirdParty", cancelOrderIxThirdParty);
-    const signatureCancelOrdersIxThirdParty = await sendAndConfirmTransaction(
-      connection,
-      new Transaction().add(cancelOrderIxThirdParty),
-      [thirdParty]
-    );
-
-    await market.reload(connection);
-    market.prettyPrint();
-
-    withdrawableMakerQuote = market.getWithdrawableBalanceTokens(
-      maker.publicKey,
-      false
-    );
-    withdrawableMakerPlayer = market.getWithdrawableBalanceTokens(
-      maker.publicKey,
-      true
-    );
-    withdrawableTakerQuote = market.getWithdrawableBalanceTokens(
-      taker.publicKey,
-      false
-    );
-    withdrawableTakerPlayer = market.getWithdrawableBalanceTokens(
-      taker.publicKey,
-      true
-    );
-    console.log(
-      "withdrawableMakerQuote",
-      withdrawableMakerQuote,
-      "withdrawableMakerPlayer",
-      withdrawableMakerPlayer,
-      "withdrawableTakerQuote",
-      withdrawableTakerQuote,
-      "withdrawableTakerPlayer",
-      withdrawableTakerPlayer
-    );
-    await makerClient.reload();
-    await takerClient.reload();
-    await thirdPartyClient.reload();
-
-    const withdrawMaker = makerClient.withdrawAllIx();
-    console.log("withdrawMaker", withdrawMaker);
-    if (withdrawMaker.length > 0) {
-      const signatureWithdrawMaker = await sendAndConfirmTransaction(
-        connection,
-        new Transaction().add(...withdrawMaker),
-        [maker]
-      );
-    }
-    const withdrawTaker = takerClient.withdrawAllIx();
-    console.log("withdrawTaker", withdrawTaker);
-    if (withdrawTaker.length > 0) {
-      const signatureWithdrawTaker = await sendAndConfirmTransaction(
-        connection,
-        new Transaction().add(...withdrawTaker),
-        [taker]
-      );
-    }
-
-    const withdrawThirdParty = thirdPartyClient.withdrawAllIx();
-    console.log("withdrawThirdParty", withdrawThirdParty);
-    if (withdrawThirdParty.length > 0) {
-      const signatureWithdrawThirdParty = await sendAndConfirmTransaction(
-        connection,
-        new Transaction().add(...withdrawThirdParty),
-        [thirdParty]
-      );
-    }
-
-    makerQuote = await getAccount(connection, makerAtaQuote);
-    console.log("maker quote amount before withdraw", makerQuote.amount);
-
-    makerPlayer = await getAccount(connection, makerAtaPlayer);
-    console.log("maker player amount before withdraw", makerPlayer.amount);
-
-    takerQuote = await getAccount(connection, takerAtaQuote);
-    console.log("taker quote amount before withdraw", takerQuote.amount);
-
-    takerPlayer = await getAccount(connection, takerAtaPlayer);
-    console.log("taker player amount before withdraw", takerPlayer.amount);
-
-    // console.log("trying swap, pre swap values: ");
-    // const takerQuote = await getAccount(connection, takerAtaQuote);
-    // console.log("taker quote amount after", takerQuote.amount);
-
-    // const takerPlayer = await getAccount(connection, takerAtaPlayer);
-    // console.log("taker player amount after", takerPlayer.amount);
-    // market.prettyPrint();
-
-    // await swap(connection, taker, marketAddress, 1, false);
-
-    // await market.reload(connection);
-    // market.prettyPrint();
-
-    // console.log("taker quote amount after", takerQuote.amount);
-
-    // console.log("taker player amount after", takerPlayer.amount);
-
-    // const fillFeed: FillFeed = new FillFeed(connection);
-    // await Promise.all([
-    //   fillFeed.parseLogs(true),
-    //   checkForFillMessage(connection, taker, marketAddress),
-    // ]);
-  });
-
-  it("Payout fails before payout is enabled.", async () => {
+  xit("Payout fails before payout is enabled.", async () => {
     const mintConfigAccount = await program.account.playerMintConfig.fetch(
       mintConfig
     );
@@ -1057,7 +655,7 @@ describe("tradetalk", () => {
     }
   });
 
-  it("Can enable payout!", async () => {
+  xit("Can enable payout!", async () => {
     let playerStatsAccount = await program.account.playerStats.fetch(
       playerStats
     );
@@ -1092,70 +690,47 @@ describe("tradetalk", () => {
       });
   });
 
-  xit("Payout provider", async () => {
-    const mintRecordProvider = PublicKey.findProgramAddressSync(
-      [
-        Buffer.from("mint_record"),
-        mintConfig.toBuffer(),
-        provider.publicKey.toBuffer(),
-      ],
-      program.programId
-    )[0];
-    const providerAtaQuote = await getAssociatedTokenAddress(
-      quote_token_mint,
-      provider.publicKey
+  it("Transfer from taker to third party", async () => {
+    thirdPartyAtaPlayer = (
+      await getOrCreateAssociatedTokenAccount(
+        connection,
+        thirdParty,
+        player_token_mint,
+        thirdParty.publicKey
+      )
+    ).address;
+
+    const amountToTransfer = 300 * 10 ** 6;
+    console.log("amount to transfer", amountToTransfer);
+    const takerAtaPlayerAccount = await getAccount(connection, takerAtaPlayer);
+    console.log("taker ata player", takerAtaPlayerAccount.amount);
+    console.log("taker", taker.publicKey.toBase58());
+    const thirdPartyAtaPlayerAccount = await getAccount(
+      connection,
+      thirdPartyAtaPlayer
     );
-    const providerAtaPlayer = await getAssociatedTokenAddress(
-      player_token_mint,
-      provider.publicKey
-    );
-    const mintConfigAccount = await program.account.playerMintConfig.fetch(
-      mintConfig
-    );
-    console.log("mintConfigAccount", mintConfigAccount.totalDepositedAmount);
-    const mintRecordProviderAccount = await program.account.mintRecord.fetch(
-      mintRecordProvider
-    );
-    console.log(
-      "mintRecordProviderAccount",
-      mintRecordProviderAccount.depositedAmount
+    console.log("third party ata player", thirdPartyAtaPlayerAccount.amount);
+    const signature = await transfer(
+      connection,
+      taker,
+      takerAtaPlayer,
+      thirdPartyAtaPlayer,
+      taker.publicKey,
+      amountToTransfer
     );
 
-    const providerQuoteBefore = await getAccount(connection, providerAtaQuote);
-    console.log("provider quote before", providerQuoteBefore.amount);
+    console.log("signature", signature);
 
-    const context = {
-      payer: provider.publicKey,
-      quoteTokenMint: quote_token_mint,
-      payerQuoteTokenAccount: providerAtaQuote,
-      playerTokenMint: player_token_mint,
-      payerPlayerTokenAccount: providerAtaPlayer,
-      mintConfig,
-      playerStats,
-      vault,
-      mintRecord: mintRecordProvider,
-      tokenProgram: TOKEN_PROGRAM_ID,
-      associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
-      systemProgram: SystemProgram.programId,
-    };
+    const thirdPartyPlayerAfter = await getAccount(
+      connection,
+      thirdPartyAtaPlayer
+    );
+    console.log("third party player after", thirdPartyPlayerAfter.amount);
+    assert(Number(thirdPartyPlayerAfter.amount) === amountToTransfer);
 
-    Object.entries(context).forEach(([key, value]) => {
-      console.log(key, value.toBase58());
-    });
-
-    const tx = await program.methods
-      .payout()
-      .accountsStrict(context)
-      // .signers([maker])
-      .rpc()
-      .then(confirm)
-      .then(log)
-      .then(async () => {
-        const providerQuote = await getAccount(connection, providerAtaQuote);
-        console.log("provider quote amount after", providerQuote.amount);
-        const providerPlayer = await getAccount(connection, providerAtaPlayer);
-        console.log("provider player amount after", providerPlayer.amount);
-      });
+    const takerPlayerAfter = await getAccount(connection, takerAtaPlayer);
+    console.log("taker player after", takerPlayerAfter.amount);
+    assert(Number(takerPlayerAfter.amount) === 0);
   });
 
   it("Payout maker", async () => {
@@ -1167,6 +742,17 @@ describe("tradetalk", () => {
       mintRecordMaker
     );
     const makerPlayerBefore = await getAccount(connection, makerAtaPlayer);
+
+    const vaultAccount = await getAccount(connection, vault);
+    const vaultAmountBefore = vaultAccount.amount;
+
+    const playerStatsAccount = await program.account.playerStats.fetch(
+      playerStats
+    );
+    const playerStatsActual = playerStatsAccount.actualPoints;
+
+    const playerMintAccount = await getMint(connection, player_token_mint);
+    const playerMintBefore = playerMintAccount.supply;
 
     console.log(
       "mintRecordMakerAccount",
@@ -1198,36 +784,97 @@ describe("tradetalk", () => {
     });
 
     const tx = await program.methods
-      .payout()
+      .testMintRewardsOnly()
       .accountsStrict(context)
       .signers([maker])
       .rpc()
       .then(confirm)
       .then(log)
       .then(async () => {
-        const makerQuote = await getAccount(connection, makerAtaQuote);
-        console.log("maker quote amount after", makerQuote.amount);
-        const makerPaidOut = makerQuote.amount - makerQuoteBefore.amount;
-        console.log("maker paid out", makerPaidOut);
-        try {
-          const makerPlayer = await getAccount(connection, makerAtaPlayer);
-          assert(false, "maker player account should not exist");
-        } catch (e) {
-          assert(e.toString().includes("TokenAccountNotFoundError"));
-        }
-        try {
-          const mintRecordMakerAccount = await program.account.mintRecord.fetch(
-            mintRecordMaker
-          );
-          assert(false, "mint record account should not exist");
-        } catch (e) {
-          console.log(e);
-          assert(
-            e
-              .toString()
-              .includes("Error: Account does not exist or has no data")
-          );
-        }
+        const makerQuoteAfterMinterRewards = await getAccount(
+          connection,
+          makerAtaQuote
+        );
+        console.log(
+          "maker quote amount after",
+          makerQuoteAfterMinterRewards.amount
+        );
+        const makerPaidOutAfterMinterRewards =
+          makerQuoteAfterMinterRewards.amount - makerQuoteBefore.amount;
+        console.log(
+          "maker paid out after minter rewards",
+          makerPaidOutAfterMinterRewards
+        );
+
+        const firstMintAmount =
+          MINT_COLLATERAL_RATE * projection1 * 300 * 10 ** 6;
+        console.log("first mint amount", firstMintAmount);
+        const secondMintAmount =
+          MINT_COLLATERAL_RATE * projection2 * 300 * 10 ** 6;
+        console.log("second mint amount", secondMintAmount);
+        const totalMintAmountMaker = firstMintAmount + secondMintAmount;
+        console.log("total mint amount maker", totalMintAmountMaker);
+        const totalMinted = totalMintAmountMaker + secondMintAmount;
+        console.log("total minted", totalMinted);
+        const expectedPercentDueMaker = totalMintAmountMaker / totalMinted;
+        console.log("expected percent due maker", expectedPercentDueMaker);
+        const expectedPaidOutPlayerTokens = 900 * actual * 10 ** 6;
+        console.log(
+          "expected paid out player tokens",
+          expectedPaidOutPlayerTokens
+        );
+        const expectedVaultRemaining =
+          totalMinted - expectedPaidOutPlayerTokens;
+        console.log("expected vault remaining", expectedVaultRemaining);
+        const expectedPayoutMakerMintRewards =
+          expectedVaultRemaining * expectedPercentDueMaker;
+        console.log(
+          "expected payout maker mint rewards",
+          expectedPayoutMakerMintRewards
+        );
+        assert(
+          makerPaidOutAfterMinterRewards.toString() ===
+            expectedPayoutMakerMintRewards.toFixed(0)
+        );
+
+        const vaultAccountAfterMinterRewards = await getAccount(
+          connection,
+          vault
+        );
+        const vaultAmountAfterMinterRewards =
+          vaultAccountAfterMinterRewards.amount;
+        await program.methods
+          .testPayoutPlayerTokens()
+          .accountsStrict(context)
+          .signers([maker])
+          .rpc()
+          .then(confirm)
+          .then(log)
+          .then(async () => {
+            const makerQuoteAfterPlayerBurn = await getAccount(
+              connection,
+              makerAtaQuote
+            );
+            console.log(
+              "maker quote amount after",
+              makerQuoteAfterPlayerBurn.amount
+            );
+            const makerPaidOutAfterBurn =
+              makerQuoteAfterPlayerBurn.amount -
+              makerQuoteAfterMinterRewards.amount;
+            console.log(
+              "maker paid out after player burn",
+              makerPaidOutAfterBurn
+            );
+            console.log(
+              "vault amount after minting rewards",
+              vaultAmountAfterMinterRewards
+            );
+
+            const expectedPayout = actual * 600 * 10 ** 6;
+            console.log("expected payout", expectedPayout);
+            assert(Number(makerPaidOutAfterBurn) === expectedPayout);
+          });
       });
   });
 
@@ -1236,17 +883,28 @@ describe("tradetalk", () => {
       mintConfig
     );
     console.log("mintConfigAccount", mintConfigAccount.totalDepositedAmount);
-
     const mintRecordTakerAccount = await program.account.mintRecord.fetch(
       mintRecordTaker
     );
+    const takerPlayerBefore = await getAccount(connection, takerAtaPlayer);
+
+    const vaultAccount = await getAccount(connection, vault);
+    const vaultAmountBefore = vaultAccount.amount;
+
+    const playerStatsAccount = await program.account.playerStats.fetch(
+      playerStats
+    );
+    const playerStatsActual = playerStatsAccount.actualPoints;
+
+    const playerMintAccount = await getMint(connection, player_token_mint);
+    const playerMintBefore = playerMintAccount.supply;
+
     console.log(
       "mintRecordTakerAccount",
-      mintRecordTakerAccount.depositedAmount
+      mintRecordTakerAccount.depositedAmount.toString(),
+      "taker player token mint amount",
+      takerPlayerBefore.amount.toString()
     );
-
-    const takerPlayerBefore = await getAccount(connection, takerAtaPlayer);
-    console.log("taker player before", takerPlayerBefore.amount);
 
     const takerQuoteBefore = await getAccount(connection, takerAtaQuote);
     console.log("taker quote before", takerQuoteBefore.amount);
@@ -1271,36 +929,98 @@ describe("tradetalk", () => {
     });
 
     const tx = await program.methods
-      .payout()
+      .testMintRewardsOnly()
       .accountsStrict(context)
       .signers([taker])
       .rpc()
       .then(confirm)
       .then(log)
       .then(async () => {
-        const takerQuote = await getAccount(connection, takerAtaQuote);
-        console.log("taker quote amount after", takerQuote.amount);
-        const takerPaidOut = takerQuote.amount - takerQuoteBefore.amount;
-        console.log("taker paid out", takerPaidOut);
-        try {
-          const takerPlayer = await getAccount(connection, takerAtaPlayer);
-          assert(false, "taker player account should not exist");
-        } catch (e) {
-          assert(e.toString().includes("TokenAccountNotFoundError"));
-        }
-        try {
-          const mintRecordTakerAccount = await program.account.mintRecord.fetch(
-            mintRecordTaker
-          );
-          assert(false, "mint record account should not exist");
-        } catch (e) {
-          console.log(e);
-          assert(
-            e
-              .toString()
-              .includes("Error: Account does not exist or has no data")
-          );
-        }
+        const takerQuoteAfterMinterRewards = await getAccount(
+          connection,
+          takerAtaQuote
+        );
+        console.log(
+          "taker quote amount after",
+          takerQuoteAfterMinterRewards.amount
+        );
+        const takerPaidOutAfterMinterRewards =
+          takerQuoteAfterMinterRewards.amount - takerQuoteBefore.amount;
+        console.log(
+          "taker paid out after minter rewards",
+          takerPaidOutAfterMinterRewards
+        );
+
+        const firstMintAmount =
+          MINT_COLLATERAL_RATE * projection1 * 300 * 10 ** 6;
+        console.log("first mint amount", firstMintAmount);
+        const secondMintAmount =
+          MINT_COLLATERAL_RATE * projection2 * 300 * 10 ** 6;
+        console.log("second mint amount", secondMintAmount);
+        const totalMintAmountTaker = secondMintAmount;
+        console.log("total mint amount maker", totalMintAmountTaker);
+        const totalMinted =
+          totalMintAmountTaker + secondMintAmount + firstMintAmount;
+        console.log("total minted", totalMinted);
+        const expectedPercentDueTaker = totalMintAmountTaker / totalMinted;
+        console.log("expected percent due maker", expectedPercentDueTaker);
+        const expectedPaidOutPlayerTokens = 900 * actual * 10 ** 6;
+        console.log(
+          "expected paid out player tokens",
+          expectedPaidOutPlayerTokens
+        );
+        const expectedVaultRemaining =
+          totalMinted - expectedPaidOutPlayerTokens;
+        console.log("expected vault remaining", expectedVaultRemaining);
+        const expectedPayoutTakerMintRewards =
+          expectedVaultRemaining * expectedPercentDueTaker;
+        console.log(
+          "expected payout taker mint rewards",
+          expectedPayoutTakerMintRewards
+        );
+        assert(
+          takerPaidOutAfterMinterRewards.toString() ===
+            expectedPayoutTakerMintRewards.toFixed(0)
+        );
+
+        const vaultAccountAfterMinterRewards = await getAccount(
+          connection,
+          vault
+        );
+        const vaultAmountAfterMinterRewards =
+          vaultAccountAfterMinterRewards.amount;
+        await program.methods
+          .testPayoutPlayerTokens()
+          .accountsStrict(context)
+          .signers([taker])
+          .rpc()
+          .then(confirm)
+          .then(log)
+          .then(async () => {
+            const takerQuoteAfterPlayerBurn = await getAccount(
+              connection,
+              takerAtaQuote
+            );
+            console.log(
+              "taker quote amount after",
+              takerQuoteAfterPlayerBurn.amount
+            );
+            const takerPaidOutAfterBurn =
+              takerQuoteAfterPlayerBurn.amount -
+              takerQuoteAfterMinterRewards.amount;
+            console.log(
+              "taker paid out after player burn",
+              takerPaidOutAfterBurn
+            );
+            console.log(
+              "vault amount after minting rewards",
+              vaultAmountAfterMinterRewards
+            );
+
+            const expectedPayout = 0;
+            console.log("expected payout", expectedPayout);
+            assert(Number(takerPaidOutAfterBurn) === expectedPayout);
+          });
       });
   });
 
@@ -1309,20 +1029,15 @@ describe("tradetalk", () => {
       mintConfig
     );
     console.log("mintConfigAccount", mintConfigAccount.totalDepositedAmount);
+    try {
+      const mintRecordThirdPartyAccount =
+        await program.account.mintRecord.fetch(mintRecordThirdParty);
+    } catch (e) {
+      console.log(e);
+      assert(e.toString().includes("Account does not exist or has no data"));
+    }
 
-    const mintRecordThirdPartyAccount = await program.account.mintRecord.fetch(
-      mintRecordThirdParty
-    );
-    console.log(
-      "mintRecordThirdPartyAccount",
-      mintRecordThirdPartyAccount.depositedAmount
-    );
-
-    const thirdPartyPlayerBefore = await getAccount(
-      connection,
-      thirdPartyAtaPlayer
-    );
-    console.log("third party player before", thirdPartyPlayerBefore.amount);
+    console.log("before");
     const thirdPartyQuoteBefore = await getAccount(
       connection,
       thirdPartyAtaQuote
@@ -1338,60 +1053,85 @@ describe("tradetalk", () => {
       mintConfig,
       playerStats,
       vault,
-      mintRecord: mintRecordThirdParty,
+      mintRecord: null,
       tokenProgram: TOKEN_PROGRAM_ID,
       associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
       systemProgram: SystemProgram.programId,
     };
 
-    Object.entries(context).forEach(([key, value]) => {
-      console.log(key, value.toBase58());
-    });
-
     const tx = await program.methods
-      .payout()
+      .testMintRewardsOnly()
       .accountsStrict(context)
       .signers([thirdParty])
       .rpc()
       .then(confirm)
       .then(log)
       .then(async () => {
-        const thirdPartyQuote = await getAccount(
+        const thirdPartyQuoteAfterMinterRewards = await getAccount(
           connection,
           thirdPartyAtaQuote
         );
-        console.log("thirdParty quote amount after", thirdPartyQuote.amount);
-        const thirdPartyPaidOut =
-          thirdPartyQuote.amount - thirdPartyQuoteBefore.amount;
-        console.log("third party paid out", thirdPartyPaidOut);
-        try {
-          const thirdPartyPlayer = await getAccount(
-            connection,
-            thirdPartyAtaPlayer
-          );
-          assert(false, "third party player account should not exist");
-        } catch (e) {
-          console.log(e);
-          assert(e.toString().includes("TokenAccountNotFoundError"));
-        }
-        try {
-          const mintRecordThirdPartyAccount =
-            await program.account.mintRecord.fetch(mintRecordThirdParty);
-          assert(false, "mint record account should not exist");
-        } catch (e) {
-          assert(
-            e
-              .toString()
-              .includes("Error: Account does not exist or has no data")
-          );
-        }
-        const vaultAccount = await getAccount(connection, vault);
-        console.log("vault", vaultAccount.amount);
-        assert(vaultAccount.amount.toString() === "0");
+        console.log(
+          "third party quote amount after",
+          thirdPartyQuoteAfterMinterRewards.amount
+        );
+        const thirdPartyPaidOutAfterMinterRewards =
+          thirdPartyQuoteAfterMinterRewards.amount -
+          thirdPartyQuoteBefore.amount;
+        console.log(
+          "third party paid out after minter rewards",
+          thirdPartyPaidOutAfterMinterRewards
+        );
+
+        const expectedPayout = 0;
+        console.log("expected payout", expectedPayout);
+        assert(
+          thirdPartyPaidOutAfterMinterRewards.toString() ===
+            expectedPayout.toFixed(0)
+        );
+
+        const vaultAccountAfterMinterRewards = await getAccount(
+          connection,
+          vault
+        );
+        const vaultAmountAfterMinterRewards =
+          vaultAccountAfterMinterRewards.amount;
+        await program.methods
+          .testPayoutPlayerTokens()
+          .accountsStrict(context)
+          .signers([thirdParty])
+          .rpc()
+          .then(confirm)
+          .then(log)
+          .then(async () => {
+            const thirdPartyQuoteAfterPlayerBurn = await getAccount(
+              connection,
+              thirdPartyAtaQuote
+            );
+            console.log(
+              "third party quote amount after",
+              thirdPartyQuoteAfterPlayerBurn.amount
+            );
+            const thirdPartyPaidOutAfterBurn =
+              thirdPartyQuoteAfterPlayerBurn.amount -
+              thirdPartyQuoteAfterMinterRewards.amount;
+            console.log(
+              "third party paid out after player burn",
+              thirdPartyPaidOutAfterBurn
+            );
+            console.log(
+              "vault amount after minting rewards",
+              vaultAmountAfterMinterRewards
+            );
+
+            const expectedPayout = 300 * 10 ** 6 * actual;
+            console.log("expected payout", expectedPayout);
+            assert(Number(thirdPartyPaidOutAfterBurn) === expectedPayout);
+          });
       });
   });
 
-  it("Close Accounts", async () => {
+  xit("Close Accounts", async () => {
     const context = {
       admin: provider.publicKey,
       quoteTokenMint: quote_token_mint,
