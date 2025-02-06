@@ -408,3 +408,53 @@ export const Trade = () => {
     </Card>
   );
 };
+
+export const ProfileCard = () => {
+  return (
+    <Card className="w-[400px] bg-black/50 border-[#2B2B2B] rounded-[30px] !p-0">
+      <CardHeader>
+        <CardTitle className="sr-only text-2xl font-bold text-center">
+          Profile
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="flex flex-col items-center gap-8">
+        {/* user data */}
+        <div className="flex flex-col items-center">
+          <Image
+            src="/player-temp/diggs.webp"
+            alt="player"
+            width={100}
+            height={100}
+            className="rounded-full object-cover w-[100px] h-[100px]"
+          />
+          <p className="text-white font-clashGroteskMed text-[19px] leading-[19px] mt-[15px]">
+            matt.sol
+          </p>
+        </div>
+        {/* my team */}
+        <div className="flex flex-col items-center gap-1">
+          <p className="text-white font-clashGroteskMed text-[15px] leading-[15px]">
+            My Team
+          </p>
+          <p className="text-[#6A6A6A] text-[11px] leading-[11px]">
+            TODO: NFL team dropdown
+          </p>
+        </div>
+        {/* actions */}
+        <div className="w-full flex flex-col gap-2">
+          <div className="w-full flex gap-2">
+            <Button className="w-1/2 h-[58.36px] bg-[#2B2B2B] hover:bg-[#3B3B3B] text-white">
+              Cancel Orders
+            </Button>
+            <Button className="w-1/2 h-[58.36px] bg-[#2B2B2B] hover:bg-[#3B3B3B] text-white">
+              Close All Trades
+            </Button>
+          </div>
+          <Button className="w-full h-[58.36px] bg-[#2B2B2B] hover:bg-[#3B3B3B] text-white">
+            Cashout Balance
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
+  );
+};
