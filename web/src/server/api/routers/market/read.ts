@@ -21,6 +21,17 @@ export const readMarket = protectedProcedure
     return market;
   });
 
+export const readAllMarkets = protectedProcedure.query(async () => {
+  const markets = await db.market.findMany({
+    include: {
+      baseMint: true,
+      player: true,
+      team: true,
+    },
+  });
+  return markets;
+});
+
 export const lastTradePrice = protectedProcedure
   .input(
     z.object({

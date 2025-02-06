@@ -42,7 +42,8 @@ export async function GET(request: Request) {
 
     try {
       if (player.market?.hasGameStarted) {
-        const url = `https://api.sportsdata.io/v3/nfl/stats/json/PlayerGameStatsByTeam/${player.market?.season}/${player.market?.week}/${player?.team?.sportsDataId}?key=${process.env.SPORTSDATA_API_KEY}`;
+        const url = `https://replay.sportsdata.io/api/v3/nfl/stats/json/playergamestatsbyteam/${player.market?.season}/${player.market?.week}/${player?.team?.sportsDataId}?key=d6f0c46073bf4bf2a70d2d6b01f74046`;
+        // const url = `https://api.sportsdata.io/v3/nfl/stats/json/PlayerGameStatsByTeam/${player.market?.season}/${player.market?.week}/${player?.team?.sportsDataId}?key=${process.env.SPORTSDATA_API_KEY}`;
         const response = await fetch(url, {
           headers: {
             Authorization: `Bearer ${process.env.ORACLE_API_KEY}`,

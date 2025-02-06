@@ -210,6 +210,8 @@ export function useMarkets() {
     },
   });
 
+  const allMarkets = api.market.readAllMarkets.useQuery();
+
   const vaults = useQuery({
     queryKey: ["vaults"],
     queryFn: async () => {
@@ -608,6 +610,7 @@ export function useMarkets() {
     closeMintAccounts,
     finishCreatingMarket,
     vaults,
+    allMarkets,
   };
 }
 
