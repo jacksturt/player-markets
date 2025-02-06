@@ -835,7 +835,7 @@ export function usePlayerMarket() {
       if (!playerId.data || !timestamp.data) {
         throw new Error("Player ID or timestamp not found");
       }
-      const quantity = new BN(1 * 10 ** 6);
+      const quantity = new BN(0.1 * 10 ** 6);
 
       if (!publicKey && !capsulePubkey.data) {
         throw new Error("No public key found");
@@ -1018,13 +1018,14 @@ export function usePlayerMarket() {
         wallet || undefined
       );
       const withdrawableQuote = balances.data?.quoteWithdrawableBalanceTokens;
-      if (!withdrawableQuote) {
+      if (withdrawableQuote === undefined) {
         throw new Error("No withdrawable quote tokens");
       }
       const neededQuote = tokenPrice * numBaseTokens;
       console.log("neededQuote", neededQuote);
       console.log("withdrawableQuote", withdrawableQuote);
-      const amountToDeposit = neededQuote - withdrawableQuote;
+      const amountToDeposit =
+        (neededQuote * 10 ** 6 - withdrawableQuote * 10 ** 6) / 10 ** 6;
       console.log("amountToDeposit", amountToDeposit);
 
       const feePayer = publicKey ?? capsulePubkey.data!;
@@ -1115,7 +1116,27 @@ export function usePlayerMarket() {
       if (!playerId.data || !timestamp.data) {
         throw new Error("Player ID or timestamp not found");
       }
-      const quantity = new BN(numBaseTokens * 10 ** 6);
+      const numPlayerDeposited = balances.data?.baseWithdrawableBalanceTokens;
+      console.log("numPlayerDeposited", numPlayerDeposited);
+      console.log("numBaseTokens", numBaseTokens);
+      if (numPlayerDeposited === undefined) {
+        throw new Error("Could not load player deposited tokens");
+      }
+      if (!playerTokenBalance.data) {
+        throw new Error("Could not load player tokens held");
+      }
+      console.log(
+        "difference",
+        (numBaseTokens * 10 ** 6 - numPlayerDeposited * 10 ** 6) / 10 ** 6
+      );
+      const playerTokensHeld =
+        parseInt(playerTokenBalance.data.valueOf() ?? "0") / 10 ** 6;
+      const quantityToDeposit =
+        (numBaseTokens * 10 ** 6 - numPlayerDeposited * 10 ** 6) / 10 ** 6;
+      const baseToMintSafe =
+        quantityToDeposit * 10 ** 6 - playerTokensHeld * 10 ** 6;
+      const quantityToMint = new BN(baseToMintSafe);
+      console.log("quantityToMint", quantityToMint.toString());
 
       if (!publicKey && !capsulePubkey.data) {
         throw new Error("No public key found");
@@ -1153,7 +1174,7 @@ export function usePlayerMarket() {
         )[0];
 
         const ix = await program.methods
-          .mintTokens(quantity)
+          .mintTokens(quantityToMint)
           .accountsStrict({
             payer: capsulePubkey.data!,
             quoteTokenMint: quoteToken,
@@ -1172,7 +1193,7 @@ export function usePlayerMarket() {
         const depositIx = client.depositIx(
           capsulePubkey.data!,
           playerTokenMint.data!,
-          numBaseTokens
+          quantityToDeposit
         );
         const clientOrderId = (lastOrderId.data ?? 0) + 1;
         const orderIx = client.placeOrderIx({
@@ -1197,7 +1218,13 @@ export function usePlayerMarket() {
         const signature = await provider.connection.sendRawTransaction(
           signed.serialize()
         );
-        return { signature, numBaseTokens, tokenPrice, clientOrderId };
+
+        return {
+          signature,
+          numBaseTokens,
+          tokenPrice,
+          clientOrderId,
+        };
       } else {
         const mintRecord = PublicKey.findProgramAddressSync(
           [
@@ -1209,7 +1236,7 @@ export function usePlayerMarket() {
         )[0];
 
         const mintIx = await program.methods
-          .mintTokens(quantity)
+          .mintTokens(quantityToMint)
           .accountsStrict({
             payer: publicKey,
             quoteTokenMint: quoteToken,
@@ -1225,12 +1252,15 @@ export function usePlayerMarket() {
             payerAtaQuote: quoteTokenAccount.data!,
           })
           .instruction();
+
+        const clientOrderId = (lastOrderId.data ?? 0) + 1;
+        console.log("quantityToDeposit", quantityToDeposit);
+
         const depositIx = client.depositIx(
           publicKey,
           playerTokenMint.data!,
-          numBaseTokens
+          quantityToDeposit
         );
-        const clientOrderId = (lastOrderId.data ?? 0) + 1;
         const orderIx = client.placeOrderIx({
           numBaseTokens: numBaseTokens,
           tokenPrice: tokenPrice,
@@ -1249,7 +1279,12 @@ export function usePlayerMarket() {
           transaction,
           provider.connection
         );
-        return { signature, numBaseTokens, tokenPrice, clientOrderId };
+        return {
+          signature,
+          numBaseTokens,
+          tokenPrice,
+          clientOrderId,
+        };
       }
     },
 
@@ -1278,7 +1313,7 @@ export function usePlayerMarket() {
         marketPK.data!,
         wallet || undefined
       );
-      const amount = 1;
+      const amount = 0.1;
       const player_token_mint = PublicKey.findProgramAddressSync(
         [
           Buffer.from("mint"),

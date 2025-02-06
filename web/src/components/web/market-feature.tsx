@@ -215,7 +215,6 @@ export default function MarketFeature({
     });
   };
 
-  const isAdmin = true;
   return (
     <div className="w-screen px-[10%] flex items-center justify-center">
       <div className="w-full grid grid-cols-3 gap-4 mt-20">
@@ -224,12 +223,17 @@ export default function MarketFeature({
           <div className="flex flex-col gap-2">
             <div className="flex flex-row gap-4 items-center">
               <div>Quote Token</div>
-              <div>{quoteTokenBalance.data?.toString()}</div>
+              <div>
+                {(
+                  ((quoteTokenBalance.data?.valueOf() as number) ?? 0) /
+                  10 ** 6
+                ).toString()}
+              </div>
             </div>
             <div className="flex flex-row gap-4 items-center">
               <div>Quote Token Withdrawable</div>
               <div>
-                {balances.data?.quoteWithdrawableBalanceTokens.toString()}
+                {balances.data?.quoteWithdrawableBalanceTokens!.toString()}
               </div>
             </div>
             <div className="flex flex-row gap-4 items-center">
@@ -240,12 +244,17 @@ export default function MarketFeature({
             </div>
             <div className="flex flex-row gap-4 items-center">
               <div>Player Token</div>
-              <div>{playerTokenBalance.data?.toString()}</div>
+              <div>
+                {(
+                  (parseInt(playerTokenBalance.data?.toString() ?? "0") ?? 0) /
+                  10 ** 6
+                ).toString()}
+              </div>
             </div>
             <div className="flex flex-row gap-4 items-center">
               <div>Player Token Withdrawable</div>
               <div>
-                {balances.data?.baseWithdrawableBalanceTokens.toString()}
+                {balances.data?.baseWithdrawableBalanceTokens!.toString()}
               </div>
             </div>
             <div className="flex flex-row gap-4 items-center">
@@ -384,10 +393,10 @@ export default function MarketFeature({
           </div>
         </div>
         <div className="flex flex-col gap-4">
-          {/* <QuoteTokenFaucet />
-          <MintPlayerTokens />
-          <DepositBase /> */}
-          <DepositQuote />
+          {/* <QuoteTokenFaucet /> */}
+          {/* <MintPlayerTokens />
+          <DepositBase />
+          <DepositQuote /> */}
           <Trade2 />
           <CancelAllOrders />
           <WithdrawAll />

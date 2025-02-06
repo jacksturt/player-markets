@@ -12,6 +12,8 @@ import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { placeOrderInstructionDiscriminator } from "manifest/src/ui_wrapper";
+import { Decimal } from "decimal.js";
+import { BN } from "bn.js";
 
 export function QuoteTokenCreate() {
   const { initialize } = useQuoteToken();
@@ -414,6 +416,7 @@ export const Trade2 = () => {
     maybeMintDepositAndSell,
     playerStatsAccount,
     balances,
+    playerTokenBalance,
   } = usePlayerMarket();
   const [placeOrderError, setPlaceOrderError] = useState("");
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
@@ -433,13 +436,6 @@ export const Trade2 = () => {
   };
 
   useEffect(() => {
-    console.log(
-      quoteTokenBalance.data,
-      playerStatsAccount.data?.projectedPoints!
-    );
-    console.log(
-      parseFloat(quantity) * playerStatsAccount.data?.projectedPoints! * 2.5
-    );
     if (orderType === "buy") {
       if (
         quoteTokenBalance.data &&
@@ -449,6 +445,11 @@ export const Trade2 = () => {
       ) {
         setPlaceOrderError("Insufficient quote tokens");
       } else {
+        console.log(
+          balances.data?.quoteWithdrawableBalanceTokens,
+          parseFloat(quantity),
+          playerStatsAccount.data?.projectedPoints
+        );
         setActualCost(
           parseFloat(quantity) * parseFloat(price) -
             balances.data?.quoteWithdrawableBalanceTokens!
@@ -467,8 +468,24 @@ export const Trade2 = () => {
         setPlaceOrderError("Insufficient quote tokens");
       } else {
         setPlaceOrderError("");
+        console.log(
+          balances.data?.baseWithdrawableBalanceTokens,
+          parseFloat(quantity),
+          playerStatsAccount.data?.projectedPoints
+        );
+        if (!playerTokenBalance.data) {
+          console.error("Could not load player tokens held");
+          return;
+        }
+
+        const playerTokensHeld =
+          parseInt(playerTokenBalance.data.valueOf() ?? "0") / 10 ** 6;
         setActualCost(
-          2.5 * playerStatsAccount.data?.projectedPoints! * parseFloat(quantity)
+          2.5 *
+            playerStatsAccount.data?.projectedPoints! *
+            (parseFloat(quantity) -
+              balances.data?.baseWithdrawableBalanceTokens! -
+              playerTokensHeld)
         );
       }
     }
@@ -479,6 +496,7 @@ export const Trade2 = () => {
     orderType,
     playerStatsAccount.data,
     balances.data,
+    playerTokenBalance.data,
   ]);
 
   return (
@@ -543,7 +561,7 @@ export const Trade2 = () => {
               <div className="p-4 bg-gray-100 rounded-lg">
                 <p className="text-lg font-medium">
                   Total: $
-                  {(parseFloat(price) * parseFloat(quantity)).toFixed(2)}
+                  {(parseFloat(price) * parseFloat(quantity)).toFixed(4)}
                 </p>
                 {actualCost > 0 && !isNaN(actualCost) && (
                   <p className="text-lg font-medium">
