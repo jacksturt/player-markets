@@ -21,15 +21,15 @@ export default function Navbar() {
       </div>
       {/* navigation */}
       <div className="absolute left-1/2 -translate-x-1/2 flex items-center justify-between gap-8 bg-black/50 rounded-full px-7 py-[11.5px] text-sm text-white font-clashGroteskMed">
-        <Link href="/" className="flex items-center gap-2">
+        <Link href="/home" className="flex items-center gap-2">
           <HomeIcon className="w-4 h-4 text-white" />
           <p className="">Place Bets</p>
         </Link>
-        <Link href="/leaderboard" className="flex items-center gap-2">
+        <Link href="/home/leaderboard" className="flex items-center gap-2">
           <TrendUpIcon size={16} color="white" />
           <p className="">Leaderboard</p>
         </Link>
-        <Link href="/wallet" className="flex items-center gap-2">
+        <Link href="/home/wallet" className="flex items-center gap-2">
           <WalletIcon className="w-4 h-4 text-white" />
           <p className="">My Bags</p>
         </Link>
