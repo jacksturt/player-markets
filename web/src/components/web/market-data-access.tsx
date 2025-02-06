@@ -805,29 +805,32 @@ export function usePlayerMarket({ marketAddress }: { marketAddress: string }) {
     queryKey: ["current-minter-rewards", { marketAddress }],
     queryFn: () => {
       const vaultAmount = new BN(vault.data!.amount.toString());
-      console.log("vaultAmount", vaultAmount);
+      console.log("vaultAmount", vaultAmount.toString());
       const playerTokenMintSupply = new BN(
         playerTokenMintAccount.data!.toString()
       );
-      console.log("playerTokenMintSupply", playerTokenMintSupply);
+      console.log("playerTokenMintSupply", playerTokenMintSupply.toString());
       console.log(playerStatsAccount.data!.actualPoints.valueOf());
       const playerStatsActualPoints = new BN(
-        playerStatsAccount.data!.actualPoints.valueOf()
+        playerStatsAccount.data!.actualPoints.valueOf() * PRECISION.toNumber()
       );
-      console.log("playerStatsActualPoints", playerStatsActualPoints);
+      console.log(
+        "playerStatsActualPoints",
+        playerStatsActualPoints.toString()
+      );
       const vaultRemaining = vaultAmount.sub(
-        playerTokenMintSupply.mul(playerStatsActualPoints)
+        playerTokenMintSupply.mul(playerStatsActualPoints).div(PRECISION)
       );
-      console.log("vaultRemaining", vaultRemaining);
+      console.log("vaultRemaining", vaultRemaining.toString());
       const totalDepositedAmount = mintConfigAccount.data!.totalDepositedAmount;
       console.log("totalDepositedAmount", totalDepositedAmount.toString());
       const depositedByMe = mintRecord.data!.depositedAmount;
       console.log("depositedByMe", depositedByMe.toString());
       const percentDue = depositedByMe.mul(PRECISION).div(totalDepositedAmount);
-      const percentDueDecimal =
-        percentDue.toNumber() / PRECISION.toNumber() / PRECISION.toNumber();
+      const percentDueDecimal = percentDue.toNumber() / PRECISION.toNumber();
       console.log("percentDue", percentDueDecimal);
-      const minterRewards = vaultRemaining.toNumber() * percentDueDecimal;
+      const minterRewards =
+        (vaultRemaining.toNumber() * percentDueDecimal) / PRECISION.toNumber();
       console.log("minterRewards", minterRewards.toString());
       return minterRewards.toString();
     },
