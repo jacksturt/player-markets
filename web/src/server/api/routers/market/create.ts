@@ -1,7 +1,6 @@
 import { db } from "@/server/db";
-import { createTRPCRouter, protectedProcedure } from "@/server/api/trpc";
+import { protectedProcedure } from "@/server/api/trpc";
 import { z } from "zod";
-import { Position } from "@prisma/client";
 
 export const createMarket = protectedProcedure
   .input(
@@ -11,6 +10,8 @@ export const createMarket = protectedProcedure
       address: z.string(),
       mintAddress: z.string(),
       network: z.enum(["MAINNET", "DEVNET"]),
+      season: z.string(),
+      week: z.string(),
     })
   )
   .mutation(async ({ input }) => {
@@ -29,6 +30,9 @@ export const createMarket = protectedProcedure
           name: input.marketName,
           description: input.description,
           address: input.address,
+          season: input.season,
+          week: input.week,
+          network: input.network,
           baseMint: {
             connect: {
               id: mint.id,
@@ -55,6 +59,7 @@ export const createMarket = protectedProcedure
         },
         data: {
           marketId: market.id,
+          mintId: mint.id,
         },
       });
     } else if (mint?.teamId) {
@@ -63,6 +68,8 @@ export const createMarket = protectedProcedure
           name: input.marketName,
           description: input.description,
           address: input.address,
+          season: input.season,
+          week: input.week,
           network: input.network,
           baseMint: {
             connect: {
@@ -90,6 +97,7 @@ export const createMarket = protectedProcedure
         },
         data: {
           marketId: market.id,
+          mintId: mint.id,
         },
       });
     }

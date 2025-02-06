@@ -54,7 +54,7 @@ pub struct Payout<'info> {
         seeds = [b"mint_record", mint_config.key().as_ref(), payer.key().as_ref()],
         bump,
     )]
-    pub mint_record: Box<Account<'info, MintRecord>>,
+    pub mint_record: Option<Box<Account<'info, MintRecord>>>,
     pub system_program: Program<'info, System>,
     pub token_program: Program<'info, Token>,
     pub associated_token_program: Program<'info, AssociatedToken>,
@@ -65,23 +65,71 @@ impl<'info> Payout<'info> {
         if !self.mint_config.payout_enabled {
             return Err(OracleError::PayoutNotEnabled.into());
         }
-        self.transfer_quote_tokens()?;
-        self.burn_player_tokens()?;
+        self.handle_minting_rewards()?;
+        self.handle_player_tokens()?;
         self.close_mint_record()?;
         Ok(())
     }
 
-    pub fn transfer_quote_tokens(&mut self) -> Result<()> {
-        // How much is left in the vault after all payouts are made
-        let vault_remaining = self.vault.amount
-            - (self.player_token_mint.supply as f64 * self.player_stats.actual_points) as u64;
+    pub fn handle_minting_rewards(&mut self) -> Result<()> {
+        match &mut self.mint_record {
+            Some(mint_record) => {
+                let vault_remaining = self.vault.amount
+                    - (self.player_token_mint.supply as f64 * self.player_stats.actual_points)
+                        as u64;
+                if vault_remaining > 0 {
+                    let percent_due;
+                    // Percentage of the total deposited amount that is due to the minter
 
-        // Percentage of the total deposited amount that is due to the minter
-        let percent_due = self.mint_record.deposited_amount as f64
-            / self.mint_config.total_deposited_amount as f64;
+                    if self.mint_config.total_deposited_amount == 0 {
+                        percent_due = 0.0;
+                    } else {
+                        percent_due = mint_record.deposited_amount as f64
+                            / self.mint_config.total_deposited_amount as f64;
+                    }
 
-        // How much is due to the minter
-        let minter_rewards = vault_remaining as f64 * percent_due;
+                    // How much is due to the minter
+                    let minter_rewards = vault_remaining as f64 * percent_due;
+                    msg!("minter_rewards: {}", minter_rewards);
+                    let cpi_program = self.token_program.to_account_info();
+
+                    let bump = self.mint_config.config_bump;
+
+                    let cpi_accounts = TransferChecked {
+                        from: self.vault.to_account_info(),
+                        to: self.payer_quote_token_account.to_account_info(),
+                        authority: self.mint_config.to_account_info(),
+                        mint: self.quote_token_mint.to_account_info(),
+                    };
+
+                    let seeds = &[
+                        "config".as_bytes(),
+                        &self.mint_config.player_id.as_bytes(),
+                        &self.mint_config.timestamp.as_bytes(),
+                        &[bump],
+                    ];
+                    let signer_seeds = &[&seeds[..]];
+
+                    let cpi_ctx =
+                        CpiContext::new_with_signer(cpi_program, cpi_accounts, signer_seeds);
+                    transfer_checked(
+                        cpi_ctx,
+                        minter_rewards as u64,
+                        self.quote_token_mint.decimals,
+                    )?;
+                }
+
+                self.mint_config.total_deposited_amount -= mint_record.deposited_amount;
+                mint_record.deposited_amount = 0;
+                Ok(())
+            }
+            None => {
+                return Ok(());
+            }
+        }
+    }
+
+    pub fn handle_player_tokens(&mut self) -> Result<()> {
         let cpi_program = self.token_program.to_account_info();
         let bump = self.mint_config.config_bump;
 
@@ -101,21 +149,25 @@ impl<'info> Payout<'info> {
         let signer_seeds = &[&seeds[..]];
 
         let cpi_ctx = CpiContext::new_with_signer(cpi_program, cpi_accounts, signer_seeds);
+        let amount_due: u64;
 
-        // How much is due based on player tokens the person owns
-        let amount = (self.player_stats.actual_points
-            * self.payer_player_token_account.amount as f64) as u64;
-        transfer_checked(
-            cpi_ctx,
-            amount + minter_rewards as u64,
-            self.quote_token_mint.decimals,
-        )?;
-        self.mint_config.total_deposited_amount -= self.mint_record.deposited_amount;
-        self.mint_record.deposited_amount = 0;
-        Ok(())
-    }
-
-    pub fn burn_player_tokens(&self) -> Result<()> {
+        if self.player_token_mint.supply as f64 * self.player_stats.actual_points
+            >= self.vault.amount as f64
+        {
+            let percent_due;
+            if self.player_token_mint.supply == 0 {
+                percent_due = 0.0;
+            } else {
+                percent_due = self.payer_player_token_account.amount as f64
+                    / self.player_token_mint.supply as f64;
+            }
+            amount_due = (self.vault.amount as f64 * percent_due) as u64;
+        } else {
+            // How much is due based on player tokens the person owns
+            amount_due = (self.player_stats.actual_points
+                * self.payer_player_token_account.amount as f64) as u64;
+        }
+        transfer_checked(cpi_ctx, amount_due, self.quote_token_mint.decimals)?;
         let cpi_accounts = Burn {
             mint: self.player_token_mint.to_account_info(),
             from: self.payer_player_token_account.to_account_info(),

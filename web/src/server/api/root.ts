@@ -4,6 +4,7 @@ import { marketRouter } from "./routers/market";
 import { mintRouter } from "./routers/mint";
 import { teamRouter } from "./routers/team";
 import { tradeRouter } from "./routers/trade";
+import { orderRouter } from "./routers/order";
 /**
  * This is the primary router for your server.
  *
@@ -14,7 +15,7 @@ export const appRouter = createTRPCRouter({
   mint: mintRouter,
   team: teamRouter,
   trade: tradeRouter,
-  // counter: counterRouter,
+  order: orderRouter,
 });
 
 // export type definition of API

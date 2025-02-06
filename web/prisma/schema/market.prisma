@@ -2,8 +2,12 @@ model Market {
     id             String  @id @default(cuid())
     name           String
     description    String
+    season         String  @default("2024POST")
+    week           String  @default("4")
     address        String  @unique
     lastTradePrice Decimal @default(0)
+    lastSlot       Int?
+    lastSignature  String?
     hasGameStarted Boolean @default(false)
     network        Network @default(DEVNET)
 

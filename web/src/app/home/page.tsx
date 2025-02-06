@@ -110,7 +110,7 @@ export default function Home() {
     <div className="relative h-full flex flex-col gap-5 justify-center pt-5">
       <Navbar />
       <div className="flex-1 overflow-y-auto">
-        <PlayersList playerData={playerData} />
+        <PlayersList />
       </div>
     </div>
   );

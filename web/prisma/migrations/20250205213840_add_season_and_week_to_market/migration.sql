@@ -1,0 +1,3 @@
+-- AlterTable
+ALTER TABLE "Market" ADD COLUMN     "season" TEXT NOT NULL DEFAULT '2024POST',
+ADD COLUMN     "week" TEXT NOT NULL DEFAULT '4';

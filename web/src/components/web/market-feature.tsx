@@ -1,9 +1,5 @@
 "use client";
 
-import { useWallet } from "@solana/wallet-adapter-react";
-import { WalletButton } from "../solana/solana-provider";
-import { AppHero, ellipsify } from "../ui/ui-layout";
-import { ExplorerLink } from "../cluster/cluster-ui";
 import {
   useMarkets,
   usePlayerMarket,
@@ -11,13 +7,11 @@ import {
 } from "./market-data-access";
 import {
   InitPlayerMint,
-  MintPlayerTokens,
   Payout,
-  DepositBase,
-  DepositQuote,
-  Trade,
   WithdrawAll,
   QuoteTokenFaucet,
+  CancelAllOrders,
+  Trade2,
 } from "./web-ui";
 import { PublicKey } from "@solana/web3.js";
 import { minimizePubkey } from "@/utils/web3";
@@ -36,6 +30,9 @@ import ChartComponent from "@/components/player-data/chart";
 import { PlaceOrderLogResult } from "@/lib/types";
 import { useQueryClient } from "@tanstack/react-query";
 import { api } from "@/trpc/react";
+import { useWallet } from "@solana/wallet-adapter-react";
+import Image from "next/image";
+import { shortenAddress } from "@/lib/utils";
 
 const sb = SendbirdChat.init({
   appId: "434D4E2C-4EEF-41DB-AE99-30D00B5AFF1D",
@@ -52,6 +49,7 @@ export default function MarketFeature({
     {
       message: string;
       sender: string;
+      image: string;
     }[]
   >([]);
   const [tradeData, setTradeData] = useState<{ date: number; price: number }[]>(
@@ -65,10 +63,19 @@ export default function MarketFeature({
     trades,
     lastTradePrice,
     playerStatsAccount,
-  } = usePlayerMarket();
+    cancelOrder,
+    capsulePubkey,
+    myOrders,
+    depositAndPlaceBuyOrder,
+    maybeMintDepositAndSell,
+    market,
+    currentMinterRewards,
+  } = usePlayerMarket({ activePlayerMarket: marketAddress });
+  const { publicKey } = useWallet();
   const { quoteTokenBalance } = useQuoteToken();
   const queryClient = useQueryClient();
   const utils = api.useUtils();
+  const myKey = publicKey ?? capsulePubkey.data!;
   useEffect(() => {
     async function checkCapsuleSession() {
       const isActive = await capsule.isSessionActive();
@@ -89,72 +96,77 @@ export default function MarketFeature({
     }
   }, [trades.data]);
 
-  useEffect(() => {
-    const feedUrl = "wss://fillfeed-production.up.railway.app";
-    if (!feedUrl) {
-      toast.error("NEXT_PUBLIC_FEED_URL not set");
-      throw new Error("NEXT_PUBLIC_FEED_URL not set");
-    }
-    const ws = new WebSocket(feedUrl);
+  // useEffect(() => {
+  //   const feedUrl = "wss://fillfeed-production.up.railway.app";
+  //   if (!feedUrl) {
+  //     toast.error("NEXT_PUBLIC_FEED_URL not set");
+  //     throw new Error("NEXT_PUBLIC_FEED_URL not set");
+  //   }
+  //   const ws = new WebSocket(feedUrl);
 
-    ws.onopen = () => {
-      console.log("Connected to server");
-    };
+  //   ws.onopen = () => {
+  //     console.log("Connected to server");
+  //   };
 
-    ws.onclose = (event) => {
-      console.log("Disconnected from server", event);
-    };
+  //   ws.onclose = (event) => {
+  //     console.log("Disconnected from server", event);
+  //   };
 
-    ws.onmessage = async (message): Promise<void> => {
-      console.log("message", message);
-      const event:
-        | {
-            type: "fill";
-            data: FillLogResult;
-          }
-        | {
-            type: "placeOrder";
-            data: PlaceOrderLogResult;
-          } = JSON.parse(message.data);
-      if (event.type === "fill") {
-        console.log("fill", event.data, Date.now());
-        setTradeData((prevData) => [
-          ...prevData,
-          {
-            date: Date.now(),
-            price: Number(event.data.priceAtoms),
-          },
-        ]);
-        queryClient.invalidateQueries({
-          queryKey: ["market", "bids", { marketAddress }],
-        });
-        queryClient.invalidateQueries({
-          queryKey: ["market", "asks", { marketAddress }],
-        });
-        utils.trade.readForMarket.invalidate({
-          marketAddress: marketAddress,
-        });
-      } else if (event.type === "placeOrder") {
-        queryClient.invalidateQueries({
-          queryKey: ["market", "bids", { marketAddress }],
-        });
-        queryClient.invalidateQueries({
-          queryKey: ["market", "asks", { marketAddress }],
-        });
-        utils.trade.readForMarket.invalidate({
-          marketAddress: marketAddress,
-        });
-        console.log("placeOrder", event.data);
-      }
-    };
+  //   ws.onmessage = async (message): Promise<void> => {
+  //     console.log("message", message);
+  //     const event:
+  //       | {
+  //           type: "fill";
+  //           data: FillLogResult;
+  //         }
+  //       | {
+  //           type: "placeOrder";
+  //           data: PlaceOrderLogResult;
+  //         } = JSON.parse(message.data);
+  //     if (event.type === "fill") {
+  //       console.log("fill", event.data, Date.now());
+  //       setTradeData((prevData) => [
+  //         ...prevData,
+  //         {
+  //           date: Date.now(),
+  //           price: Number(event.data.priceAtoms),
+  //         },
+  //       ]);
+  //       queryClient.invalidateQueries({
+  //         queryKey: ["market", "bids", { marketAddress }],
+  //       });
+  //       queryClient.invalidateQueries({
+  //         queryKey: ["market", "asks", { marketAddress }],
+  //       });
+  //       utils.trade.readForMarket.invalidate({
+  //         marketAddress: marketAddress,
+  //       });
+  //     } else if (event.type === "placeOrder") {
+  //       queryClient.invalidateQueries({
+  //         queryKey: ["market", "bids", { marketAddress }],
+  //       });
+  //       queryClient.invalidateQueries({
+  //         queryKey: ["market", "asks", { marketAddress }],
+  //       });
+  //       utils.trade.readForMarket.invalidate({
+  //         marketAddress: marketAddress,
+  //       });
+  //       console.log("placeOrder", event.data);
+  //     }
+  //   };
 
-    // return () => {
-    //   ws.close();
-    // };
-  }, [marketAddress, queryClient, utils]);
+  //   // return () => {
+  //   //   ws.close();
+  //   // };
+  // }, [marketAddress, queryClient, utils]);
 
   const connectToChat = async () => {
-    const user = await sb.connect(username);
+    const uniqueID = myKey.toBase58();
+    await sb.connect(uniqueID);
+    await sb.updateCurrentUserInfo({
+      nickname: username,
+      profileUrl: "https://picsum.photos/200/300",
+    });
     const open_channel_params = {
       channelUrl: "market",
       name: "Market",
@@ -183,6 +195,7 @@ export default function MarketFeature({
           return {
             message: message.message,
             sender: senderName ?? "Market",
+            image: sender?.profileUrl ?? "",
           };
         })
       );
@@ -203,21 +216,27 @@ export default function MarketFeature({
     });
   };
 
-  const isAdmin = true;
   return (
     <div className="w-screen px-[10%] flex items-center justify-center">
       <div className="w-full grid grid-cols-3 gap-4 mt-20">
         <div>
+          <h1>Player</h1>
+          <h1>{market.data?.player?.name}</h1>
           <h1>Your Balances</h1>
           <div className="flex flex-col gap-2">
             <div className="flex flex-row gap-4 items-center">
               <div>Quote Token</div>
-              <div>{quoteTokenBalance.data?.toString()}</div>
+              <div>
+                {(
+                  ((quoteTokenBalance.data?.valueOf() as number) ?? 0) /
+                  10 ** 6
+                ).toString()}
+              </div>
             </div>
             <div className="flex flex-row gap-4 items-center">
               <div>Quote Token Withdrawable</div>
               <div>
-                {balances.data?.quoteWithdrawableBalanceTokens.toString()}
+                {balances.data?.quoteWithdrawableBalanceTokens!.toString()}
               </div>
             </div>
             <div className="flex flex-row gap-4 items-center">
@@ -227,13 +246,22 @@ export default function MarketFeature({
               </div>
             </div>
             <div className="flex flex-row gap-4 items-center">
+              <div>Minter Rewards</div>
+              <div>{currentMinterRewards.data?.toString()}</div>
+            </div>
+            <div className="flex flex-row gap-4 items-center">
               <div>Player Token</div>
-              <div>{playerTokenBalance.data?.toString()}</div>
+              <div>
+                {(
+                  (parseInt(playerTokenBalance.data?.toString() ?? "0") ?? 0) /
+                  10 ** 6
+                ).toString()}
+              </div>
             </div>
             <div className="flex flex-row gap-4 items-center">
               <div>Player Token Withdrawable</div>
               <div>
-                {balances.data?.baseWithdrawableBalanceTokens.toString()}
+                {balances.data?.baseWithdrawableBalanceTokens!.toString()}
               </div>
             </div>
             <div className="flex flex-row gap-4 items-center">
@@ -260,13 +288,14 @@ export default function MarketFeature({
               <h1>{playerStatsAccount.data.actualPoints.toString()}</h1>
             )}
           </div>
-          <h1 className="text-2xl font-bold">Trades</h1>
+          <h1 className="text-2xl font-bold">Orders</h1>
           <h2 className="text-lg font-bold">Bids</h2>
-          <div className="grid grid-cols-3 gap-4 mb-4">
+          <div className="grid grid-cols-4 gap-4 mb-4">
             <>
               <h3 key="trader">Trader</h3>
               <h3 key="price">Price</h3>
               <h3 key="quantity">Quantity</h3>
+              <h3 key="action">Action</h3>
             </>
             {bids.data?.map((bid) => (
               <>
@@ -279,15 +308,46 @@ export default function MarketFeature({
                 <div key={"quantity-" + bid.trader.toBase58()}>
                   {bid.numBaseTokens.toString()}
                 </div>
+                {bid.trader.toBase58() === myKey.toBase58() ? (
+                  <button
+                    onClick={() => {
+                      console.log("myOrders", myOrders.data);
+                      const clientOrderId =
+                        myOrders.data?.find(
+                          (order) =>
+                            order.sequenceNumber?.toString() ===
+                            bid.sequenceNumber.toString()
+                        )?.clientOrderId ?? 0;
+                      console.log("clientOrderId", clientOrderId);
+                      cancelOrder.mutate({
+                        clientOrderId: clientOrderId,
+                      });
+                    }}
+                  >
+                    Cancel
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => {
+                      maybeMintDepositAndSell.mutate({
+                        numBaseTokens: parseFloat(bid.numBaseTokens.toString()),
+                        tokenPrice: bid.tokenPrice,
+                      });
+                    }}
+                  >
+                    Fill
+                  </button>
+                )}
               </>
             ))}
           </div>
           <h2 className="text-lg font-bold">Asks</h2>
-          <div className="grid grid-cols-3 gap-4 mb-4">
+          <div className="grid grid-cols-4 gap-4 mb-4">
             <>
               <h3>Trader</h3>
               <h3>Price</h3>
               <h3>Quantity</h3>
+              <h3>Action</h3>
             </>
             {asks.data?.map((ask) => (
               <>
@@ -299,6 +359,61 @@ export default function MarketFeature({
                 </div>
                 <div key={"quantity-" + ask.trader.toBase58()}>
                   {ask.numBaseTokens.toString()}
+                </div>
+                {ask.trader.toBase58() === myKey.toBase58() ? (
+                  <button
+                    onClick={() => {
+                      console.log("myOrders", myOrders.data);
+                      const clientOrderId =
+                        myOrders.data?.find(
+                          (order) =>
+                            order.sequenceNumber?.toString() ===
+                            ask.sequenceNumber.toString()
+                        )?.clientOrderId ?? 0;
+                      console.log("clientOrderId", clientOrderId);
+                      cancelOrder.mutate({
+                        clientOrderId: clientOrderId,
+                      });
+                    }}
+                  >
+                    Cancel
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => {
+                      depositAndPlaceBuyOrder.mutate({
+                        numBaseTokens: parseFloat(ask.numBaseTokens.toString()),
+                        tokenPrice: ask.tokenPrice,
+                      });
+                    }}
+                  >
+                    Fill
+                  </button>
+                )}
+              </>
+            ))}
+          </div>
+          <h1 className="text-2xl font-bold">Trades</h1>
+          <div className="grid grid-cols-4 gap-4 mb-4">
+            <>
+              <h3>Buyer</h3>
+              <h3>Seller</h3>
+              <h3>Price</h3>
+              <h3>Quantity</h3>
+            </>
+            {trades.data?.map((trade) => (
+              <>
+                <div key={"buyer-" + trade.id}>
+                  {trade.buyer.name ??
+                    shortenAddress(trade.buyerWallet.address)}
+                </div>
+                <div key={"seller-" + trade.id}>
+                  {trade.seller.name ??
+                    shortenAddress(trade.sellerWallet.address)}
+                </div>
+                <div key={"price-" + trade.id}>{trade.price.toString()}</div>
+                <div key={"quantity-" + trade.id}>
+                  {parseFloat(trade.quantity.toString()) / 10 ** 6}
                 </div>
               </>
             ))}
@@ -320,6 +435,13 @@ export default function MarketFeature({
           <div>
             {messages.map((message, index) => (
               <div key={"message-" + index} className="flex flex-row">
+                <Image
+                  src={message.image}
+                  alt="profile"
+                  className="w-10 h-10 rounded-full"
+                  width={40}
+                  height={40}
+                />
                 <div>{message.sender}</div>
                 <div>{message.message}</div>
               </div>
@@ -327,11 +449,12 @@ export default function MarketFeature({
           </div>
         </div>
         <div className="flex flex-col gap-4">
-          <QuoteTokenFaucet />
-          <MintPlayerTokens />
+          {/* <QuoteTokenFaucet /> */}
+          {/* <MintPlayerTokens />
           <DepositBase />
-          <DepositQuote />
-          <Trade />
+          <DepositQuote /> */}
+          <Trade2 />
+          <CancelAllOrders />
           <WithdrawAll />
           <Payout />
         </div>

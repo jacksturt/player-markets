@@ -26,38 +26,41 @@ impl<'info> UpdateProjectionOracle<'info> {
         &mut self,
         points: f64,
         is_projected: bool,
-        set_mint_disabled: bool,
-        set_payout_enabled: bool,
+        mint_enabled: bool,
+        payout_enabled: bool,
     ) -> Result<()> {
         require!(
             self.authority.key().to_string() == UPDATE_PLAYER_PROJECTIONS_PUBKEY
                 || self.authority.key().to_string() == ADMIN_PUBKEY,
             OracleError::UnauthorizedAuthority
         );
-        msg!("set_mint_disabled: {}", set_mint_disabled);
-        msg!("set_payout_enabled: {}", set_payout_enabled);
+        msg!("mint_enabled: {}", mint_enabled);
+        msg!("payout_enabled: {}", payout_enabled);
 
-        if set_mint_disabled {
+        if self.config.minting_enabled != mint_enabled {
             require!(
                 self.authority.key().to_string() == ADMIN_PUBKEY,
                 OracleError::AdminOnlyUnlock
             );
-            msg!("Disabling minting");
-            self.config.minting_enabled = false;
+            msg!("Setting minting_enabled to {}", mint_enabled);
+            self.config.minting_enabled = mint_enabled;
         }
 
-        if set_payout_enabled {
+        if self.config.payout_enabled != payout_enabled {
             require!(
                 self.authority.key().to_string() == ADMIN_PUBKEY,
                 OracleError::AdminOnlyUnlock
             );
-            self.config.payout_enabled = true;
+            msg!("Setting payout_enabled to {}", payout_enabled);
+            self.config.payout_enabled = payout_enabled;
         }
 
         // Update player statistics
         if is_projected {
+            msg!("Setting projected_points to {}", points);
             self.player_stats.projected_points = points;
         } else {
+            msg!("Setting actual_points to {}", points);
             self.player_stats.actual_points = points;
         }
         self.player_stats.last_updated = Clock::get()?.unix_timestamp;

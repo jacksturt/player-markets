@@ -52,18 +52,38 @@ export const createMint = protectedProcedure
         },
       });
     } else {
-      const team = await db.team.create({
-        data: {
-          name: input.teamName!,
-          image: input.teamImage!,
+      let team = await db.team.findUnique({
+        where: {
           sportsDataId: input.teamSportsdataId!,
-          mint: {
-            connect: {
-              id: mint.id,
-            },
-          },
         },
       });
+      if (!team) {
+        team = await db.team.create({
+          data: {
+            name: input.teamName!,
+            image: input.teamImage!,
+            sportsDataId: input.teamSportsdataId!,
+            mint: {
+              connect: {
+                id: mint.id,
+              },
+            },
+          },
+        });
+      } else {
+        await db.team.update({
+          where: {
+            id: team.id,
+          },
+          data: {
+            mint: {
+              connect: {
+                id: mint.id,
+              },
+            },
+          },
+        });
+      }
     }
     return mint;
   });

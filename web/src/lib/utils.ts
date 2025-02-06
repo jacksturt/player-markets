@@ -1,3 +1,4 @@
+import { PublicKey } from "@solana/web3.js";
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
 
@@ -27,4 +28,11 @@ export function timeAgo(timestamp: number): string {
   }
 
   return "just now";
+}
+
+export function shortenAddress(address: PublicKey | string) {
+  if (typeof address === "string") {
+    return address.slice(0, 4) + "..." + address.slice(-4);
+  }
+  return address.toBase58().slice(0, 4) + "..." + address.toBase58().slice(-4);
 }

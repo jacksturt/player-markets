@@ -18,6 +18,10 @@ export const readTradesForMarket = protectedProcedure
       },
       include: {
         baseMint: true,
+        buyer: true,
+        buyerWallet: true,
+        seller: true,
+        sellerWallet: true,
       },
     });
     return trades;

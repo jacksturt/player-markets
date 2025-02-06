@@ -10,7 +10,8 @@ model Order {
     price          Decimal
     numBaseTokens  Int
     numQuoteTokens Int
-    sequenceNumber Int
+    sequenceNumber Int?
+    clientOrderId  Int         @default(0)
 
     baseMint   Mint   @relation(fields: [baseMintId], references: [id])
     baseMintId String

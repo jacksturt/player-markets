@@ -1,25 +1,12 @@
 "use client";
 
 import Image from "next/image";
-import { useWallet } from "@solana/wallet-adapter-react";
-import { WalletButton } from "../solana/solana-provider";
-import { AppHero, ellipsify } from "../ui/ui-layout";
-import { ExplorerLink } from "../cluster/cluster-ui";
 import {
   useMarkets,
   usePlayerMarket,
   useQuoteToken,
 } from "./market-data-access";
-import {
-  InitPlayerMint,
-  MintPlayerTokens,
-  Payout,
-  DepositBase,
-  DepositQuote,
-  Trade,
-  WithdrawAll,
-  QuoteTokenFaucet,
-} from "./web-ui";
+import { Payout, Trade, WithdrawAll, QuoteTokenFaucet } from "./web-ui";
 import { PublicKey } from "@solana/web3.js";
 import { minimizePubkey } from "@/utils/web3";
 import { useEffect, useState } from "react";
@@ -91,7 +78,7 @@ export default function MarketFeatureNew({
     trades,
     lastTradePrice,
     playerStatsAccount,
-  } = usePlayerMarket();
+  } = usePlayerMarket({});
   const { quoteTokenBalance } = useQuoteToken();
   const queryClient = useQueryClient();
   const utils = api.useUtils();

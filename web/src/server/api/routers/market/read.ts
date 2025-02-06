@@ -1,7 +1,6 @@
 import { db } from "@/server/db";
-import { createTRPCRouter, protectedProcedure } from "@/server/api/trpc";
+import { protectedProcedure } from "@/server/api/trpc";
 import { z } from "zod";
-import { Position } from "@prisma/client";
 
 export const readMarket = protectedProcedure
   .input(
@@ -16,10 +15,27 @@ export const readMarket = protectedProcedure
       },
       include: {
         baseMint: true,
+        player: {
+          include: {
+            team: true,
+            projections: true,
+          },
+        },
       },
     });
     return market;
   });
+
+export const readAllMarkets = protectedProcedure.query(async () => {
+  const markets = await db.market.findMany({
+    include: {
+      baseMint: true,
+      player: true,
+      team: true,
+    },
+  });
+  return markets;
+});
 
 export const lastTradePrice = protectedProcedure
   .input(

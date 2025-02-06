@@ -8,16 +8,31 @@ import toast, { Toaster } from "react-hot-toast";
 import { capsule } from "@/lib/capsule";
 import { IconCopy } from "@tabler/icons-react";
 
-import { AccountChecker } from "../account/account-ui";
-import {
-  ClusterChecker,
-  ClusterUiSelect,
-  ExplorerLink,
-} from "../cluster/cluster-ui";
 import { WalletButton } from "../solana/solana-provider";
 import { Button } from "./button";
 import { PublicKey } from "@solana/web3.js";
-
+export function ExplorerLink({
+  path,
+  label,
+  className,
+}: {
+  path: string;
+  label: string;
+  className?: string;
+}) {
+  const getExplorerUrl = (path: string) =>
+    `https://explorer.solana.com/${path}`;
+  return (
+    <a
+      href={getExplorerUrl(path)}
+      target="_blank"
+      rel="noopener noreferrer"
+      className={className ? className : `link font-mono`}
+    >
+      {label}
+    </a>
+  );
+}
 export function UiLayout({
   children,
   links,
@@ -39,12 +54,8 @@ export function UiLayout({
         <div className="flex-none space-x-2">
           <CapsuleAccountInfo />
           <WalletButton />
-          <ClusterUiSelect />
         </div>
       </div>
-      <ClusterChecker>
-        <AccountChecker />
-      </ClusterChecker>
       <div className="">
         <Suspense
           fallback={
@@ -152,7 +163,10 @@ export function useTransactionToast() {
           label={"View Transaction"}
           className="btn btn-xs btn-primary"
         />
-      </div>
+      </div>,
+      {
+        duration: 5000,
+      }
     );
   };
 }

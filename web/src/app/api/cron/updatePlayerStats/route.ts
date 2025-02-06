@@ -24,12 +24,10 @@ export async function GET(request: Request) {
       { status: 400 }
     );
   }
-  const season = "2024POST";
-  const week = "4";
   try {
     const player = await db.player.findUniqueOrThrow({
       where: {
-        id: playerId,
+        sportsDataId: parseInt(playerId),
       },
       include: {
         team: true,
@@ -41,25 +39,37 @@ export async function GET(request: Request) {
 
     try {
       if (player.market?.hasGameStarted) {
-        const url = `https://api.sportsdata.io/v3/nfl/stats/json/PlayerGameStatsByTeam/${season}/${week}/${player?.team?.sportsDataId}?key=${process.env.SPORTSDATA_API_KEY}`;
+        const url = `https://replay.sportsdata.io/api/v3/nfl/stats/json/playergamestatsbyteam/${player.market?.season.toLowerCase()}/${
+          player.market?.week
+        }/${player?.team?.sportsDataId.toLowerCase()}?key=d6f0c46073bf4bf2a70d2d6b01f74046`;
+        // const url = `https://api.sportsdata.io/v3/nfl/stats/json/PlayerGameStatsByTeam/${player.market?.season}/${player.market?.week}/${player?.team?.sportsDataId}?key=${process.env.SPORTSDATA_API_KEY}`;
         const response = await fetch(url, {
           headers: {
             Authorization: `Bearer ${process.env.ORACLE_API_KEY}`,
           },
         });
-        const playerActualData: PlayerGameStats = await response.json();
-        console.log("data", playerActualData);
-
-        if (!playerActualData) {
+        const playerActualDataList: PlayerGameStats[] = await response.json();
+        if (!playerActualDataList) {
           return NextResponse.json(
             { success: false, error: "Player projection not found" },
             { status: 404 }
           );
         }
+        const playerActualData = playerActualDataList.find(
+          (data) => data.PlayerID === parseInt(playerId)
+        );
+
+        if (!playerActualData) {
+          return NextResponse.json(
+            { success: false, error: "Player actual data not found" },
+            { status: 404 }
+          );
+        }
 
         const camelCaseData = convertPlayerGameStatsToActual(playerActualData);
+
         if (
-          player.projections?.projectedFantasyPointsPpr !==
+          player.projections?.actualFantasyPointsPpr !==
           camelCaseData.actualFantasyPointsPpr
         ) {
           await db.playerStatsAndProjection.update({
@@ -80,15 +90,22 @@ export async function GET(request: Request) {
           );
         }
       } else {
-        const url = `https://baker-api.sportsdata.io/baker/v2/nfl/projections/players/${season}/${week}/team/${player?.team?.sportsDataId}/avg?key=${process.env.SPORTSDATA_API_KEY}`;
+        if (player.market?.season === "2023POST") {
+          return NextResponse.json({ success: true });
+        }
+        const url = `https://api.sportsdata.io/v3/nfl/projections/json/PlayerGameProjectionStatsByTeam/${player.market?.season}/${player.market?.week}/${player?.team?.sportsDataId}?key=${process.env.SPORTSDATA_API_KEY}`;
 
         const response = await fetch(url, {
           headers: {
             Authorization: `Bearer ${process.env.ORACLE_API_KEY}`,
           },
         });
-        const playerProjectionData: PlayerProjection = await response.json();
-        console.log("data", playerProjectionData);
+        const playerProjectionDataList: PlayerGameStats[] =
+          await response.json();
+
+        const playerProjectionData = playerProjectionDataList.find(
+          (data) => data.PlayerID === parseInt(playerId)
+        );
 
         if (!playerProjectionData) {
           return NextResponse.json(
@@ -98,7 +115,7 @@ export async function GET(request: Request) {
         }
 
         const camelCaseData =
-          convertPlayerProjectionToCamelCase(playerProjectionData);
+          convertPlayerGameStatsToProjected(playerProjectionData);
         if (
           player.projections?.projectedFantasyPointsPpr !==
           camelCaseData.projectedFantasyPointsPpr
@@ -111,14 +128,18 @@ export async function GET(request: Request) {
               ...camelCaseData,
             },
             create: {
-              playerId: player.id,
+              player: {
+                connect: {
+                  id: player.id,
+                },
+              },
               ...camelCaseData,
             },
           });
           await updateProjectionOracle(
             player.sportsDataId.toString(),
             player.mint!.timestamp,
-            playerProjectionData.fantasy_points_ppr,
+            camelCaseData.projectedFantasyPointsPpr,
             true,
             false,
             false
@@ -142,27 +163,29 @@ export async function GET(request: Request) {
   }
 }
 
-function convertPlayerProjectionToCamelCase(projection: PlayerProjection) {
+function convertPlayerGameStatsToProjected(actual: PlayerGameStats) {
   return {
-    projectedRushingAttempts: projection.rushing_attempts,
-    projectedRushingYards: projection.rushing_yards,
-    projectedRushingTouchdowns: projection.rushing_touchdowns,
-    projectedFumblesLost: projection.fumbles_lost,
-    projectedCatches: projection.catches,
-    projectedReceivingYards: projection.receiving_yards,
-    projectedReceivingTouchdowns: projection.receiving_touchdowns,
-    projectedPassingInterceptions: projection.passing_interceptions,
-    projectedPassingYards: projection.passing_yards,
-    projectedPassingTouchdowns: projection.passing_touchdowns,
-    projectedPassingSacks: projection.passing_sacks,
-    projectedFieldGoalsMade: projection.field_goals_made,
-    projectedFieldGoalsMissed: projection.field_goals_missed,
-    projectedExtraPointKickingConversions:
-      projection.extra_point_kicking_conversions,
-    projectedExtraPointKickingMisses: projection.extra_point_kicking_misses,
-    projectedFantasyPointsHalfPpr: projection.fantasy_points_half_ppr,
-    projectedFantasyPointsPpr: projection.fantasy_points_ppr,
-    projectedFantasyPointsNonPpr: projection.fantasy_points_non_ppr,
+    projectedRushingAttempts: actual.RushingAttempts,
+    projectedRushingYards: actual.RushingYards,
+    projectedRushingTouchdowns: actual.RushingTouchdowns,
+    projectedFumblesLost: actual.FumblesLost,
+    projectedCatches: actual.Receptions,
+    projectedReceivingYards: actual.ReceivingYards,
+    projectedReceivingTouchdowns: actual.ReceivingTouchdowns,
+    projectedPassingInterceptions: actual.PassingInterceptions,
+    projectedPassingYards: actual.PassingYards,
+    projectedPassingTouchdowns: actual.PassingTouchdowns,
+    projectedPassingSacks: actual.PassingSacks,
+    projectedFieldGoalsMade: actual.FieldGoalsMade,
+    projectedFieldGoalsMissed:
+      actual.FieldGoalsAttempted - actual.FieldGoalsMade,
+    projectedExtraPointKickingConversions: actual.ExtraPointsMade,
+    projectedExtraPointKickingMisses:
+      actual.ExtraPointsAttempted - actual.ExtraPointsMade,
+    projectedFantasyPointsHalfPpr:
+      (actual.FantasyPointsPPR + actual.FantasyPoints) / 2,
+    projectedFantasyPointsPpr: actual.FantasyPointsPPR,
+    projectedFantasyPointsNonPpr: actual.FantasyPoints,
   };
 }
 
@@ -202,7 +225,7 @@ function updateProjectionOracle(
   const connection = new Connection(process.env.RPC_URL!);
   const wallet = new EnvWallet();
   const provider = new AnchorProvider(connection, wallet);
-  const programId = getTradetalkProgramId("devnet");
+  const programId = getTradetalkProgramId("mainnet-beta");
   const program = getTradetalkProgram(provider, programId);
   const mintConfig = PublicKey.findProgramAddressSync(
     [Buffer.from("config"), Buffer.from(playerId), Buffer.from(timestamp)],

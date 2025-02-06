@@ -9,7 +9,7 @@ use crate::constants::*;
 use crate::context::*;
 use crate::errors::*;
 
-declare_id!("131iREZN7gtrQ7Tdg2jGTmVsywQ1puq9iN85KAZGwzML");
+declare_id!("AMNTpN6ykSqt6VUs5tnypD433naSCNbjS8fsEJLVHSsh");
 
 #[program]
 pub mod tradetalk {
@@ -58,12 +58,22 @@ pub mod tradetalk {
         ctx: Context<UpdateProjectionOracle>,
         points: f64,
         is_projected: bool,
-        set_mint_disabled: bool,
-        set_payout_enabled: bool,
+        mint_enabled: bool,
+        payout_enabled: bool,
     ) -> Result<()> {
         ctx.accounts
-            .update_projection_oracle(points, is_projected, set_mint_disabled, set_payout_enabled)
+            .update_projection_oracle(points, is_projected, mint_enabled, payout_enabled)
             .unwrap();
+        Ok(())
+    }
+
+    pub fn test_mint_rewards_only(ctx: Context<Payout>) -> Result<()> {
+        ctx.accounts.handle_minting_rewards().unwrap();
+        Ok(())
+    }
+
+    pub fn test_payout_player_tokens(ctx: Context<Payout>) -> Result<()> {
+        ctx.accounts.handle_player_tokens().unwrap();
         Ok(())
     }
 

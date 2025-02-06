@@ -1,17 +1,17 @@
-import { Connection, PublicKey } from '@solana/web3.js';
-import { bignum } from '@metaplex-foundation/beet';
-import { publicKey as beetPublicKey } from '@metaplex-foundation/beet-solana';
-import { FIXED_WRAPPER_HEADER_SIZE, NIL } from './constants';
-import { OrderType } from './manifest';
-import { deserializeRedBlackTree } from './utils/redBlackTree';
+import { Connection, PublicKey } from "@solana/web3.js";
+import { bignum } from "@metaplex-foundation/beet";
+import { publicKey as beetPublicKey } from "@metaplex-foundation/beet-solana";
+import { FIXED_WRAPPER_HEADER_SIZE, NIL } from "./constants";
+import { OrderType } from "./manifest";
+import { deserializeRedBlackTree } from "./utils/redBlackTree";
 import {
   MarketInfo,
   WrapperOpenOrder as WrapperOpenOrderRaw,
   marketInfoBeet,
   wrapperOpenOrderBeet,
-} from './wrapper/types';
-import { convertU128 } from './utils/numbers';
-import BN from 'bn.js';
+} from "./wrapper/types";
+import { convertU128 } from "./utils/numbers";
+import BN from "bn.js";
 
 /**
  * All data stored on a wrapper account.
@@ -157,7 +157,7 @@ export class Wrapper {
     const filtered: WrapperMarketInfo[] = this.data.marketInfos.filter(
       (marketInfo: WrapperMarketInfo) => {
         return marketInfo.market.toBase58() == marketPk.toBase58();
-      },
+      }
     );
     if (filtered.length == 0) {
       return null;
@@ -176,7 +176,7 @@ export class Wrapper {
     const filtered: WrapperMarketInfo[] = this.data.marketInfos.filter(
       (marketInfo: WrapperMarketInfo) => {
         return marketInfo.market.toBase58() == marketPk.toBase58();
-      },
+      }
     );
     if (filtered.length == 0) {
       return null;
@@ -191,7 +191,7 @@ export class Wrapper {
    * Print all information loaded about the wrapper in a human readable format.
    */
   public prettyPrint() {
-    console.log('');
+    console.log("");
     console.log(`Wrapper: ${this.address.toBase58()}`);
     console.log(`========================`);
     console.log(`Trader: ${this.data.trader.toBase58()}`);
@@ -200,11 +200,11 @@ export class Wrapper {
       console.log(`Market: ${marketInfo.market}`);
       console.log(`Last updated slot: ${marketInfo.lastUpdatedSlot}`);
       console.log(
-        `BaseAtoms: ${marketInfo.baseBalanceAtoms} QuoteAtoms: ${marketInfo.quoteBalanceAtoms}`,
+        `BaseAtoms: ${marketInfo.baseBalanceAtoms} QuoteAtoms: ${marketInfo.quoteBalanceAtoms}`
       );
       marketInfo.orders.forEach((order: WrapperOpenOrder) => {
         console.log(
-          `OpenOrder: ClientOrderId: ${order.clientOrderId} ${order.numBaseAtoms}@${order.price} SeqNum: ${order.orderSequenceNumber} LastValidSlot: ${order.lastValidSlot} IsBid: ${order.isBid}`,
+          `OpenOrder: ClientOrderId: ${order.clientOrderId} ${order.numBaseAtoms}@${order.price} SeqNum: ${order.orderSequenceNumber} LastValidSlot: ${order.lastValidSlot} IsBid: ${order.isBid}`
         );
       });
     });
@@ -248,7 +248,7 @@ export class Wrapper {
         ? deserializeRedBlackTree(
             data.subarray(FIXED_WRAPPER_HEADER_SIZE),
             marketInfosRootIndex,
-            marketInfoBeet,
+            marketInfoBeet
           )
         : [];
 
@@ -260,7 +260,7 @@ export class Wrapper {
             ? deserializeRedBlackTree(
                 data.subarray(FIXED_WRAPPER_HEADER_SIZE),
                 rootIndex,
-                wrapperOpenOrderBeet,
+                wrapperOpenOrderBeet
               )
             : [];
 
@@ -268,9 +268,9 @@ export class Wrapper {
           (openOrder: WrapperOpenOrderRaw) => {
             return {
               ...openOrder,
-              price: convertU128(new BN(openOrder.price, 10, 'le')),
+              price: convertU128(new BN(openOrder.price, 10, "le")),
             };
-          },
+          }
         );
 
         return {
@@ -281,7 +281,7 @@ export class Wrapper {
           orders: parsedOpenOrdersWithPrice,
           lastUpdatedSlot: marketInfoRaw.lastUpdatedSlot,
         };
-      },
+      }
     );
 
     return {

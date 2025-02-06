@@ -22,7 +22,8 @@ export default function PlayerCard({ market }: { market: any }) {
   const { market: offChainMarket } = usePlayerMarket({
     activePlayerMarket: market.publicKey.toBase58(),
   });
-
+  const baseMint = offChainMarket?.data?.baseMint;
+  const playerData = offChainMarket?.data?.player;
   const [cardView, setCardView] = useState<CardView>(CardView.FRONT);
   const [selectedOrderType, setSelectedOrderType] = useState<
     "buy" | "sell" | undefined
@@ -48,7 +49,7 @@ export default function PlayerCard({ market }: { market: any }) {
               <div
                 className="absolute inset-0"
                 style={{
-                  backgroundImage: `url(${offChainMarket?.baseMint?.image})`,
+                  backgroundImage: `url(${offChainMarket?.data?.baseMint?.image})`,
                   backgroundSize: "cover",
                   backgroundPosition: "center",
                 }}
@@ -59,12 +60,12 @@ export default function PlayerCard({ market }: { market: any }) {
               <div className="relative w-full h-full z-10 text-white px-4 py-6 flex flex-col justify-between">
                 <div className="flex flex-col">
                   <h3 className="text-[13px] leading-[13px] font-clashSemiBold">
-                    {playerData.name}
+                    {playerData?.name}
                   </h3>
                   <p className="text-[9px] leading-[9px]">
                     {
                       NFL_POSITIONS[
-                        playerData.position as keyof typeof NFL_POSITIONS
+                        playerData?.position as keyof typeof NFL_POSITIONS
                       ]
                     }
                   </p>
@@ -76,7 +77,7 @@ export default function PlayerCard({ market }: { market: any }) {
                         Projected Total
                       </p>
                       <p className="text-[13px] leading-[13px] font-clashSemiBold">
-                        {playerData.projectedTotal} pts
+                        {playerData?.projections?.projectedFantasyPointsPpr} pts
                       </p>
                     </div>
                   </div>
@@ -88,7 +89,6 @@ export default function PlayerCard({ market }: { market: any }) {
                 <Button
                   onClick={(e) => {
                     e.stopPropagation();
-                    setActivePlayerMarket(playerData.name);
                     setSelectedOrderType("buy");
                     handleFlip();
                   }}

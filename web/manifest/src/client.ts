@@ -732,7 +732,6 @@ export class ManifestClient {
       throw new Error("Read only");
     }
     const withdrawInstructions: TransactionInstruction[] = [];
-
     const baseBalance = this.market.getWithdrawableBalanceTokens(
       this.payer,
       true

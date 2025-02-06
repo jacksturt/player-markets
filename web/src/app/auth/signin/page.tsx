@@ -21,7 +21,6 @@ function SignInContent() {
   const { publicKey } = useWallet();
   const callbackUrl = searchParams.get("callbackUrl") ?? "/";
   const handleCapsuleSetup = async () => {
-    console.log("handleCapsuleSetup");
     try {
       const { data } = await capsule.userSetupAfterLogin();
 
@@ -31,7 +30,6 @@ function SignInContent() {
       if (!!publicKey || !!capsulePublicKey) {
         const signInKey = publicKey ?? capsulePublicKey;
         const result = await signIn("capsule", {
-          userId: (data as any).userId,
           email: email,
           publicKey: signInKey,
           capsuleUserId: (data as any).userId ?? "undefined",

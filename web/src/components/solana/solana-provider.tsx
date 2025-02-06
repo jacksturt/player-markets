@@ -12,7 +12,6 @@ import {
 } from "@solana/wallet-adapter-react";
 import { WalletModalProvider } from "@solana/wallet-adapter-react-ui";
 import { ReactNode, useCallback, useMemo } from "react";
-import { useCluster } from "../cluster/cluster-data-access";
 import {
   backpackWallet,
   CapsuleSolanaProvider,
@@ -30,24 +29,21 @@ export const WalletButton = dynamic(
 );
 
 export function SolanaProvider({ children }: { children: ReactNode }) {
-  const { cluster } = useCluster();
-  const endpoint = useMemo(() => cluster.endpoint, [cluster]);
   const onError = useCallback((error: WalletError) => {
     console.error(error);
   }, []);
-  const solanaNetwork = WalletAdapterNetwork.Devnet;
 
   return (
     <CapsuleSolanaProvider
-      endpoint={endpoint}
+      endpoint={process.env.NEXT_PUBLIC_RPC_URL!}
       wallets={[glowWallet, phantomWallet, backpackWallet]}
-      chain={solanaNetwork}
+      chain={"solana:mainnet-beta"}
       appIdentity={{
         name: "Your App Name",
         uri: `https://localhost:3000`,
       }}
     >
-      <ConnectionProvider endpoint={endpoint}>
+      <ConnectionProvider endpoint={process.env.NEXT_PUBLIC_RPC_URL!}>
         <WalletProvider wallets={[]} onError={onError} autoConnect={true}>
           <WalletModalProvider>{children}</WalletModalProvider>
         </WalletProvider>

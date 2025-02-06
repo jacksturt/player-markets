@@ -3,8 +3,9 @@
 import { OrderType } from "@prisma/client";
 import { checkOrdersAndFills } from "@/server/handlers/checkOrdersAndFills";
 import { NextResponse } from "next/server";
+import { db } from "@/server/db";
 
-export async function POST(request: Request) {
+export async function GET(request: Request) {
   if (
     request.headers.get("Authorization") !== `Bearer ${process.env.CRON_SECRET}`
   ) {
@@ -13,7 +14,11 @@ export async function POST(request: Request) {
       { status: 401 }
     );
   }
-  const { data } = await request.json();
+  const markets = await db.market.findMany({
+    select: {
+      address: true,
+    },
+  });
 
-  checkOrdersAndFills(data.marketAddress);
+  return NextResponse.json(markets.map((market) => market.address));
 }
