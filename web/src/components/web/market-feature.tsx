@@ -73,6 +73,7 @@ export default function MarketFeature({
     depositAndPlaceBuyOrder,
     maybeMintDepositAndSell,
     market,
+    currentMinterRewards,
   } = usePlayerMarket();
   const { publicKey } = useWallet();
   const { quoteTokenBalance } = useQuoteToken();
@@ -247,6 +248,10 @@ export default function MarketFeature({
               <div>
                 {balances.data?.quoteOpenOrdersBalanceTokens.toString()}
               </div>
+            </div>
+            <div className="flex flex-row gap-4 items-center">
+              <div>Minter Rewards</div>
+              <div>{currentMinterRewards.data?.toString()}</div>
             </div>
             <div className="flex flex-row gap-4 items-center">
               <div>Player Token</div>

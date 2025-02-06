@@ -19,6 +19,7 @@ import {
   ASSOCIATED_TOKEN_PROGRAM_ID,
   getAccount,
   getAssociatedTokenAddressSync,
+  getMint,
   TOKEN_PROGRAM_ID,
 } from "@solana/spl-token";
 import { createMarketTX } from "manifest/instructions/createMarket";
@@ -712,6 +713,133 @@ export function usePlayerMarket() {
       return playerStatsAccount;
     },
     enabled: !!playerId.data && !!timestamp.data,
+  });
+
+  const vault = useQuery({
+    queryKey: ["vault", { marketAddress }],
+    queryFn: async () => {
+      if (!playerId.data || !timestamp.data) return;
+      const mintConfig = PublicKey.findProgramAddressSync(
+        [
+          Buffer.from("config"),
+          Buffer.from(playerId.data),
+          Buffer.from(timestamp.data),
+        ],
+        program.programId
+      )[0];
+      const vaultAddress = getAssociatedTokenAddressSync(
+        quoteToken,
+        mintConfig,
+        true
+      );
+      console.log("vaultAddress", vaultAddress.toBase58());
+
+      const vault = await getAccount(provider.connection, vaultAddress);
+      console.log("vault", vault);
+      return vault;
+    },
+    enabled: !!playerId.data && !!timestamp.data,
+  });
+
+  const playerTokenMintAccount = useQuery({
+    queryKey: ["player-token-mint-account", { marketAddress }],
+    queryFn: async () => {
+      if (!playerTokenMint.data) return;
+      const playerTokenMintAccount = await getMint(
+        provider.connection,
+        playerTokenMint.data
+      );
+      return playerTokenMintAccount.supply;
+    },
+    enabled: !!playerTokenMint.data,
+  });
+
+  const mintConfigAccount = useQuery({
+    queryKey: ["mint-config-account", { marketAddress }],
+    queryFn: async () => {
+      if (!playerId.data || !timestamp.data) return;
+      const mintConfig = PublicKey.findProgramAddressSync(
+        [
+          Buffer.from("config"),
+          Buffer.from(playerId.data),
+          Buffer.from(timestamp.data),
+        ],
+        program.programId
+      )[0];
+
+      const mintConfigAccount = await program.account.playerMintConfig.fetch(
+        mintConfig
+      );
+
+      return mintConfigAccount;
+    },
+    enabled: !!playerId.data && !!timestamp.data,
+  });
+
+  const mintRecord = useQuery({
+    queryKey: ["mint-record", { marketAddress }],
+    queryFn: async () => {
+      if (!playerId.data || !timestamp.data) return;
+      const mintConfig = PublicKey.findProgramAddressSync(
+        [
+          Buffer.from("config"),
+          Buffer.from(playerId.data),
+          Buffer.from(timestamp.data),
+        ],
+        program.programId
+      )[0];
+      const pubkey = publicKey ?? capsulePubkey.data!;
+      const mintRecordAddress = PublicKey.findProgramAddressSync(
+        [Buffer.from("mint_record"), mintConfig.toBuffer(), pubkey.toBuffer()],
+        program.programId
+      )[0];
+
+      const mintRecord = await program.account.mintRecord.fetch(
+        mintRecordAddress
+      );
+
+      return mintRecord;
+    },
+    enabled: !!playerId.data && !!timestamp.data,
+  });
+
+  const PRECISION = new BN(1_000_000); // 6 decimals of precision
+  const currentMinterRewards = useQuery({
+    queryKey: ["current-minter-rewards", { marketAddress }],
+    queryFn: () => {
+      const vaultAmount = new BN(vault.data!.amount.toString());
+      console.log("vaultAmount", vaultAmount);
+      const playerTokenMintSupply = new BN(
+        playerTokenMintAccount.data!.toString()
+      );
+      console.log("playerTokenMintSupply", playerTokenMintSupply);
+      console.log(playerStatsAccount.data!.actualPoints.valueOf());
+      const playerStatsActualPoints = new BN(
+        playerStatsAccount.data!.actualPoints.valueOf()
+      );
+      console.log("playerStatsActualPoints", playerStatsActualPoints);
+      const vaultRemaining = vaultAmount.sub(
+        playerTokenMintSupply.mul(playerStatsActualPoints)
+      );
+      console.log("vaultRemaining", vaultRemaining);
+      const totalDepositedAmount = mintConfigAccount.data!.totalDepositedAmount;
+      console.log("totalDepositedAmount", totalDepositedAmount.toString());
+      const depositedByMe = mintRecord.data!.depositedAmount;
+      console.log("depositedByMe", depositedByMe.toString());
+      const percentDue = depositedByMe.mul(PRECISION).div(totalDepositedAmount);
+      const percentDueDecimal =
+        percentDue.toNumber() / PRECISION.toNumber() / PRECISION.toNumber();
+      console.log("percentDue", percentDueDecimal);
+      const minterRewards = vaultRemaining.toNumber() * percentDueDecimal;
+      console.log("minterRewards", minterRewards.toString());
+      return minterRewards.toString();
+    },
+    enabled:
+      !!mintRecord.data &&
+      !!playerStatsAccount.data &&
+      !!vault.data &&
+      !!mintConfigAccount.data &&
+      !!playerTokenMintAccount.data,
   });
 
   const myOrders = api.order.readOrdersForUserByMarket.useQuery(
@@ -1760,5 +1888,7 @@ export function usePlayerMarket() {
     depositAndPlaceBuyOrder,
     maybeMintDepositAndSell,
     myOrders,
+    mintRecord,
+    currentMinterRewards,
   };
 }
