@@ -36,13 +36,13 @@ export async function GET(request: Request) {
         market: true,
       },
     });
-    if (player.market?.season === "2023POST") {
-      return NextResponse.json({ success: true });
-    }
+    console.log("player.market?.hasGameStarted", player.market?.hasGameStarted);
 
     try {
       if (player.market?.hasGameStarted) {
-        const url = `https://replay.sportsdata.io/api/v3/nfl/stats/json/playergamestatsbyteam/${player.market?.season}/${player.market?.week}/${player?.team?.sportsDataId}?key=d6f0c46073bf4bf2a70d2d6b01f74046`;
+        const url = `https://replay.sportsdata.io/api/v3/nfl/stats/json/playergamestatsbyteam/${player.market?.season.toLowerCase()}/${
+          player.market?.week
+        }/${player?.team?.sportsDataId.toLowerCase()}?key=d6f0c46073bf4bf2a70d2d6b01f74046`;
         // const url = `https://api.sportsdata.io/v3/nfl/stats/json/PlayerGameStatsByTeam/${player.market?.season}/${player.market?.week}/${player?.team?.sportsDataId}?key=${process.env.SPORTSDATA_API_KEY}`;
         const response = await fetch(url, {
           headers: {
@@ -50,7 +50,7 @@ export async function GET(request: Request) {
           },
         });
         const playerActualDataList: PlayerGameStats[] = await response.json();
-
+        console.log("playerActualDataList", playerActualDataList);
         if (!playerActualDataList) {
           return NextResponse.json(
             { success: false, error: "Player projection not found" },
@@ -91,6 +91,9 @@ export async function GET(request: Request) {
           );
         }
       } else {
+        if (player.market?.season === "2023POST") {
+          return NextResponse.json({ success: true });
+        }
         const url = `https://api.sportsdata.io/v3/nfl/projections/json/PlayerGameProjectionStatsByTeam/${player.market?.season}/${player.market?.week}/${player?.team?.sportsDataId}?key=${process.env.SPORTSDATA_API_KEY}`;
 
         const response = await fetch(url, {
