@@ -11,7 +11,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-import { placeOrderInstructionDiscriminator } from "manifest/src/ui_wrapper";
 
 export function QuoteTokenCreate() {
   const { initialize } = useQuoteToken();
@@ -155,11 +154,11 @@ export function VaultsList() {
 
 export function UpdateProjectionOracle() {
   const { updateProjectionOracle } = useMarkets();
-  const playerId = "18890";
-  const projection = 19.32;
-  const timestamp = "1738716012254";
-  const isProjected = true;
-  const setMintingDisabled = false;
+  const playerId = "24423";
+  const projection = 0.0;
+  const timestamp = "1738799324566";
+  const isProjected = false;
+  const setMintingDisabled = true;
   const setPayoutEnabled = false;
 
   return (
@@ -415,6 +414,7 @@ export const Trade2 = () => {
     playerStatsAccount,
     balances,
     playerTokenBalance,
+    market,
   } = usePlayerMarket();
   const [placeOrderError, setPlaceOrderError] = useState("");
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
@@ -455,6 +455,24 @@ export const Trade2 = () => {
         setPlaceOrderError("");
       }
     } else {
+      console.log("playerTokenBalance.data", playerTokenBalance.data);
+      const playerTokenBalanceSafe = playerTokenBalance.data ?? "0";
+
+      const playerTokensHeld = parseInt(playerTokenBalanceSafe) / 10 ** 6;
+      console.log("market.data?.hasGameStarted", market.data?.hasGameStarted);
+      console.log(
+        "balances.data?.baseWithdrawableBalanceTokens",
+        balances.data?.baseWithdrawableBalanceTokens
+      );
+      const amountToMint =
+        parseFloat(quantity) -
+        balances.data?.baseWithdrawableBalanceTokens! -
+        playerTokensHeld;
+      console.log("amountToMint", amountToMint);
+      if (market.data?.hasGameStarted && amountToMint > 0) {
+        setPlaceOrderError("Minting Is Disabled");
+        return;
+      }
       if (
         quoteTokenBalance.data &&
         2.5 *
@@ -471,10 +489,6 @@ export const Trade2 = () => {
           parseFloat(quantity),
           playerStatsAccount.data?.projectedPoints
         );
-        console.log("playerTokenBalance.data", playerTokenBalance.data);
-        const playerTokenBalanceSafe = playerTokenBalance.data ?? "0";
-
-        const playerTokensHeld = parseInt(playerTokenBalanceSafe) / 10 ** 6;
         setActualCost(
           2.5 *
             playerStatsAccount.data?.projectedPoints! *
