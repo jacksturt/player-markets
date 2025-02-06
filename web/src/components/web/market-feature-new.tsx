@@ -56,7 +56,7 @@ const PlayerCard = () => (
       />
       <div className="flex flex-col gap-2">
         <p className="text-2xl font-clashSemiBold">Stefon Diggs</p>
-        <p className="text-[60px] leading-[58px] font-clashMed bg-gradient-to-r from-[#F92D37] via-[#F9D10A] to-[#F9D10A] text-transparent bg-clip-text">
+        <p className="text-[60px] leading-[58px] font-clashMed bg-chiefs-gradient text-transparent bg-clip-text">
           $1.04
         </p>
       </div>

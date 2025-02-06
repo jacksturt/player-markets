@@ -61,6 +61,12 @@ const config: Config = {
           "5": "hsl(var(--chart-5))",
         },
       },
+      backgroundImage: {
+        "eagles-gradient":
+          "linear-gradient(to right, #F92D37, #F9D10A, #F9D10A)",
+        "chiefs-gradient":
+          "linear-gradient(to right, #004C54, #A5ACAF, #A5ACAF)",
+      },
     },
   },
   plugins: [require("daisyui"), require("tailwindcss-animate")],
