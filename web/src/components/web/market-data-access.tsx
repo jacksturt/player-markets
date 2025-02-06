@@ -832,7 +832,8 @@ export function usePlayerMarket({ marketAddress }: { marketAddress: string }) {
       const minterRewards =
         (vaultRemaining.toNumber() * percentDueDecimal) / PRECISION.toNumber();
       console.log("minterRewards", minterRewards.toString());
-      return minterRewards.toString();
+      const rewards = parseFloat(minterRewards.toString());
+      return rewards.toFixed(4);
     },
     enabled:
       !!mintRecord.data &&
