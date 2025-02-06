@@ -12,8 +12,6 @@ import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { placeOrderInstructionDiscriminator } from "manifest/src/ui_wrapper";
-import { Decimal } from "decimal.js";
-import { BN } from "bn.js";
 
 export function QuoteTokenCreate() {
   const { initialize } = useQuoteToken();
@@ -473,13 +471,10 @@ export const Trade2 = () => {
           parseFloat(quantity),
           playerStatsAccount.data?.projectedPoints
         );
-        if (!playerTokenBalance.data) {
-          console.error("Could not load player tokens held");
-          return;
-        }
+        console.log("playerTokenBalance.data", playerTokenBalance.data);
+        const playerTokenBalanceSafe = playerTokenBalance.data ?? "0";
 
-        const playerTokensHeld =
-          parseInt(playerTokenBalance.data.valueOf() ?? "0") / 10 ** 6;
+        const playerTokensHeld = parseInt(playerTokenBalanceSafe) / 10 ** 6;
         setActualCost(
           2.5 *
             playerStatsAccount.data?.projectedPoints! *

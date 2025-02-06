@@ -283,11 +283,11 @@ export function useMarkets() {
     }) => {
       const timestamp = Date.now().toString();
       const player_token_mint = PublicKey.findProgramAddressSync(
-        [Buffer.from("mint"), Buffer.from(playerId), Buffer.from(timestamp)],
+        [Buffer.from("mint"), Buffer.from(teamId), Buffer.from(timestamp)],
         program.programId
       )[0];
       const mintConfig = PublicKey.findProgramAddressSync(
-        [Buffer.from("config"), Buffer.from(playerId), Buffer.from(timestamp)],
+        [Buffer.from("config"), Buffer.from(teamId), Buffer.from(timestamp)],
         program.programId
       )[0];
       const vault = getAssociatedTokenAddressSync(quoteToken, mintConfig, true);
@@ -346,11 +346,12 @@ export function useMarkets() {
           mintName: data.playerName,
           mintSymbol: data.mintSymbol,
           mintImage: data.playerImage,
-          mintSlug: data.playerId,
+          mintSlug: data.teamId,
           timestamp: data.timestamp,
           description: data.playerName,
           baseMint: data.player_token_mint.toBase58(),
-          teamId: data.teamId,
+          // teamId: data.teamId,
+          teamSportsdataId: data.teamId,
           position: data.playerPosition as
             | "QB"
             | "RB"
@@ -387,7 +388,7 @@ export function useMarkets() {
                   const playerStats = PublicKey.findProgramAddressSync(
                     [
                       Buffer.from("player_stats"),
-                      Buffer.from(data.playerId),
+                      Buffer.from(data.teamId),
                       Buffer.from(data.timestamp),
                     ],
                     program.programId
@@ -1119,21 +1120,15 @@ export function usePlayerMarket() {
       if (!playerId.data || !timestamp.data) {
         throw new Error("Player ID or timestamp not found");
       }
-      const numPlayerDeposited = balances.data?.baseWithdrawableBalanceTokens;
-      console.log("numPlayerDeposited", numPlayerDeposited);
-      console.log("numBaseTokens", numBaseTokens);
-      if (numPlayerDeposited === undefined) {
-        throw new Error("Could not load player deposited tokens");
-      }
-      if (!playerTokenBalance.data) {
-        throw new Error("Could not load player tokens held");
-      }
+      const numPlayerDeposited =
+        balances.data?.baseWithdrawableBalanceTokens ?? 0;
+
       console.log(
         "difference",
         (numBaseTokens * 10 ** 6 - numPlayerDeposited * 10 ** 6) / 10 ** 6
       );
-      const playerTokensHeld =
-        parseInt(playerTokenBalance.data.valueOf() ?? "0") / 10 ** 6;
+      const playerTokenBalanceSafe = playerTokenBalance.data ?? "0";
+      const playerTokensHeld = parseInt(playerTokenBalanceSafe) / 10 ** 6;
       const quantityToDeposit =
         (numBaseTokens * 10 ** 6 - numPlayerDeposited * 10 ** 6) / 10 ** 6;
       const baseToMintSafe =
