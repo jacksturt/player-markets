@@ -11,7 +11,7 @@ import {
   WithdrawAll,
   QuoteTokenFaucet,
   CancelAllOrders,
-  Trade,
+  Trade2,
 } from "./web-ui";
 import { PublicKey } from "@solana/web3.js";
 import { minimizePubkey } from "@/utils/web3";
@@ -453,7 +453,7 @@ export default function MarketFeature({
           {/* <MintPlayerTokens />
           <DepositBase />
           <DepositQuote /> */}
-          <Trade />
+          <Trade2 />
           <CancelAllOrders />
           <WithdrawAll />
           <Payout />

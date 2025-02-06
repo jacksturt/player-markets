@@ -256,7 +256,7 @@ export function Payout() {
   );
 }
 
-export const Trade = () => {
+export const Trade2 = () => {
   const [orderType, setOrderType] = useState("buy");
   const [price, setPrice] = useState("");
   const [quantity, setQuantity] = useState("");
@@ -325,7 +325,6 @@ export const Trade = () => {
       console.log("amountToMint", amountToMint);
       if (market.data?.hasGameStarted && amountToMint > 0) {
         setPlaceOrderError("Minting Is Disabled");
-        return;
       }
       if (
         quoteTokenBalance.data &&
