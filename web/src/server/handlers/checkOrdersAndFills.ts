@@ -222,6 +222,8 @@ async function handleSignature(
             playerId: market?.player.id,
             signature: signature.signature,
             price: fillData.priceAtoms,
+            quantity: fillData.baseAtoms,
+            slot: signature.slot,
             ...buyAndSellData,
           },
         });
@@ -251,6 +253,8 @@ async function handleSignature(
             teamId: market?.team.id,
             signature: signature.signature,
             price: fillData.priceAtoms,
+            quantity: fillData.baseAtoms,
+            slot: signature.slot,
             ...buyAndSellData,
           },
         });
