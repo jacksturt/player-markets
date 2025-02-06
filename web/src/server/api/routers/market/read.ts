@@ -16,6 +16,7 @@ export const readMarket = protectedProcedure
       },
       include: {
         baseMint: true,
+        player: true,
       },
     });
     return market;
