@@ -7,10 +7,7 @@ import {
 } from "./market-data-access";
 import {
   InitPlayerMint,
-  MintPlayerTokens,
   Payout,
-  DepositBase,
-  DepositQuote,
   WithdrawAll,
   QuoteTokenFaucet,
   CancelAllOrders,

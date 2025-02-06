@@ -962,176 +962,6 @@ export function usePlayerMarket() {
     },
   });
 
-  const mint = useMutation({
-    mutationKey: ["market", "mint", { playerMintPK: marketPK }],
-    mutationFn: async () => {
-      if (!playerId.data || !timestamp.data) {
-        throw new Error("Player ID or timestamp not found");
-      }
-      const quantity = new BN(0.1 * 10 ** 6);
-
-      if (!publicKey && !capsulePubkey.data) {
-        throw new Error("No public key found");
-      }
-
-      const mintConfig = PublicKey.findProgramAddressSync(
-        [
-          Buffer.from("config"),
-          Buffer.from(playerId.data),
-          Buffer.from(timestamp.data),
-        ],
-        program.programId
-      )[0];
-      const vault = getAssociatedTokenAddressSync(quoteToken, mintConfig, true);
-      if (!publicKey) {
-        const mintRecord = PublicKey.findProgramAddressSync(
-          [
-            Buffer.from("mint_record"),
-            mintConfig.toBuffer(),
-            capsulePubkey.data!.toBuffer(),
-          ],
-          program.programId
-        )[0];
-
-        const playerStats = PublicKey.findProgramAddressSync(
-          [
-            Buffer.from("player_stats"),
-            Buffer.from(playerId.data ?? ""),
-            Buffer.from(timestamp.data ?? ""),
-          ],
-          program.programId
-        )[0];
-
-        const ix = await program.methods
-          .mintTokens(quantity)
-          .accountsStrict({
-            payer: capsulePubkey.data!,
-            quoteTokenMint: quoteToken,
-            vault,
-            playerTokenMint: playerTokenMint.data!,
-            destination: playerTokenAccount.data!,
-            config: mintConfig,
-            tokenProgram: TOKEN_PROGRAM_ID,
-            systemProgram: SystemProgram.programId,
-            associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
-            playerStats,
-            mintRecord,
-            payerAtaQuote: quoteTokenAccount.data!,
-          })
-          .instruction();
-        const blockhash = await provider.connection.getLatestBlockhash();
-        const transaction = new Transaction({
-          feePayer: capsulePubkey.data!,
-          blockhash: blockhash.blockhash,
-          lastValidBlockHeight: blockhash.lastValidBlockHeight,
-        }).add(ix);
-        const solanaSigner = new CapsuleSolanaWeb3Signer(
-          capsule,
-          provider.connection
-        );
-        const signed = await solanaSigner.signTransaction(transaction);
-        const signature = await provider.connection.sendRawTransaction(
-          signed.serialize()
-        );
-        return signature;
-      } else {
-        const mintRecord = PublicKey.findProgramAddressSync(
-          [
-            Buffer.from("mint_record"),
-            mintConfig.toBuffer(),
-            publicKey.toBuffer(),
-          ],
-          program.programId
-        )[0];
-
-        const playerStats = PublicKey.findProgramAddressSync(
-          [
-            Buffer.from("player_stats"),
-            Buffer.from(playerId.data ?? ""),
-            Buffer.from(timestamp.data ?? ""),
-          ],
-          program.programId
-        )[0];
-
-        const signature = await program.methods
-          .mintTokens(quantity)
-          .accountsStrict({
-            payer: publicKey,
-            quoteTokenMint: quoteToken,
-            vault,
-            playerTokenMint: playerTokenMint.data!,
-            destination: playerTokenAccount.data!,
-            config: mintConfig,
-            tokenProgram: TOKEN_PROGRAM_ID,
-            systemProgram: SystemProgram.programId,
-            associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
-            playerStats,
-            mintRecord,
-            payerAtaQuote: quoteTokenAccount.data!,
-          })
-          .rpc();
-        return signature;
-      }
-    },
-    onSuccess: (signature) => {
-      transactionToast(signature);
-      playerTokenBalance.refetch();
-      return accounts.refetch();
-    },
-    onError: async (error: SendTransactionError) => {
-      toast.error("Failed to mint tokens");
-      console.error("error", error);
-      try {
-        const logs = await error.getLogs(provider.connection);
-        console.log("logs", logs);
-      } catch (error) {
-        console.error("error", error);
-      }
-    },
-  });
-
-  const depositQuote = useMutation({
-    mutationKey: ["market", "deposit-quote", { playerMintPK: marketPK }],
-    mutationFn: async () => {
-      const client = await ManifestClient.getClientForMarket(
-        provider,
-        marketPK.data!,
-        wallet || undefined
-      );
-      const feePayer = publicKey ?? capsulePubkey.data!;
-      const amount = 10.52;
-      const depositIx = client.depositIx(feePayer, quoteToken, amount);
-      const blockhash = await provider.connection.getLatestBlockhash();
-      const transaction = new Transaction({
-        feePayer,
-        blockhash: blockhash.blockhash,
-        lastValidBlockHeight: blockhash.lastValidBlockHeight,
-      }).add(depositIx);
-      if (!publicKey) {
-        const solanaSigner = new CapsuleSolanaWeb3Signer(
-          capsule,
-          provider.connection
-        );
-        const signed = await solanaSigner.signTransaction(transaction);
-        const signature = await provider.connection.sendRawTransaction(
-          signed.serialize()
-        );
-        return signature;
-      } else {
-        return wallet?.adapter.sendTransaction(
-          transaction,
-          provider.connection
-        );
-      }
-    },
-    onSuccess: (signature) => {
-      console.log("deposited quote", signature);
-      transactionToast(`${signature}`);
-      return accounts.refetch();
-    },
-    onError: () => toast.error("Failed to deposit quote"),
-  });
-
   const depositAndPlaceBuyOrder = useMutation({
     mutationKey: [
       "market",
@@ -1445,56 +1275,6 @@ export function usePlayerMarket() {
     onError: () => toast.error("Failed to deposit quote"),
   });
 
-  const depositBase = useMutation({
-    mutationKey: ["market", "deposit-base", { playerMintPK: marketPK }],
-    mutationFn: async () => {
-      const client = await ManifestClient.getClientForMarket(
-        provider,
-        marketPK.data!,
-        wallet || undefined
-      );
-      const amount = 0.1;
-      const player_token_mint = PublicKey.findProgramAddressSync(
-        [
-          Buffer.from("mint"),
-          Buffer.from(playerId.data ?? ""),
-          Buffer.from(timestamp.data ?? ""),
-        ],
-        program.programId
-      )[0];
-      const feePayer = publicKey ?? capsulePubkey.data!;
-
-      const depositIx = client.depositIx(feePayer, player_token_mint, amount);
-      const blockhash = await provider.connection.getLatestBlockhash();
-      const transaction = new Transaction({
-        feePayer,
-        blockhash: blockhash.blockhash,
-        lastValidBlockHeight: blockhash.lastValidBlockHeight,
-      }).add(depositIx);
-      if (!publicKey) {
-        const solanaSigner = new CapsuleSolanaWeb3Signer(
-          capsule,
-          provider.connection
-        );
-        const signed = await solanaSigner.signTransaction(transaction);
-        const signature = await provider.connection.sendRawTransaction(
-          signed.serialize()
-        );
-        return signature;
-      } else {
-        return wallet?.adapter.sendTransaction(
-          transaction,
-          provider.connection
-        );
-      }
-    },
-    onSuccess: (signature) => {
-      transactionToast(`${signature}`);
-      return accounts.refetch();
-    },
-    onError: () => toast.error("Failed to deposit base"),
-  });
-
   const cancelAllOrders = useMutation({
     mutationKey: ["market", "cancel-all-orders", { playerMintPK: marketPK }],
     mutationFn: async () => {
@@ -1573,133 +1353,6 @@ export function usePlayerMarket() {
       return accounts.refetch();
     },
     onError: () => toast.error("Failed to cancel order"),
-  });
-
-  const buy = useMutation({
-    mutationKey: ["market", "buy-quote", { playerMintPK: marketPK }],
-    mutationFn: async ({
-      numBaseTokens,
-      tokenPrice,
-    }: {
-      numBaseTokens: number;
-      tokenPrice: number;
-    }) => {
-      const client = await ManifestClient.getClientForMarket(
-        provider,
-        marketPK.data!,
-        wallet || undefined
-      );
-      // const sequenceNumber = await market.
-      const orderIx = client.placeOrderIx({
-        numBaseTokens: numBaseTokens,
-        tokenPrice: tokenPrice,
-        isBid: true,
-        lastValidSlot: 0,
-        orderType: OrderType.Limit,
-        clientOrderId: 0,
-      });
-      const feePayer = publicKey ?? capsulePubkey.data!;
-
-      const blockhash = await provider.connection.getLatestBlockhash();
-      const transaction = new Transaction({
-        feePayer,
-        blockhash: blockhash.blockhash,
-        lastValidBlockHeight: blockhash.lastValidBlockHeight,
-      }).add(orderIx);
-      if (!publicKey) {
-        const solanaSigner = new CapsuleSolanaWeb3Signer(
-          capsule,
-          provider.connection
-        );
-        const signed = await solanaSigner.signTransaction(transaction);
-        const signature = await provider.connection.sendRawTransaction(
-          signed.serialize()
-        );
-        return { signature, tokenPrice, numBaseTokens };
-      } else {
-        const signature = await wallet?.adapter.sendTransaction(
-          transaction,
-          provider.connection
-        );
-        return { signature, tokenPrice, numBaseTokens };
-      }
-    },
-    onSuccess: async ({ signature, tokenPrice, numBaseTokens }) => {
-      transactionToast(`${signature}`);
-      queryClient.invalidateQueries({
-        queryKey: ["market", "bids", { playerMintPK: marketPK }],
-      });
-      queryClient.invalidateQueries({
-        queryKey: ["market", "asks", { playerMintPK: marketPK }],
-      });
-      accounts.refetch();
-
-      const market: Market = await Market.loadFromAddress({
-        connection: provider.connection,
-        address: marketPK.data!,
-      });
-      const bids = await market.bids();
-      const thisBid = bids.find(
-        (bid) =>
-          bid.trader.toBase58() === capsulePubkey.data!.toBase58() &&
-          bid.tokenPrice === tokenPrice &&
-          bid.numBaseTokens === numBaseTokens
-      );
-    },
-    onError: () => toast.error("Failed to place buy order"),
-  });
-
-  const sell = useMutation({
-    mutationKey: ["market", "sell-quote", { playerMintPK: marketPK }],
-    mutationFn: async ({
-      numBaseTokens,
-      tokenPrice,
-    }: {
-      numBaseTokens: number;
-      tokenPrice: number;
-    }) => {
-      const client = await ManifestClient.getClientForMarket(
-        provider,
-        marketPK.data!,
-        wallet || undefined
-      );
-      const orderIx = client.placeOrderIx({
-        numBaseTokens: numBaseTokens,
-        tokenPrice: tokenPrice,
-        isBid: false,
-        lastValidSlot: 0,
-        orderType: OrderType.Limit,
-        clientOrderId: 0,
-      });
-      const feePayer = publicKey ?? capsulePubkey.data!;
-      const blockhash = await provider.connection.getLatestBlockhash();
-      const transaction = new Transaction({
-        feePayer,
-        blockhash: blockhash.blockhash,
-        lastValidBlockHeight: blockhash.lastValidBlockHeight,
-      }).add(orderIx);
-      if (!publicKey) {
-        const solanaSigner = new CapsuleSolanaWeb3Signer(
-          capsule,
-          provider.connection
-        );
-        const signed = await solanaSigner.signTransaction(transaction);
-        const signature = await provider.connection.sendRawTransaction(
-          signed.serialize()
-        );
-        return signature;
-      } else {
-        return wallet?.adapter.sendTransaction(
-          transaction,
-          provider.connection
-        );
-      }
-    },
-    onSuccess: (signature) => {
-      transactionToast(`${signature}`);
-      return accounts.refetch();
-    },
-    onError: () => toast.error("Failed to place sell order"),
   });
 
   const withdrawAll = useMutation({
@@ -1865,12 +1518,7 @@ export function usePlayerMarket() {
   });
 
   return {
-    mint,
     market,
-    depositBase,
-    depositQuote,
-    buy,
-    sell,
     withdrawAll,
     printMarket,
     payout,
@@ -1880,7 +1528,6 @@ export function usePlayerMarket() {
     latestTransaction,
     playerTokenAccount,
     playerTokenBalance,
-    trades,
     lastTradePrice,
     playerStatsAccount,
     cancelAllOrders,
@@ -1890,6 +1537,7 @@ export function usePlayerMarket() {
     maybeMintDepositAndSell,
     myOrders,
     mintRecord,
+    trades,
     currentMinterRewards,
   };
 }

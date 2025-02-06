@@ -215,48 +215,6 @@ export function CloseMintAccounts() {
   );
 }
 
-export function MintPlayerTokens() {
-  const { mint } = usePlayerMarket();
-
-  return (
-    <button
-      className="btn btn-xs lg:btn-md btn-primary"
-      onClick={() => mint.mutateAsync()}
-      disabled={mint.isPending}
-    >
-      Mint Player Tokens {mint.isPending && "..."}
-    </button>
-  );
-}
-
-export function DepositBase() {
-  const { depositBase } = usePlayerMarket();
-
-  return (
-    <button
-      className="btn btn-xs lg:btn-md btn-primary"
-      onClick={() => depositBase.mutateAsync()}
-      disabled={depositBase.isPending}
-    >
-      Deposit Player Tokens {depositBase.isPending && "..."}
-    </button>
-  );
-}
-
-export function DepositQuote() {
-  const { depositQuote } = usePlayerMarket();
-
-  return (
-    <button
-      className="btn btn-xs lg:btn-md btn-primary"
-      onClick={() => depositQuote.mutateAsync()}
-      disabled={depositQuote.isPending}
-    >
-      Deposit Quote Tokens {depositQuote.isPending && "..."}
-    </button>
-  );
-}
-
 export function WithdrawAll() {
   const { withdrawAll } = usePlayerMarket();
 
