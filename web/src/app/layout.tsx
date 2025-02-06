@@ -19,6 +19,7 @@ import { PublicKey } from "@solana/web3.js";
 import { IconCopy } from "@tabler/icons-react";
 import Link from "next/link";
 import { useWallet } from "@solana/wallet-adapter-react";
+import { shortenAddress } from "@/lib/utils";
 
 const links: { label: string; path: string }[] = [
   { label: "Account", path: "/account" },
@@ -132,7 +133,7 @@ function AccountButtons() {
       }}
     >
       <IconCopy />
-      {pk.toBase58().slice(0, 4)}...{pk.toBase58().slice(-4)}
+      {shortenAddress(pk)}
     </div>
   );
 }

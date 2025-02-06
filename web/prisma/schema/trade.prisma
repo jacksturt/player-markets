@@ -2,6 +2,7 @@ model Trade {
     id        String  @id @default(cuid())
     signature String  @unique
     price     Decimal
+    quantity  Decimal @default(0)
 
     marketId String
     market   Market @relation(fields: [marketId], references: [id])

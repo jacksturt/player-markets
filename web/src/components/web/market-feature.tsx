@@ -36,6 +36,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { api } from "@/trpc/react";
 import { useWallet } from "@solana/wallet-adapter-react";
 import Image from "next/image";
+import { shortenAddress } from "@/lib/utils";
 
 const sb = SendbirdChat.init({
   appId: "434D4E2C-4EEF-41DB-AE99-30D00B5AFF1D",
@@ -388,7 +389,31 @@ export default function MarketFeature({
               </>
             ))}
           </div>
-          <h1 className="text-2xl font-bold">Orders</h1>
+          <h1 className="text-2xl font-bold">Trades</h1>
+          <div className="grid grid-cols-4 gap-4 mb-4">
+            <>
+              <h3>Buyer</h3>
+              <h3>Seller</h3>
+              <h3>Price</h3>
+              <h3>Quantity</h3>
+            </>
+            {trades.data?.map((trade) => (
+              <>
+                <div key={"buyer-" + trade.id}>
+                  {trade.buyer.name ??
+                    shortenAddress(trade.buyerWallet.address)}
+                </div>
+                <div key={"seller-" + trade.id}>
+                  {trade.seller.name ??
+                    shortenAddress(trade.sellerWallet.address)}
+                </div>
+                <div key={"price-" + trade.id}>{trade.price.toString()}</div>
+                <div key={"quantity-" + trade.id}>
+                  {parseFloat(trade.quantity.toString()) / 10 ** 6}
+                </div>
+              </>
+            ))}
+          </div>
         </div>
         <div>
           {trades && <ChartComponent data={tradeData} />}
