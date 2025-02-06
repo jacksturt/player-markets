@@ -69,6 +69,8 @@ export default function MarketFeature({
     cancelOrder,
     capsulePubkey,
     myOrders,
+    depositAndPlaceBuyOrder,
+    maybeMintDepositAndSell,
   } = usePlayerMarket();
   const { publicKey } = useWallet();
   const { quoteTokenBalance } = useQuoteToken();
@@ -281,13 +283,14 @@ export default function MarketFeature({
               <h1>{playerStatsAccount.data.actualPoints.toString()}</h1>
             )}
           </div>
-          <h1 className="text-2xl font-bold">Trades</h1>
+          <h1 className="text-2xl font-bold">Orders</h1>
           <h2 className="text-lg font-bold">Bids</h2>
-          <div className="grid grid-cols-3 gap-4 mb-4">
+          <div className="grid grid-cols-4 gap-4 mb-4">
             <>
               <h3 key="trader">Trader</h3>
               <h3 key="price">Price</h3>
               <h3 key="quantity">Quantity</h3>
+              <h3 key="action">Action</h3>
             </>
             {bids.data?.map((bid) => (
               <>
@@ -300,7 +303,7 @@ export default function MarketFeature({
                 <div key={"quantity-" + bid.trader.toBase58()}>
                   {bid.numBaseTokens.toString()}
                 </div>
-                {bid.trader.toBase58() === myKey.toBase58() && (
+                {bid.trader.toBase58() === myKey.toBase58() ? (
                   <button
                     onClick={() => {
                       console.log("myOrders", myOrders.data);
@@ -318,16 +321,28 @@ export default function MarketFeature({
                   >
                     Cancel
                   </button>
+                ) : (
+                  <button
+                    onClick={() => {
+                      maybeMintDepositAndSell.mutate({
+                        numBaseTokens: parseFloat(bid.numBaseTokens.toString()),
+                        tokenPrice: bid.tokenPrice,
+                      });
+                    }}
+                  >
+                    Fill
+                  </button>
                 )}
               </>
             ))}
           </div>
           <h2 className="text-lg font-bold">Asks</h2>
-          <div className="grid grid-cols-3 gap-4 mb-4">
+          <div className="grid grid-cols-4 gap-4 mb-4">
             <>
               <h3>Trader</h3>
               <h3>Price</h3>
               <h3>Quantity</h3>
+              <h3>Action</h3>
             </>
             {asks.data?.map((ask) => (
               <>
@@ -340,7 +355,7 @@ export default function MarketFeature({
                 <div key={"quantity-" + ask.trader.toBase58()}>
                   {ask.numBaseTokens.toString()}
                 </div>
-                {ask.trader.toBase58() === myKey.toBase58() && (
+                {ask.trader.toBase58() === myKey.toBase58() ? (
                   <button
                     onClick={() => {
                       console.log("myOrders", myOrders.data);
@@ -358,10 +373,22 @@ export default function MarketFeature({
                   >
                     Cancel
                   </button>
+                ) : (
+                  <button
+                    onClick={() => {
+                      depositAndPlaceBuyOrder.mutate({
+                        numBaseTokens: parseFloat(ask.numBaseTokens.toString()),
+                        tokenPrice: ask.tokenPrice,
+                      });
+                    }}
+                  >
+                    Fill
+                  </button>
                 )}
               </>
             ))}
           </div>
+          <h1 className="text-2xl font-bold">Orders</h1>
         </div>
         <div>
           {trades && <ChartComponent data={tradeData} />}

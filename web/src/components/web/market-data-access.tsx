@@ -1172,29 +1172,41 @@ export function usePlayerMarket() {
           ],
           program.programId
         )[0];
+        const blockhash = await provider.connection.getLatestBlockhash();
+        const transaction = new Transaction({
+          feePayer: capsulePubkey.data!,
+          blockhash: blockhash.blockhash,
+          lastValidBlockHeight: blockhash.lastValidBlockHeight,
+        });
 
-        const ix = await program.methods
-          .mintTokens(quantityToMint)
-          .accountsStrict({
-            payer: capsulePubkey.data!,
-            quoteTokenMint: quoteToken,
-            vault,
-            playerTokenMint: playerTokenMint.data!,
-            destination: playerTokenAccount.data!,
-            config: mintConfig,
-            tokenProgram: TOKEN_PROGRAM_ID,
-            systemProgram: SystemProgram.programId,
-            associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
-            playerStats,
-            mintRecord,
-            payerAtaQuote: quoteTokenAccount.data!,
-          })
-          .instruction();
-        const depositIx = client.depositIx(
-          capsulePubkey.data!,
-          playerTokenMint.data!,
-          quantityToDeposit
-        );
+        if (quantityToMint.gt(new BN(0))) {
+          const ix = await program.methods
+            .mintTokens(quantityToMint)
+            .accountsStrict({
+              payer: capsulePubkey.data!,
+              quoteTokenMint: quoteToken,
+              vault,
+              playerTokenMint: playerTokenMint.data!,
+              destination: playerTokenAccount.data!,
+              config: mintConfig,
+              tokenProgram: TOKEN_PROGRAM_ID,
+              systemProgram: SystemProgram.programId,
+              associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
+              playerStats,
+              mintRecord,
+              payerAtaQuote: quoteTokenAccount.data!,
+            })
+            .instruction();
+          transaction.add(ix);
+        }
+        if (quantityToDeposit > 0) {
+          const depositIx = client.depositIx(
+            capsulePubkey.data!,
+            playerTokenMint.data!,
+            quantityToDeposit
+          );
+          transaction.add(depositIx);
+        }
         const clientOrderId = (lastOrderId.data ?? 0) + 1;
         const orderIx = client.placeOrderIx({
           numBaseTokens: numBaseTokens,
@@ -1204,12 +1216,7 @@ export function usePlayerMarket() {
           orderType: OrderType.Limit,
           clientOrderId,
         });
-        const blockhash = await provider.connection.getLatestBlockhash();
-        const transaction = new Transaction({
-          feePayer: capsulePubkey.data!,
-          blockhash: blockhash.blockhash,
-          lastValidBlockHeight: blockhash.lastValidBlockHeight,
-        }).add(ix, depositIx, orderIx);
+        transaction.add(orderIx);
         const solanaSigner = new CapsuleSolanaWeb3Signer(
           capsule,
           provider.connection
@@ -1234,33 +1241,44 @@ export function usePlayerMarket() {
           ],
           program.programId
         )[0];
+        const blockhash = await provider.connection.getLatestBlockhash();
+        const transaction = new Transaction({
+          feePayer: publicKey,
+          blockhash: blockhash.blockhash,
+          lastValidBlockHeight: blockhash.lastValidBlockHeight,
+        });
+        if (quantityToMint.gt(new BN(0))) {
+          const mintIx = await program.methods
+            .mintTokens(quantityToMint)
+            .accountsStrict({
+              payer: publicKey,
+              quoteTokenMint: quoteToken,
+              vault,
+              playerTokenMint: playerTokenMint.data!,
+              destination: playerTokenAccount.data!,
+              config: mintConfig,
+              tokenProgram: TOKEN_PROGRAM_ID,
+              systemProgram: SystemProgram.programId,
+              associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
+              playerStats,
+              mintRecord,
+              payerAtaQuote: quoteTokenAccount.data!,
+            })
+            .instruction();
+          transaction.add(mintIx);
+        }
+        if (quantityToDeposit > 0) {
+          console.log("quantityToDeposit", quantityToDeposit);
 
-        const mintIx = await program.methods
-          .mintTokens(quantityToMint)
-          .accountsStrict({
-            payer: publicKey,
-            quoteTokenMint: quoteToken,
-            vault,
-            playerTokenMint: playerTokenMint.data!,
-            destination: playerTokenAccount.data!,
-            config: mintConfig,
-            tokenProgram: TOKEN_PROGRAM_ID,
-            systemProgram: SystemProgram.programId,
-            associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
-            playerStats,
-            mintRecord,
-            payerAtaQuote: quoteTokenAccount.data!,
-          })
-          .instruction();
-
+          const depositIx = client.depositIx(
+            publicKey,
+            playerTokenMint.data!,
+            quantityToDeposit
+          );
+          transaction.add(depositIx);
+        }
         const clientOrderId = (lastOrderId.data ?? 0) + 1;
-        console.log("quantityToDeposit", quantityToDeposit);
 
-        const depositIx = client.depositIx(
-          publicKey,
-          playerTokenMint.data!,
-          quantityToDeposit
-        );
         const orderIx = client.placeOrderIx({
           numBaseTokens: numBaseTokens,
           tokenPrice: tokenPrice,
@@ -1269,12 +1287,7 @@ export function usePlayerMarket() {
           orderType: OrderType.Limit,
           clientOrderId,
         });
-        const blockhash = await provider.connection.getLatestBlockhash();
-        const transaction = new Transaction({
-          feePayer: publicKey,
-          blockhash: blockhash.blockhash,
-          lastValidBlockHeight: blockhash.lastValidBlockHeight,
-        }).add(mintIx, depositIx, orderIx);
+        transaction.add(orderIx);
         const signature = await wallet?.adapter.sendTransaction(
           transaction,
           provider.connection
