@@ -386,8 +386,8 @@ export default function MarketFeature({
         <div className="flex flex-col gap-4">
           {/* <QuoteTokenFaucet />
           <MintPlayerTokens />
-          <DepositBase />
-          <DepositQuote /> */}
+          <DepositBase /> */}
+          <DepositQuote />
           <Trade2 />
           <CancelAllOrders />
           <WithdrawAll />

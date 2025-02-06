@@ -966,7 +966,7 @@ export function usePlayerMarket() {
         wallet || undefined
       );
       const feePayer = publicKey ?? capsulePubkey.data!;
-      const amount = 11.43;
+      const amount = 10.52;
       const depositIx = client.depositIx(feePayer, quoteToken, amount);
       const blockhash = await provider.connection.getLatestBlockhash();
       const transaction = new Transaction({
@@ -1017,12 +1017,31 @@ export function usePlayerMarket() {
         marketPK.data!,
         wallet || undefined
       );
+      const withdrawableQuote = balances.data?.quoteWithdrawableBalanceTokens;
+      if (!withdrawableQuote) {
+        throw new Error("No withdrawable quote tokens");
+      }
+      const neededQuote = tokenPrice * numBaseTokens;
+      console.log("neededQuote", neededQuote);
+      console.log("withdrawableQuote", withdrawableQuote);
+      const amountToDeposit = neededQuote - withdrawableQuote;
+      console.log("amountToDeposit", amountToDeposit);
+
       const feePayer = publicKey ?? capsulePubkey.data!;
-      const depositIx = client.depositIx(
+      const blockhash = await provider.connection.getLatestBlockhash();
+      const transaction = new Transaction({
         feePayer,
-        quoteToken,
-        tokenPrice * numBaseTokens
-      );
+        blockhash: blockhash.blockhash,
+        lastValidBlockHeight: blockhash.lastValidBlockHeight,
+      });
+      if (amountToDeposit > 0) {
+        const depositIx = client.depositIx(
+          feePayer,
+          quoteToken,
+          amountToDeposit
+        );
+        transaction.add(depositIx);
+      }
       const clientOrderId = (lastOrderId.data ?? 0) + 1;
       const orderIx = client.placeOrderIx({
         numBaseTokens: numBaseTokens,
@@ -1032,12 +1051,7 @@ export function usePlayerMarket() {
         orderType: OrderType.Limit,
         clientOrderId,
       });
-      const blockhash = await provider.connection.getLatestBlockhash();
-      const transaction = new Transaction({
-        feePayer,
-        blockhash: blockhash.blockhash,
-        lastValidBlockHeight: blockhash.lastValidBlockHeight,
-      }).add(depositIx, orderIx);
+      transaction.add(orderIx);
       if (!publicKey) {
         const solanaSigner = new CapsuleSolanaWeb3Signer(
           capsule,

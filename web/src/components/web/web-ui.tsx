@@ -407,12 +407,13 @@ export const Trade2 = () => {
   const [orderType, setOrderType] = useState("buy");
   const [price, setPrice] = useState("");
   const [quantity, setQuantity] = useState("");
-  const [mintCost, setMintCost] = useState(0);
+  const [actualCost, setActualCost] = useState(0);
   const { quoteTokenBalance } = useQuoteToken();
   const {
     depositAndPlaceBuyOrder,
     maybeMintDepositAndSell,
     playerStatsAccount,
+    balances,
   } = usePlayerMarket();
   const [placeOrderError, setPlaceOrderError] = useState("");
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
@@ -443,10 +444,15 @@ export const Trade2 = () => {
       if (
         quoteTokenBalance.data &&
         parseFloat(quantity) * parseFloat(price) * 10 ** 6 >
-          parseFloat(quoteTokenBalance.data)
+          parseFloat(quoteTokenBalance.data) +
+            balances.data?.quoteWithdrawableBalanceTokens!
       ) {
         setPlaceOrderError("Insufficient quote tokens");
       } else {
+        setActualCost(
+          parseFloat(quantity) * parseFloat(price) -
+            balances.data?.quoteWithdrawableBalanceTokens!
+        );
         setPlaceOrderError("");
       }
     } else {
@@ -461,12 +467,19 @@ export const Trade2 = () => {
         setPlaceOrderError("Insufficient quote tokens");
       } else {
         setPlaceOrderError("");
-        setMintCost(
+        setActualCost(
           2.5 * playerStatsAccount.data?.projectedPoints! * parseFloat(quantity)
         );
       }
     }
-  }, [quoteTokenBalance.data, quantity, price]);
+  }, [
+    quoteTokenBalance.data,
+    quantity,
+    price,
+    orderType,
+    playerStatsAccount.data,
+    balances.data,
+  ]);
 
   return (
     <Card className="w-full max-w-md mx-auto">
@@ -532,9 +545,9 @@ export const Trade2 = () => {
                   Total: $
                   {(parseFloat(price) * parseFloat(quantity)).toFixed(2)}
                 </p>
-                {orderType === "sell" && (
+                {actualCost > 0 && !isNaN(actualCost) && (
                   <p className="text-lg font-medium">
-                    Mint Cost: ${mintCost.toFixed(2)}
+                    Actual Cost: ${actualCost.toFixed(4)}
                   </p>
                 )}
               </div>
