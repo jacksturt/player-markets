@@ -36,7 +36,6 @@ export async function GET(request: Request) {
         market: true,
       },
     });
-    console.log("player.market?.hasGameStarted", player.market?.hasGameStarted);
 
     try {
       if (player.market?.hasGameStarted) {
@@ -50,7 +49,6 @@ export async function GET(request: Request) {
           },
         });
         const playerActualDataList: PlayerGameStats[] = await response.json();
-        console.log("playerActualDataList", playerActualDataList);
         if (!playerActualDataList) {
           return NextResponse.json(
             { success: false, error: "Player projection not found" },
@@ -69,8 +67,9 @@ export async function GET(request: Request) {
         }
 
         const camelCaseData = convertPlayerGameStatsToActual(playerActualData);
+
         if (
-          player.projections?.projectedFantasyPointsPpr !==
+          player.projections?.actualFantasyPointsPpr !==
           camelCaseData.actualFantasyPointsPpr
         ) {
           await db.playerStatsAndProjection.update({
