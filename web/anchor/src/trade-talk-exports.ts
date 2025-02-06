@@ -3,12 +3,15 @@ import { AnchorProvider, Program } from "@coral-xyz/anchor";
 import { Cluster, PublicKey } from "@solana/web3.js";
 import TradetalkIDL from "../target/idl/tradetalk.json";
 import type { Tradetalk } from "../target/types/tradetalk";
-
+import { IdlAccounts } from "@coral-xyz/anchor";
 // Re-export the generated IDL and type
 export { Tradetalk, TradetalkIDL };
 
 // The programId is imported from the program IDL.
 export const TRADETALK_PROGRAM_ID = new PublicKey(TradetalkIDL.address);
+export type PlayerMintConfig = IdlAccounts<Tradetalk>["playerMintConfig"];
+export type PlayerStats = IdlAccounts<Tradetalk>["playerStats"];
+export type MintRecord = IdlAccounts<Tradetalk>["mintRecord"];
 
 // This is a helper function to get the Web Anchor program.
 export function getTradetalkProgram(
