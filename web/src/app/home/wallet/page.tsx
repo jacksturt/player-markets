@@ -1,14 +1,15 @@
-import BackArrow from "@/components/icons/back-arrow";
-import DataTablesUser from "@/components/wallet/data-tables-user";
-import Link from "next/link";
 import React from "react";
-import PnL from "./pnl";
 import TrendDown from "@/components/icons/trend-down";
 import TrendUp from "@/components/icons/trend-up";
 import { cn } from "@/lib/utils";
 import Navbar from "@/components/shared/navbar";
 import { Button } from "@/components/ui/button";
-import { Position, ProfileCard, UserStats } from "@/components/web/web-ui";
+import {
+  Position,
+  ProfileCard,
+  UserStats,
+  TradeHistoryItem,
+} from "@/components/web/web-ui";
 
 const balanceData = {
   "24h_pct_change": 10,
@@ -28,7 +29,7 @@ export default async function WalletPage() {
             <div className="flex flex-col gap-2">
               <p className="uppercase">My Balance</p>
               <div className="flex items-end gap-3">
-                <p className="text-[50px] leading-[50px] font-clashMed">
+                <p className="text-[50px] leading-[50px] font-clashMed bg-chiefs-gradient-bg text-transparent bg-clip-text">
                   ${1920.08}
                 </p>
                 <div className="flex gap-2">
@@ -69,7 +70,7 @@ export default async function WalletPage() {
               <Button>Close all</Button>
             </div>
             {/* TODO: positions.map */}
-            <div className="w-full flex flex-col gap-3 pt-7">
+            <div className="w-full flex flex-col gap-2 pt-7">
               <Position
                 image="/player-temp/diggs.webp"
                 ticker="MAHOMES"
@@ -101,10 +102,31 @@ export default async function WalletPage() {
               <Button>Cancel all</Button>
             </div>
             {/* TODO: open orders.map */}
-            <div className="w-full flex flex-col pt-7">
-              <p className="text-white font-clashMed text-[15px] leading-[15px]">
-                COMING SOON
-              </p>
+            <div className="w-full flex flex-col gap-2 pt-7">
+              <TradeHistoryItem
+                image="/player-temp/diggs.webp"
+                type="buy"
+                ticker="MAHOMES"
+                amount={523}
+                usdValue={869.0}
+                timestamp="Feb 9, 2025 at 7:58:06PM"
+              />
+              <TradeHistoryItem
+                image="/player-temp/diggs.webp"
+                type="sell"
+                ticker="MAHOMES"
+                amount={190}
+                usdValue={341.0}
+                timestamp="Feb 8, 2025 at 6:36:46PM"
+              />
+              <TradeHistoryItem
+                image="/player-temp/diggs.webp"
+                type="buy"
+                ticker="MAHOMES"
+                amount={45}
+                usdValue={23.0}
+                timestamp="Feb 8, 2025 at 5:33:11PM"
+              />
             </div>
           </div>
           {/* trade history */}
@@ -116,10 +138,31 @@ export default async function WalletPage() {
               </p>
             </div>
             {/* TODO: trade history.map */}
-            <div className="w-full flex flex-col pt-7">
-              <p className="text-white font-clashMed text-[15px] leading-[15px]">
-                COMING SOON
-              </p>
+            <div className="w-full flex flex-col gap-2 pt-7">
+              <TradeHistoryItem
+                image="/player-temp/diggs.webp"
+                type="buy"
+                ticker="MAHOMES"
+                amount={523}
+                usdValue={869.0}
+                timestamp="Feb 9, 2025 at 7:58:06PM"
+              />
+              <TradeHistoryItem
+                image="/player-temp/diggs.webp"
+                type="sell"
+                ticker="MAHOMES"
+                amount={190}
+                usdValue={341.0}
+                timestamp="Feb 8, 2025 at 6:36:46PM"
+              />
+              <TradeHistoryItem
+                image="/player-temp/diggs.webp"
+                type="buy"
+                ticker="MAHOMES"
+                amount={45}
+                usdValue={23.0}
+                timestamp="Feb 8, 2025 at 5:33:11PM"
+              />
             </div>
           </div>
         </div>

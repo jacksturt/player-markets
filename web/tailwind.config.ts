@@ -18,6 +18,9 @@ const config: Config = {
         clashBold: ["Clash Display Bold", "sans-serif"],
         clashGrotesk: ["Clash Grotesk Reg", "sans-serif"],
         clashGroteskMed: ["Clash Grotesk Med", "sans-serif"],
+        sfProReg: ["SF Pro Reg", "sans-serif"],
+        sfProMed: ["SF Pro Med", "sans-serif"],
+        sfProSemibold: ["SF Pro Semibold", "sans-serif"],
       },
       colors: {
         background: "hsl(var(--background))",
@@ -62,10 +65,14 @@ const config: Config = {
         },
       },
       backgroundImage: {
-        "eagles-gradient":
+        "chiefs-gradient-bg":
           "linear-gradient(to right, #F92D37, #F9D10A, #F9D10A)",
-        "chiefs-gradient":
+        "chiefs-gradient-text":
+          "linear-gradient(to bottom, #F92D37, #F9D10A, #F9D10A)",
+        "eagles-gradient-bg":
           "linear-gradient(to right, #004C54, #A5ACAF, #A5ACAF)",
+        "eagles-gradient-text":
+          "linear-gradient(to bottom, #004C54, #A5ACAF, #A5ACAF)",
       },
     },
   },
