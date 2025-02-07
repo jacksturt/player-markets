@@ -15,7 +15,7 @@ import { Label } from "@/components/ui/label";
 import TrendDownIcon from "../icons/trend-down";
 import TrendUpIcon from "../icons/trend-up";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
-import { Switch } from "@radix-ui/react-switch";
+import { Switch } from "@/components/ui/switch";
 
 export const Trade = ({
   defaultOrderType = "buy",
@@ -468,6 +468,35 @@ export function CreateTeam() {
   );
 }
 
+export function InitTeamMint() {
+  const { initializeTeamMint } = useMarkets();
+  const teamId = "DET";
+  const mintSymbol = "LIONS";
+  const season = "2023POST";
+  const week = "3";
+  const network = "MAINNET";
+  const projection = 23;
+
+  return (
+    <button
+      className="btn btn-xs lg:btn-md btn-primary"
+      onClick={() =>
+        initializeTeamMint.mutateAsync({
+          teamId,
+          mintSymbol,
+          season,
+          week,
+          network,
+          projection,
+        })
+      }
+      disabled={initializeTeamMint.isPending}
+    >
+      Initialize Team Mint ({teamId}) {initializeTeamMint.isPending && "..."}
+    </button>
+  );
+}
+
 export function InitPlayerMint() {
   const { initialize } = useMarkets();
   const playerId = "24423";
@@ -562,12 +591,12 @@ export function VaultsList() {
 
 export function UpdateProjectionOracle() {
   const { updateProjectionOracle } = useMarkets();
-  const playerId = "24423";
-  const projection = 0.0;
-  const timestamp = "1738799324566";
-  const isProjected = false;
-  const setMintingDisabled = true;
-  const setPayoutEnabled = false;
+  const playerId = "DET";
+  const projection = 30.5;
+  const timestamp = "1738892110488";
+  const isProjected = true;
+  const isMintingEnabled = true;
+  const isPayoutEnabled = false;
 
   return (
     <button
@@ -578,8 +607,8 @@ export function UpdateProjectionOracle() {
           timestamp,
           projection,
           isProjected,
-          setMintingDisabled,
-          setPayoutEnabled,
+          isMintingEnabled,
+          isPayoutEnabled,
         })
       }
       disabled={updateProjectionOracle.isPending}

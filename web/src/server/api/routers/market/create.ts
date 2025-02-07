@@ -12,6 +12,7 @@ export const createMarket = protectedProcedure
       network: z.enum(["MAINNET", "DEVNET"]),
       season: z.string(),
       week: z.string(),
+      teamPointsProjected: z.optional(z.number()),
     })
   )
   .mutation(async ({ input }) => {
@@ -98,6 +99,12 @@ export const createMarket = protectedProcedure
         data: {
           marketId: market.id,
           mintId: mint.id,
+          stats: {
+            create: {
+              actualPoints: 0,
+              projectedPoints: input.teamPointsProjected ?? 0,
+            },
+          },
         },
       });
     }

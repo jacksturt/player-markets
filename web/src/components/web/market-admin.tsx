@@ -7,6 +7,7 @@ import {
   InitPlayerMint,
   UpdateProjectionOracle,
   CreateTeam,
+  InitTeamMint,
   CloseMintAccounts,
   FinishCreatingMarket,
   VaultsList,
@@ -35,6 +36,7 @@ export default function MarketAdmin() {
           <QuoteTokenCreate />
           <QuoteTokenFaucet />
           <CreateTeam />
+          <InitTeamMint />
           <InitPlayerMint />
           <UpdateProjectionOracle />
           <CloseMintAccounts />

@@ -77,12 +77,22 @@ function AccountButtons() {
   const [isActive, setIsActive] = useState(false);
   const router = useRouter();
   const pathname = usePathname();
-  const { publicKey } = useWallet();
+  const { publicKey, wallet } = useWallet();
   const { data: session } = useSession();
 
   useEffect(() => {
     capsule.isSessionActive().then(setIsActive);
   }, [setIsActive, session, publicKey]);
+
+  useEffect(() => {
+    if (
+      session?.user.wallets &&
+      session?.user.wallets[0] !== publicKey?.toBase58() &&
+      pathname !== "/auth/signin"
+    ) {
+      router.push(`/auth/signin?callbackUrl=${encodeURIComponent(pathname)}`);
+    }
+  }, [session, publicKey, router, pathname]);
 
   if (publicKey) {
     return <WalletButton />;

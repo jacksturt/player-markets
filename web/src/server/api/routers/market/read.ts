@@ -21,6 +21,7 @@ export const readMarket = protectedProcedure
             projections: true,
           },
         },
+        team: true,
       },
     });
     return market;

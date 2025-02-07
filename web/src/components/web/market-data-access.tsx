@@ -352,7 +352,7 @@ export function useMarkets() {
           timestamp: data.timestamp,
           description: data.playerName,
           baseMint: data.player_token_mint.toBase58(),
-          // teamId: data.teamId,
+          teamId: data.teamId,
           teamSportsdataId: data.teamId,
           position: data.playerPosition as
             | "QB"
@@ -409,7 +409,157 @@ export function useMarkets() {
                   transactionToast(initSignature);
 
                   const updateSignature = await program.methods
-                    .updateProjectionOracle(data.projection, true, false, false)
+                    .updateProjectionOracle(data.projection, true, true, false)
+                    .accountsStrict({
+                      authority: provider.publicKey,
+                      config: data.mintConfig,
+                      playerStats,
+                    })
+                    .rpc();
+                  transactionToast(updateSignature);
+                },
+                onError: async (error) => {
+                  toast.error(error.message);
+                },
+              }
+            );
+
+            return accounts.refetch();
+          },
+        }
+      );
+    },
+    onError: async (error: SendTransactionError) => {
+      toast.error(error.message);
+      const logs = await error.getLogs(provider.connection);
+      console.log("logs", logs);
+    },
+  });
+
+  const initializeTeamMint = useMutation({
+    mutationKey: ["markets", "initialize-team-mint"],
+    mutationFn: async ({
+      teamId,
+      mintSymbol,
+      season,
+      week,
+      network,
+      projection,
+    }: {
+      teamId: string;
+      mintSymbol: string;
+      season: string;
+      week: string;
+      network: string;
+      projection: number;
+    }) => {
+      const timestamp = Date.now().toString();
+      const team_token_mint = PublicKey.findProgramAddressSync(
+        [Buffer.from("mint"), Buffer.from(teamId), Buffer.from(timestamp)],
+        program.programId
+      )[0];
+      const mintConfig = PublicKey.findProgramAddressSync(
+        [Buffer.from("config"), Buffer.from(teamId), Buffer.from(timestamp)],
+        program.programId
+      )[0];
+      const vault = getAssociatedTokenAddressSync(quoteToken, mintConfig, true);
+      const signature = await program.methods
+        .initMint(teamId, timestamp)
+        .accountsStrict({
+          payer: provider.publicKey,
+          quoteTokenMint: quoteToken,
+          vault,
+          playerTokenMint: team_token_mint,
+          config: mintConfig,
+          tokenProgram: TOKEN_PROGRAM_ID,
+          systemProgram: SystemProgram.programId,
+          associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
+        })
+        .rpc();
+      setPlayerId(playerId);
+      setTimestamp(timestamp);
+      setPlayerTokenMint(team_token_mint.toBase58());
+      return {
+        signature,
+        teamId,
+        timestamp,
+        team_token_mint,
+        mintConfig,
+        mintSymbol,
+        season,
+        week,
+        network,
+        projection,
+      };
+    },
+    onSuccess: async (data: {
+      signature: string;
+      teamId: string;
+      timestamp: string;
+      team_token_mint: PublicKey;
+      mintSymbol: string;
+      season: string;
+      week: string;
+      network: string;
+      projection: number;
+      mintConfig: PublicKey;
+    }) => {
+      transactionToast(data.signature);
+      await createMint.mutateAsync(
+        {
+          mintSlug: data.teamId,
+          timestamp: data.timestamp,
+          description: data.teamId,
+          baseMint: data.team_token_mint.toBase58(),
+          // teamId: data.teamId,
+          teamSportsdataId: data.teamId,
+        },
+        {
+          onSuccess: async () => {
+            toast.success("Mint created");
+            const keyPair = await createMarketTX(
+              provider.connection,
+              provider,
+              quoteToken,
+              data.team_token_mint
+            );
+
+            createMarketAPI.mutateAsync(
+              {
+                marketName: data.teamId,
+                description: data.teamId,
+                address: keyPair.toBase58(),
+                mintAddress: data.team_token_mint.toBase58(),
+                network: data.network as "MAINNET" | "DEVNET",
+                season: data.season,
+                week: data.week,
+                teamPointsProjected: data.projection,
+              },
+              {
+                onSuccess: async () => {
+                  const playerStats = PublicKey.findProgramAddressSync(
+                    [
+                      Buffer.from("player_stats"),
+                      Buffer.from(data.teamId),
+                      Buffer.from(data.timestamp),
+                    ],
+                    program.programId
+                  )[0];
+                  const initSignature = await program.methods
+                    .initProjectionOracle()
+                    .accountsStrict({
+                      payer: provider.publicKey,
+                      config: data.mintConfig,
+                      playerStats,
+                      tokenProgram: TOKEN_PROGRAM_ID,
+                      systemProgram: SystemProgram.programId,
+                      associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
+                    })
+                    .rpc();
+                  transactionToast(initSignature);
+
+                  const updateSignature = await program.methods
+                    .updateProjectionOracle(data.projection, true, true, false)
                     .accountsStrict({
                       authority: provider.publicKey,
                       config: data.mintConfig,
@@ -513,15 +663,15 @@ export function useMarkets() {
       timestamp,
       projection,
       isProjected,
-      setMintingDisabled,
-      setPayoutEnabled,
+      isMintingEnabled,
+      isPayoutEnabled,
     }: {
       playerId: string;
       timestamp: string;
       projection: number;
       isProjected: boolean;
-      setMintingDisabled: boolean;
-      setPayoutEnabled: boolean;
+      isMintingEnabled: boolean;
+      isPayoutEnabled: boolean;
     }) => {
       const mintConfig = PublicKey.findProgramAddressSync(
         [Buffer.from("config"), Buffer.from(playerId), Buffer.from(timestamp)],
@@ -539,8 +689,8 @@ export function useMarkets() {
         .updateProjectionOracle(
           projection,
           isProjected,
-          setMintingDisabled,
-          setPayoutEnabled
+          isMintingEnabled,
+          isPayoutEnabled
         )
         .accountsStrict({
           authority: provider.publicKey,
@@ -613,6 +763,7 @@ export function useMarkets() {
     createTeam,
     closeMintAccounts,
     finishCreatingMarket,
+    initializeTeamMint,
     vaults,
     allMarkets,
   };

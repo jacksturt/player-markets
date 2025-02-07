@@ -85,7 +85,7 @@ export async function GET(request: Request) {
             player.mint!.timestamp,
             camelCaseData.actualFantasyPointsPpr,
             false,
-            false,
+            true,
             false
           );
         }
@@ -141,7 +141,7 @@ export async function GET(request: Request) {
             player.mint!.timestamp,
             camelCaseData.projectedFantasyPointsPpr,
             true,
-            false,
+            true,
             false
           );
         }
@@ -219,8 +219,8 @@ function updateProjectionOracle(
   timestamp: string,
   projection: number,
   isProjected: boolean,
-  setMintingDisabled: boolean,
-  setPayoutEnabled: boolean
+  isMintingEnabled: boolean,
+  isPayoutEnabled: boolean
 ) {
   const connection = new Connection(process.env.RPC_URL!);
   const wallet = new EnvWallet();
@@ -243,8 +243,8 @@ function updateProjectionOracle(
     .updateProjectionOracle(
       projection,
       isProjected,
-      setMintingDisabled,
-      setPayoutEnabled
+      isMintingEnabled,
+      isPayoutEnabled
     )
     .accountsStrict({
       authority: provider.publicKey,

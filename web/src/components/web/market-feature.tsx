@@ -221,8 +221,20 @@ export default function MarketFeature({
     <div className="w-screen px-[10%] flex items-center justify-center">
       <div className="w-full grid grid-cols-3 gap-4 mt-20">
         <div>
-          <h1>Player</h1>
-          <h1>{market.data?.player?.name}</h1>
+          <>
+            {market.data?.player?.name && (
+              <>
+                <h1>Player</h1>
+                <h1>{market.data?.player?.name}</h1>
+              </>
+            )}
+            {market.data?.team?.name && (
+              <>
+                <h1>Team</h1>
+                <h1>{market.data?.team?.name}</h1>
+              </>
+            )}
+          </>
           <h1>Your Balances</h1>
           <div className="flex flex-col gap-2">
             <div className="flex flex-row gap-4 items-center">

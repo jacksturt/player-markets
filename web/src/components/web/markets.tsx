@@ -19,7 +19,7 @@ export default function Markets() {
           href={`/markets/${market.address}`}
           className="flex flex-col p-2 rounded-sm border-purple-700 border"
         >
-          <div>{market.player?.name}</div>
+          <div>{market.player?.name ?? market.team?.name}</div>
           <div>{timeAgo(parseInt(market.baseMint.timestamp))}</div>
           <div>{minimizePubkey(market.address)}</div>
         </Link>

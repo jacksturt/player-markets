@@ -1,0 +1,3 @@
+-- AlterTable
+ALTER TABLE "TeamStats" ALTER COLUMN "projectedPoints" SET DATA TYPE DECIMAL(65,30),
+ALTER COLUMN "actualPoints" SET DATA TYPE DECIMAL(65,30);

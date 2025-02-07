@@ -15,4 +15,14 @@ model Team {
     mintId String?
 
     trades Trade[]
+    stats  TeamStats?
+}
+
+model TeamStats {
+    id     String @id @default(cuid())
+    teamId String @unique
+    team   Team   @relation(fields: [teamId], references: [id])
+
+    projectedPoints Decimal
+    actualPoints    Decimal
 }

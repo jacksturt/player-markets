@@ -6,9 +6,9 @@ import { Position } from "@prisma/client";
 export const createMint = protectedProcedure
   .input(
     z.object({
-      mintName: z.string(),
-      mintSymbol: z.string(),
-      mintImage: z.string(),
+      mintName: z.optional(z.string()),
+      mintSymbol: z.optional(z.string()),
+      mintImage: z.optional(z.string()),
       mintSlug: z.string(),
       timestamp: z.string(),
       teamImage: z.optional(z.string()),
@@ -24,19 +24,19 @@ export const createMint = protectedProcedure
     })
   )
   .mutation(async ({ input }) => {
-    const mint = await db.mint.create({
-      data: {
-        address: input.baseMint,
-        name: input.mintName,
-        symbol: input.mintSymbol,
-        image: input.mintName,
-        description: input.description,
-        decimals: 6,
-        timestamp: input.timestamp,
-        mintSlug: input.mintSlug,
-      },
-    });
     if (input.teamId) {
+      const mint = await db.mint.create({
+        data: {
+          address: input.baseMint,
+          name: input.mintName!,
+          symbol: input.mintSymbol!,
+          image: input.mintName!,
+          description: input.description,
+          decimals: 6,
+          timestamp: input.timestamp,
+          mintSlug: input.mintSlug,
+        },
+      });
       const player = await db.player.create({
         data: {
           name: input.playerName!,
@@ -51,39 +51,39 @@ export const createMint = protectedProcedure
           },
         },
       });
+      return mint;
     } else {
-      let team = await db.team.findUnique({
+      let team = await db.team.findUniqueOrThrow({
         where: {
           sportsDataId: input.teamSportsdataId!,
         },
       });
-      if (!team) {
-        team = await db.team.create({
-          data: {
-            name: input.teamName!,
-            image: input.teamImage!,
-            sportsDataId: input.teamSportsdataId!,
-            mint: {
-              connect: {
-                id: mint.id,
-              },
+
+      const mint = await db.mint.create({
+        data: {
+          address: input.baseMint,
+          name: team.name,
+          symbol: team.sportsDataId,
+          image: team.image,
+          description: team.name,
+          decimals: 6,
+          timestamp: input.timestamp,
+          mintSlug: input.mintSlug,
+        },
+      });
+
+      await db.team.update({
+        where: {
+          id: team.id,
+        },
+        data: {
+          mint: {
+            connect: {
+              id: mint.id,
             },
           },
-        });
-      } else {
-        await db.team.update({
-          where: {
-            id: team.id,
-          },
-          data: {
-            mint: {
-              connect: {
-                id: mint.id,
-              },
-            },
-          },
-        });
-      }
+        },
+      });
+      return mint;
     }
-    return mint;
   });
