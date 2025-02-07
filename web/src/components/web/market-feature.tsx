@@ -173,7 +173,7 @@ export default function MarketFeature() {
     await sb.connect(uniqueID);
     await sb.updateCurrentUserInfo({
       nickname: username,
-      profileUrl: "https://picsum.photos/200/300",
+      profileUrl: "/player-temp/allen.jpg",
     });
     const open_channel_params = {
       channelUrl: "market",

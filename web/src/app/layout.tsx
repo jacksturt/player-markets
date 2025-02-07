@@ -7,15 +7,15 @@ import { ReactQueryProvider } from "./react-query-provider";
 import { TRPCReactProvider } from "@/trpc/react";
 import { SessionProvider } from "next-auth/react";
 import { Toaster } from "react-hot-toast";
-
+import ChatUI from "@/components/web/chat-ui";
 export default function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className="bg-black">
-      <body className="h-screen bg-[url('/background.png')] bg-cover bg-center bg-fixed">
+    <html lang="en" className="">
+      <body className="min-h-screen bg-[url('/background.png')] bg-cover bg-center bg-fixed">
         {/* Dark overlay */}
         <SessionProvider>
           <ReactQueryProvider>
@@ -31,6 +31,7 @@ export default function RootLayout({
                 >
                   <main className="relative max-w-screen min-h-screen">
                     {children}
+                    <ChatUI />
                   </main>
                 </Suspense>
               </TRPCReactProvider>
