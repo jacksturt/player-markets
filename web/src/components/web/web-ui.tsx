@@ -670,8 +670,6 @@ export function SetPayoutEnabled() {
 
 export function CloseMintAccounts() {
   const { closeMintAccounts } = useMarketAdmin();
-  const playerId = "18890";
-  const timestamp = "1738715534348";
 
   return (
     <button

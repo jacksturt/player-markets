@@ -18,6 +18,7 @@ export default function MarketPage({
     : params.marketAddress;
 
   useEffect(() => {
+    console.log("marketAddress", marketAddress);
     setMarketAddress(marketAddress);
   }, [marketAddress]);
 

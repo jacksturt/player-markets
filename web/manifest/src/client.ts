@@ -51,6 +51,7 @@ import { AnchorProvider } from "@coral-xyz/anchor";
 import { CapsuleSolanaWeb3Signer } from "@usecapsule/solana-web3.js-v1-integration";
 import { capsule } from "@/lib/capsule";
 import { Wallet } from "@solana/wallet-adapter-react";
+import { FEE_PAYER_PUBLIC_KEY } from "@/lib/types";
 export interface SetupData {
   setupNeeded: boolean;
   instructions: TransactionInstruction[];
@@ -187,8 +188,9 @@ export class ManifestClient {
       solanaSigner = new CapsuleSolanaWeb3Signer(capsule, provider.connection);
     }
 
-    const payer =
-      wallet?.adapter.publicKey ?? new PublicKey(solanaSigner!.address!);
+    const payer = wallet?.adapter.publicKey ?? FEE_PAYER_PUBLIC_KEY;
+    const seatHolder =
+      wallet?.adapter.publicKey ?? new PublicKey(capsule.getAddress()!);
     const marketObject: Market = await Market.loadFromAddress({
       connection: connection,
       address: marketPk,
@@ -220,7 +222,7 @@ export class ManifestClient {
     });
     const userWrapper = await ManifestClient.fetchFirstUserWrapper(
       connection,
-      payer
+      seatHolder
     );
     const blockhash = await provider.connection.getLatestBlockhash();
     const transaction: Transaction = new Transaction({
@@ -247,7 +249,7 @@ export class ManifestClient {
         });
       const claimSeatIx: TransactionInstruction = createClaimSeatInstruction({
         manifestProgram: MANIFEST_PROGRAM_ID,
-        owner: payer,
+        owner: seatHolder,
         market: marketPk,
         wrapperState: wrapperKeypair.publicKey,
       });
@@ -256,8 +258,27 @@ export class ManifestClient {
       transaction.add(claimSeatIx);
       await transaction.sign(wrapperKeypair);
       if (!wallet) {
-        const signed = await solanaSigner!.signTransaction(transaction);
-        await provider.connection.sendRawTransaction(signed.serialize());
+        const serializedTransactionToSend = Buffer.from(
+          transaction.serialize({
+            requireAllSignatures: false,
+          })
+        ).toJSON();
+        const response = await fetch("/api/signWithFeePayer", {
+          method: "POST",
+          body: JSON.stringify({
+            transaction: serializedTransactionToSend,
+          }),
+        });
+        const { serializedTransaction } = await response.json();
+
+        const transactionBuffer = Buffer.from(serializedTransaction);
+        const partialSignedTransaction = Transaction.from(transactionBuffer);
+        const signed = await solanaSigner!.signTransaction(
+          partialSignedTransaction
+        );
+        const signature = await connection.sendRawTransaction(
+          signed.serialize()
+        );
       } else {
         await wallet.adapter.sendTransaction(transaction, provider.connection);
       }
@@ -269,7 +290,7 @@ export class ManifestClient {
         connection,
         wrapper,
         marketObject,
-        payer,
+        seatHolder,
         baseMint,
         quoteMint,
         baseGlobal,
@@ -294,7 +315,7 @@ export class ManifestClient {
         connection,
         wrapper,
         marketObject,
-        payer,
+        seatHolder,
         baseMint,
         quoteMint,
         baseGlobal,
@@ -305,14 +326,31 @@ export class ManifestClient {
     // There is a wrapper, but need to claim a seat.
     const claimSeatIx: TransactionInstruction = createClaimSeatInstruction({
       manifestProgram: MANIFEST_PROGRAM_ID,
-      owner: payer,
+      owner: seatHolder,
       market: marketPk,
       wrapperState: userWrapper.pubkey,
     });
     transaction.add(claimSeatIx);
     if (!wallet) {
-      const signed = await solanaSigner!.signTransaction(transaction);
-      await provider.connection.sendRawTransaction(signed.serialize());
+      const serializedTransactionToSend = Buffer.from(
+        transaction.serialize({
+          requireAllSignatures: false,
+        })
+      ).toJSON();
+      const response = await fetch("/api/signWithFeePayer", {
+        method: "POST",
+        body: JSON.stringify({
+          transaction: serializedTransactionToSend,
+        }),
+      });
+      const { serializedTransaction } = await response.json();
+
+      const transactionBuffer = Buffer.from(serializedTransaction);
+      const partialSignedTransaction = Transaction.from(transactionBuffer);
+      const signed = await solanaSigner!.signTransaction(
+        partialSignedTransaction
+      );
+      const signature = await connection.sendRawTransaction(signed.serialize());
     } else {
       await wallet.adapter.sendTransaction(transaction, provider.connection);
     }

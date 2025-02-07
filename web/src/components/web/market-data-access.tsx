@@ -11,7 +11,7 @@ import {
   Transaction,
 } from "@solana/web3.js";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import { useAnchorProvider } from "../solana/solana-provider";
 import { useTransactionToast } from "../ui/ui-layout";
@@ -29,21 +29,33 @@ import { capsule } from "@/lib/capsule";
 import { OrderType } from "manifest/src/manifest";
 import { Market, Wrapper, WrapperMarketInfo, WrapperData } from "manifest/src";
 import { api } from "@/trpc/react";
-import { useParams } from "next/navigation";
-import { bignum } from "@metaplex-foundation/beet";
-export function useCurrentMarket() {
-  const [marketAddress, setMarketAddress] = useState<string>("");
 
-  const marketPublicKey = useMemo(() => {
-    if (marketAddress && marketAddress !== "")
-      return new PublicKey(marketAddress);
-    return null;
-  }, [marketAddress]);
+export function useCurrentMarket() {
+  const queryClient = useQueryClient();
+
+  const marketAddress = useQuery<string | null>({
+    queryKey: ["current-market-address"],
+    queryFn: () => null,
+    enabled: false,
+  });
+
+  const setMarketAddress = useCallback(
+    (address: string) => {
+      queryClient.setQueryData(["current-market-address"], address);
+    },
+    [queryClient]
+  );
+
+  // Convert to PublicKey if we have an address
+  const marketPublicKey = useMemo(
+    () => (marketAddress.data ? new PublicKey(marketAddress.data) : null),
+    [marketAddress.data]
+  );
 
   return {
+    marketAddress: marketAddress.data,
     marketPublicKey,
     setMarketAddress,
-    marketAddress,
   };
 }
 
@@ -838,7 +850,7 @@ export function usePlayerMarket() {
 
   const market = api.market.read.useQuery(
     {
-      marketAddress: marketAddress,
+      marketAddress: marketAddress ?? "",
     },
     {
       enabled: !!marketAddress,
@@ -847,7 +859,7 @@ export function usePlayerMarket() {
 
   const lastTradePrice = api.market.lastTradePrice.useQuery(
     {
-      marketAddress: marketAddress,
+      marketAddress: marketAddress ?? "",
     },
     {
       enabled: !!marketAddress,
@@ -964,7 +976,7 @@ export function usePlayerMarket() {
 
   const trades = api.trade.readForMarket.useQuery(
     {
-      marketAddress: marketAddress,
+      marketAddress: marketAddress ?? "",
     },
     {
       enabled: !!marketAddress,
@@ -1090,7 +1102,38 @@ export const useCapsuleWallet = () => {
     },
   });
 
-  return { capsulePubkey, solanaSigner };
+  const feePayerPublicKey = new PublicKey(
+    "feeioiUZWN8AhHGydS5DVodJLgvUfpiJWaENC81ppzX"
+  );
+
+  const signWithFeePayer = useMutation({
+    mutationFn: async (transaction: Transaction) => {
+      const serializedTransactionToSend = Buffer.from(
+        transaction.serialize({
+          requireAllSignatures: false,
+        })
+      ).toJSON();
+      const response = await fetch("/api/signWithFeePayer", {
+        method: "POST",
+        body: JSON.stringify({
+          transaction: serializedTransactionToSend,
+        }),
+      });
+      const { serializedTransaction } = await response.json();
+
+      const transactionBuffer = Buffer.from(serializedTransaction);
+      const partialSignedTransaction = Transaction.from(transactionBuffer);
+      const signed = await solanaSigner.data!.signTransaction(
+        partialSignedTransaction
+      );
+      const signature = await provider.connection.sendRawTransaction(
+        signed.serialize()
+      );
+      return signature;
+    },
+  });
+
+  return { capsulePubkey, solanaSigner, signWithFeePayer, feePayerPublicKey };
 };
 
 export const useManifestClient = () => {
@@ -1171,7 +1214,7 @@ export function useMyMarket() {
   const transactionToast = useTransactionToast();
   const lastOrderId = api.order.getLastOrderIdForUser.useQuery(
     {
-      marketAddress: marketAddress,
+      marketAddress: marketAddress ?? "",
     },
     {
       enabled: !!marketAddress,
@@ -1183,7 +1226,8 @@ export function useMyMarket() {
   const provider = useAnchorProvider();
   const { publicKey, wallet } = useWallet();
   const queryClient = useQueryClient();
-  const { capsulePubkey, solanaSigner } = useCapsuleWallet();
+  const { capsulePubkey, solanaSigner, signWithFeePayer, feePayerPublicKey } =
+    useCapsuleWallet();
 
   const mintRecord = useQuery({
     queryKey: ["mint-record", { marketAddress }],
@@ -1257,7 +1301,7 @@ export function useMyMarket() {
 
   const myOrders = api.order.readOrdersForUserByMarket.useQuery(
     {
-      marketAddress: marketAddress,
+      marketAddress: marketAddress ?? "",
     },
     {
       enabled: !!marketAddress,
@@ -1289,10 +1333,9 @@ export function useMyMarket() {
       numBaseTokens: number;
       tokenPrice: number;
     }) => {
-      const withdrawableQuote = balances.data?.quoteWithdrawableBalanceTokens;
-      if (withdrawableQuote === undefined) {
-        throw new Error("No withdrawable quote tokens");
-      }
+      const withdrawableQuote =
+        balances.data?.quoteWithdrawableBalanceTokens ?? 0;
+
       const neededQuote = tokenPrice * numBaseTokens;
       console.log("neededQuote", neededQuote);
       console.log("withdrawableQuote", withdrawableQuote);
@@ -1300,7 +1343,7 @@ export function useMyMarket() {
         (neededQuote * 10 ** 6 - withdrawableQuote * 10 ** 6) / 10 ** 6;
       console.log("amountToDeposit", amountToDeposit);
 
-      const feePayer = publicKey ?? capsulePubkey.data!;
+      const feePayer = publicKey ?? feePayerPublicKey;
       const blockhash = await provider.connection.getLatestBlockhash();
       const transaction = new Transaction({
         feePayer,
@@ -1326,10 +1369,7 @@ export function useMyMarket() {
       });
       transaction.add(orderIx);
       if (!publicKey) {
-        const signed = await solanaSigner.data!.signTransaction(transaction);
-        const signature = await provider.connection.sendRawTransaction(
-          signed.serialize()
-        );
+        const signature = await signWithFeePayer.mutateAsync(transaction);
         return {
           signature,
           numBaseTokens,
