@@ -15,25 +15,27 @@ import { Label } from "@/components/ui/label";
 import TrendDownIcon from "../icons/trend-down";
 import TrendUpIcon from "../icons/trend-up";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
-import { Switch } from "@/components/ui/switch";
-
+import { Switch } from "@radix-ui/react-switch";
+import { usePlayerMarketCardStore } from "@/lib/zustand";
 export const Trade = ({
   defaultOrderType = "buy",
 }: {
   defaultOrderType?: "buy" | "sell";
 }) => {
-  const [orderType, setOrderType] = useState(defaultOrderType);
   const [price, setPrice] = useState("");
   const [quantity, setQuantity] = useState("");
   const { depositAndPlaceBuyOrder, maybeMintDepositAndSell } =
     usePlayerMarketWithParams();
+
+  const { selectedOrderType, setSelectedOrderType } =
+    usePlayerMarketCardStore();
 
   // TODO: use actual balanaces
   const TEMP_BALANCE = 1000;
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (orderType === "buy") {
+    if (selectedOrderType === "buy") {
       depositAndPlaceBuyOrder.mutateAsync({
         numBaseTokens: parseFloat(quantity),
         tokenPrice: parseFloat(price),
@@ -60,24 +62,24 @@ export const Trade = ({
             <div className="flex items-start h-[37px] justify-center gap-4">
               <button
                 className={`h-full flex items-center gap-2 text-white font-clashGroteskMed uppercase px-6 border-b-2 ${
-                  orderType === "buy"
+                  selectedOrderType === "buy"
                     ? "border-[#CCCCCC]"
                     : "border-transparent"
                 }`}
                 type="button"
-                onClick={() => setOrderType("buy")}
+                onClick={() => setSelectedOrderType("buy")}
               >
                 <TrendUpIcon size={16} />
                 Buy
               </button>
               <button
                 className={`h-full flex items-center gap-2 text-white font-clashGroteskMed uppercase px-6 border-b-2 ${
-                  orderType === "sell"
+                  selectedOrderType === "sell"
                     ? "border-[#CCCCCC]"
                     : "border-transparent"
                 }`}
                 type="button"
-                onClick={() => setOrderType("sell")}
+                onClick={() => setSelectedOrderType("sell")}
               >
                 <TrendDownIcon size={16} />
                 Sell
@@ -201,17 +203,18 @@ export const Trade = ({
             <Button
               type="submit"
               className={`w-full h-[58px] ${
-                orderType === "buy"
+                selectedOrderType === "buy"
                   ? "bg-green-500 hover:bg-green-600"
                   : "bg-red-500 hover:bg-red-600"
               } text-black font-medium rounded-[9.5px] transition-colors`}
             >
-              {orderType === "buy" ? "Long" : "Short"}
+              {selectedOrderType === "buy" ? "Long" : "Short"}
             </Button>
 
             {/* TODO: dynamic player and projection data */}
             <p className="text-[#6A6A6A] text-[11px] leading-[11px] max-w-[254px] mx-auto text-center">
-              Make money if Patrick Mahomes scores more than{" "}
+              Make money if Patrick Mahomes scores{" "}
+              {selectedOrderType === "buy" ? "more" : "less"} than{" "}
               <span className="text-white">20.4 fantasy points</span>
             </p>
           </div>
@@ -796,19 +799,82 @@ export const Position = ({
             <Image
               src="/player-temp/diggs.webp"
               alt="player"
-              width={30}
-              height={30}
+              width={40}
+              height={40}
             />
           </AvatarFallback>
         </Avatar>
         <p className="text-white font-clashGroteskMed text-[15px] leading-[15px]">
-          <span className="font-clashGroteskMed text-[#6A6A6A]">{amount}</span>{" "}
+          <span className="font-clashGroteskMed bg-chiefs-gradient text-transparent bg-clip-text">
+            {amount}
+          </span>{" "}
           {ticker}
         </p>
       </div>
       <p className="text-white font-clashMed text-[20px] leading-[20px]">
         ${usdValue}
       </p>
+    </div>
+  );
+};
+
+export const TradeHistoryItem = ({
+  type,
+  ticker,
+  image,
+  timestamp,
+  amount,
+  usdValue,
+}: {
+  type: string;
+  ticker: string;
+  image: string;
+  timestamp: string;
+  amount: number;
+  usdValue: number;
+}) => {
+  return (
+    <div className="w-full h-[44px] flex items-center justify-between">
+      <div className="flex items-center gap-2">
+        <Avatar>
+          <AvatarImage src={image} />
+          <AvatarFallback>
+            <Image
+              src="/player-temp/diggs.webp"
+              alt="player"
+              width={40}
+              height={40}
+            />
+          </AvatarFallback>
+        </Avatar>
+        <div className="flex flex-col gap-1">
+          <div className="flex items-center gap-2">
+            <p className="text-white font-clashGroteskMed text-[15px] leading-[15px] uppercase">
+              {type === "sell" ? "Sold" : "Bought"}
+            </p>
+            <p className="bg-chiefs-gradient text-transparent bg-clip-text font-clashGroteskMed text-[15px] leading-[15px]">
+              {ticker}
+            </p>
+          </div>
+          <p className="text-[#6a6a6a] font-clashGroteskMed text-[13px] leading-[13px]">
+            {timestamp}
+          </p>
+        </div>
+      </div>
+      <div className="flex flex-col items-end gap-1">
+        <div className="flex items-center gap-2">
+          <p
+            className={`font-clashGroteskMed text-[15px] leading-[15px] ${
+              type === "sell" ? "text-[#FF4646]" : "text-[#44E865]"
+            }`}
+          >
+            {`${type === "sell" ? "-" : "+"}${amount} ${ticker}`}
+          </p>
+        </div>
+        <p className="text-[#6a6a6a] font-clashGroteskMed text-[13px] leading-[13px]">
+          {`${type === "sell" ? "+" : "-"}$${usdValue}`}
+        </p>
+      </div>
     </div>
   );
 };

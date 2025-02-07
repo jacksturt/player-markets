@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import Image from "next/image";
 import LeaderboardTableItem from "./leaderboard-table-item";
 import { Button } from "../ui/button";
 import {
@@ -30,7 +31,7 @@ const filterOptions = [
 export default function LeaderboardView() {
   const [filter, setFilter] = useState("current_payout");
   return (
-    <div className="w-full h-full flex items-start gap-[70px] px-[120px] pt-8">
+    <div className="w-full h-full flex flex-col items-center lg:flex-row lg:items-start gap-[70px] px-[120px] pt-8">
       {/* super MVP table UI, can upgrade to tanstack table later for more features */}
       <div className="w-full flex flex-col gap-[15px]">
         <div className="flex items-center justify-between">
@@ -75,11 +76,99 @@ export default function LeaderboardView() {
           <LeaderboardTableItem />
         </div>
       </div>
-      <div className="flex flex-col gap-[25px]">
-        <p className="text-2xl text-white font-clashMed">Popular Bets</p>
-        <div className="w-[388px] bg-black/50 rounded-[30px] py-[25px] flex flex-col items-center gap-3">
-          test
+      <div className="w-full lg:w-auto flex flex-col gap-[25px]">
+        <div className="flex flex-col gap-[25px]">
+          <p className="text-2xl text-white font-clashMed">Popular Markets</p>
+          <div className="w-full lg:w-[388px] flex flex-col items-center gap-3">
+            {/* TODO: popular markets.map */}
+            <PopularMarketCard />
+            <PopularMarketCard />
+            <PopularMarketCard />
+          </div>
         </div>
+        <div className="flex flex-col gap-[25px]">
+          <p className="text-2xl text-white font-clashMed">Best Bets</p>
+          <div className="w-full lg:w-[388px] flex flex-col items-center gap-3">
+            {/* TODO: best bets.map */}
+            <BestBetsCard />
+            <BestBetsCard />
+            <BestBetsCard />
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function PopularMarketCard() {
+  return (
+    <div className="w-full h-[83px] bg-black/50 rounded-[20px] px-6 py-4 flex items-center justify-between">
+      <div className="flex items-center gap-4">
+        <Image
+          src="/player-temp/diggs.webp"
+          alt="Player"
+          className="w-[35px] h-[35px] rounded-full object-cover"
+          width={35}
+          height={35}
+        />
+        <div className="flex flex-col">
+          <span className="text-white font-clash text-base">
+            PATRICK MAHOMES
+          </span>
+          <div className="flex items-center gap-2 mt-1">
+            <div className="flex items-center gap-0.5 text-[7px] border border-[#2f2f2f] rounded-full px-[11px] py-[2.5px]">
+              <span className="text-[#888888]">Buy Vol:</span>
+              <span className="text-[#44E865]">$4305.35</span>
+            </div>
+            <div className="flex items-center gap-0.5 text-[7px] border border-[#2f2f2f] rounded-full px-[11px] py-[2.5px]">
+              <span className="text-[#888888]">Sell Vol:</span>
+              <span className="text-[#EC4545]">$4305.35</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div className="flex flex-col text-white">
+        <p className="text-[9px] leading-[9px]">Projected Total</p>
+        <p className="font-clashSemiBold text-[20px] leading-[20px]">
+          20.4 pts
+        </p>
+      </div>
+    </div>
+  );
+}
+
+function BestBetsCard() {
+  return (
+    <div className="w-full h-[83px] bg-black/50 rounded-[20px] px-6 py-4 flex items-center justify-between">
+      <div className="flex items-center gap-4">
+        <Image
+          src="/player-temp/diggs.webp"
+          alt="Player"
+          className="w-[35px] h-[35px] rounded-full object-cover"
+          width={35}
+          height={35}
+        />
+        <div className="flex flex-col">
+          <span className="text-white font-clash text-base">
+            PATRICK MAHOMES
+          </span>
+          <div className="flex items-center gap-2 mt-1">
+            <div className="flex items-center gap-0.5 text-[7px] border border-[#2f2f2f] rounded-full px-[11px] py-[2.5px]">
+              <span className="text-[#888888]">Buy Vol:</span>
+              <span className="text-[#44E865]">$4305.35</span>
+            </div>
+            <div className="flex items-center gap-0.5 text-[7px] border border-[#2f2f2f] rounded-full px-[11px] py-[2.5px]">
+              <span className="text-[#888888]">Sell Vol:</span>
+              <span className="text-[#EC4545]">$4305.35</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div className="flex flex-col text-white">
+        <p className="text-[9px] leading-[9px]">Projected Total</p>
+        <p className="font-clashSemiBold text-[20px] leading-[20px]">
+          20.4 pts
+        </p>
       </div>
     </div>
   );

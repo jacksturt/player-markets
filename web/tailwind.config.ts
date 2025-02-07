@@ -62,10 +62,14 @@ const config: Config = {
         },
       },
       backgroundImage: {
-        "eagles-gradient":
+        "chiefs-gradient-bg":
           "linear-gradient(to right, #F92D37, #F9D10A, #F9D10A)",
-        "chiefs-gradient":
+        "chiefs-gradient-text":
+          "linear-gradient(to bottom, #F92D37, #F9D10A, #F9D10A)",
+        "eagles-gradient-bg":
           "linear-gradient(to right, #004C54, #A5ACAF, #A5ACAF)",
+        "eagles-gradient-text":
+          "linear-gradient(to bottom, #004C54, #A5ACAF, #A5ACAF)",
       },
     },
   },
