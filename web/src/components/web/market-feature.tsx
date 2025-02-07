@@ -1,9 +1,12 @@
 "use client";
 
 import {
+  useCapsuleWallet,
   useMarkets,
+  useMyMarket,
   usePlayerMarket,
   usePlayerMarketWithParams,
+  usePlayerToken,
   useQuoteToken,
 } from "./market-data-access";
 import {
@@ -56,24 +59,25 @@ export default function MarketFeature({
   const [tradeData, setTradeData] = useState<{ date: number; price: number }[]>(
     []
   );
+  const { bids, asks, trades, lastTradePrice, playerStatsAccount, market } =
+    usePlayerMarketWithParams();
+
+  const { playerTokenBalance } = usePlayerToken({ marketAddress });
+
   const {
-    bids,
-    asks,
+    currentMinterRewards,
     balances,
-    playerTokenBalance,
-    trades,
-    lastTradePrice,
-    playerStatsAccount,
     cancelOrder,
-    capsulePubkey,
     myOrders,
     depositAndPlaceBuyOrder,
     maybeMintDepositAndSell,
-    market,
-    currentMinterRewards,
-  } = usePlayerMarketWithParams();
+  } = useMyMarket({
+    marketAddress,
+  });
+
   const { publicKey } = useWallet();
   const { quoteTokenBalance } = useQuoteToken();
+  const { capsulePubkey } = useCapsuleWallet();
   const queryClient = useQueryClient();
   const utils = api.useUtils();
   const myKey = publicKey ?? capsulePubkey.data!;
@@ -218,7 +222,7 @@ export default function MarketFeature({
   };
 
   return (
-    <div className="w-screen px-[10%] flex items-center justify-center">
+    <div className="w-screen px-[10%] flex items-center justify-center bg-white">
       <div className="w-full grid grid-cols-3 gap-4 mt-20">
         <div>
           <>
@@ -312,13 +316,13 @@ export default function MarketFeature({
             </>
             {bids.data?.map((bid) => (
               <>
-                <div key={"trader-" + bid.trader.toBase58()}>
+                <div key={"trader-" + bid.lastValidSlot}>
                   {minimizePubkey(bid.trader.toBase58())}
                 </div>
-                <div key={"price-" + bid.trader.toBase58()}>
+                <div key={"price-" + bid.lastValidSlot}>
                   {bid.tokenPrice.toFixed(6)}
                 </div>
-                <div key={"quantity-" + bid.trader.toBase58()}>
+                <div key={"quantity-" + bid.lastValidSlot}>
                   {bid.numBaseTokens.toString()}
                 </div>
                 {bid.trader.toBase58() === myKey.toBase58() ? (
@@ -336,6 +340,7 @@ export default function MarketFeature({
                         clientOrderId: clientOrderId,
                       });
                     }}
+                    key={"cancel-" + bid.lastValidSlot}
                   >
                     Cancel
                   </button>
@@ -347,6 +352,7 @@ export default function MarketFeature({
                         tokenPrice: bid.tokenPrice,
                       });
                     }}
+                    key={"fill-" + bid.lastValidSlot}
                   >
                     Fill
                   </button>
@@ -364,13 +370,13 @@ export default function MarketFeature({
             </>
             {asks.data?.map((ask) => (
               <>
-                <div key={"trader-" + ask.trader.toBase58()}>
+                <div key={"trader-" + ask.lastValidSlot}>
                   {minimizePubkey(ask.trader.toBase58())}
                 </div>
-                <div key={"price-" + ask.trader.toBase58()}>
+                <div key={"price-" + ask.lastValidSlot}>
                   {ask.tokenPrice.toFixed(6)}
                 </div>
-                <div key={"quantity-" + ask.trader.toBase58()}>
+                <div key={"quantity-" + ask.lastValidSlot}>
                   {ask.numBaseTokens.toString()}
                 </div>
                 {ask.trader.toBase58() === myKey.toBase58() ? (
@@ -388,6 +394,7 @@ export default function MarketFeature({
                         clientOrderId: clientOrderId,
                       });
                     }}
+                    key={"cancel-" + ask.lastValidSlot}
                   >
                     Cancel
                   </button>
@@ -399,6 +406,7 @@ export default function MarketFeature({
                         tokenPrice: ask.tokenPrice,
                       });
                     }}
+                    key={"fill-" + ask.lastValidSlot}
                   >
                     Fill
                   </button>

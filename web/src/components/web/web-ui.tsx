@@ -4,9 +4,12 @@ import React, { useEffect, useState } from "react";
 import Image from "next/image";
 import {
   useMarkets,
+  useMarketAdmin,
   usePlayerMarket,
   usePlayerMarketWithParams,
   useQuoteToken,
+  useMyMarket,
+  usePlayerToken,
 } from "./market-data-access";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -25,8 +28,10 @@ export const Trade = ({
   const [orderType, setOrderType] = useState(defaultOrderType);
   const [price, setPrice] = useState("");
   const [quantity, setQuantity] = useState("");
-  const { depositAndPlaceBuyOrder, maybeMintDepositAndSell } =
-    usePlayerMarketWithParams();
+  const { market } = usePlayerMarketWithParams();
+  const { depositAndPlaceBuyOrder, maybeMintDepositAndSell } = useMyMarket({
+    marketAddress: market.data?.address!,
+  });
 
   // TODO: use actual balanaces
   const TEMP_BALANCE = 1000;
@@ -227,14 +232,14 @@ export const Trade2 = () => {
   const [quantity, setQuantity] = useState("");
   const [actualCost, setActualCost] = useState(0);
   const { quoteTokenBalance } = useQuoteToken();
-  const {
-    depositAndPlaceBuyOrder,
-    maybeMintDepositAndSell,
-    playerStatsAccount,
-    balances,
-    playerTokenBalance,
-    market,
-  } = usePlayerMarketWithParams();
+  const { playerStatsAccount, market } = usePlayerMarketWithParams();
+  const { depositAndPlaceBuyOrder, maybeMintDepositAndSell, balances } =
+    useMyMarket({
+      marketAddress: market.data?.address!,
+    });
+  const { playerTokenBalance } = usePlayerToken({
+    marketAddress: market.data?.address!,
+  });
   const [placeOrderError, setPlaceOrderError] = useState("");
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -450,7 +455,7 @@ export function QuoteTokenFaucet() {
 }
 
 export function CreateTeam() {
-  const { createTeam } = useMarkets();
+  const { createTeam } = useMarketAdmin();
   return (
     <button
       className="btn btn-xs lg:btn-md btn-primary"
@@ -469,7 +474,7 @@ export function CreateTeam() {
 }
 
 export function InitTeamMint() {
-  const { initializeTeamMint } = useMarkets();
+  const { initializeTeamMint } = useMarketAdmin();
   const teamId = "DET";
   const mintSymbol = "LIONS";
   const season = "2023POST";
@@ -498,7 +503,7 @@ export function InitTeamMint() {
 }
 
 export function InitPlayerMint() {
-  const { initialize } = useMarkets();
+  const { initialize } = useMarketAdmin();
   const playerId = "24423";
   const playerName = "Jake Moody";
   const playerImage =
@@ -537,7 +542,7 @@ export function InitPlayerMint() {
 }
 
 export function FinishCreatingMarket() {
-  const { finishCreatingMarket } = useMarkets();
+  const { finishCreatingMarket } = useMarketAdmin();
   const playerId = "19063";
   const playerName = "George Kittle";
   const playerImage =
@@ -590,7 +595,7 @@ export function VaultsList() {
 }
 
 export function UpdateProjectionOracle() {
-  const { updateProjectionOracle } = useMarkets();
+  const { updateProjectionOracle } = useMarketAdmin();
   const playerId = "DET";
   const projection = 30.5;
   const timestamp = "1738892110488";
@@ -619,7 +624,10 @@ export function UpdateProjectionOracle() {
 }
 
 export function CancelAllOrders() {
-  const { cancelAllOrders } = usePlayerMarketWithParams();
+  const { market } = usePlayerMarketWithParams();
+  const { cancelAllOrders } = useMyMarket({
+    marketAddress: market.data?.address!,
+  });
   return (
     <button
       className="btn btn-xs lg:btn-md btn-primary"
@@ -632,7 +640,7 @@ export function CancelAllOrders() {
 }
 
 export function CloseMintAccounts() {
-  const { closeMintAccounts } = useMarkets();
+  const { closeMintAccounts } = useMarketAdmin();
   const playerId = "18890";
   const timestamp = "1738715534348";
 
@@ -653,7 +661,10 @@ export function CloseMintAccounts() {
 }
 
 export function WithdrawAll() {
-  const { withdrawAll } = usePlayerMarketWithParams();
+  const { market } = usePlayerMarketWithParams();
+  const { withdrawAll } = useMyMarket({
+    marketAddress: market.data?.address!,
+  });
 
   return (
     <button
@@ -667,7 +678,8 @@ export function WithdrawAll() {
 }
 
 export function Payout() {
-  const { payout } = usePlayerMarketWithParams();
+  const { market } = usePlayerMarketWithParams();
+  const { payout } = useMyMarket({ marketAddress: market.data?.address! });
 
   return (
     <button
