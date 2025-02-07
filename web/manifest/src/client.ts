@@ -95,7 +95,7 @@ export class ManifestClient {
    *
    * @returns Promise<GetProgramAccountsResponse>
    */
-  private static async fetchFirstUserWrapper(
+  public static async fetchFirstUserWrapper(
     connection: Connection,
     payerPub: PublicKey
   ): Promise<WrapperResponse | null> {

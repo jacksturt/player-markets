@@ -2,6 +2,7 @@
 
 import {
   useCapsuleWallet,
+  useManifestClient,
   useMarkets,
   useMyMarket,
   usePlayerMarket,
@@ -16,6 +17,7 @@ import {
   QuoteTokenFaucet,
   CancelAllOrders,
   Trade2,
+  ClaimSeat,
 } from "./web-ui";
 import { PublicKey } from "@solana/web3.js";
 import { minimizePubkey } from "@/utils/web3";
@@ -78,6 +80,9 @@ export default function MarketFeature({
   const { publicKey } = useWallet();
   const { quoteTokenBalance } = useQuoteToken();
   const { capsulePubkey } = useCapsuleWallet();
+  const { hasSeatBeenClaimed } = useManifestClient({
+    marketAddress,
+  });
   const queryClient = useQueryClient();
   const utils = api.useUtils();
   const myKey = publicKey ?? capsulePubkey.data!;
@@ -325,38 +330,41 @@ export default function MarketFeature({
                 <div key={"quantity-" + bid.lastValidSlot}>
                   {bid.numBaseTokens.toString()}
                 </div>
-                {bid.trader.toBase58() === myKey.toBase58() ? (
-                  <button
-                    onClick={() => {
-                      console.log("myOrders", myOrders.data);
-                      const clientOrderId =
-                        myOrders.data?.find(
-                          (order) =>
-                            order.sequenceNumber?.toString() ===
-                            bid.sequenceNumber.toString()
-                        )?.clientOrderId ?? 0;
-                      console.log("clientOrderId", clientOrderId);
-                      cancelOrder.mutate({
-                        clientOrderId: clientOrderId,
-                      });
-                    }}
-                    key={"cancel-" + bid.lastValidSlot}
-                  >
-                    Cancel
-                  </button>
-                ) : (
-                  <button
-                    onClick={() => {
-                      maybeMintDepositAndSell.mutate({
-                        numBaseTokens: parseFloat(bid.numBaseTokens.toString()),
-                        tokenPrice: bid.tokenPrice,
-                      });
-                    }}
-                    key={"fill-" + bid.lastValidSlot}
-                  >
-                    Fill
-                  </button>
-                )}
+                {hasSeatBeenClaimed.data &&
+                  (bid.trader.toBase58() === myKey.toBase58() ? (
+                    <button
+                      onClick={() => {
+                        console.log("myOrders", myOrders.data);
+                        const clientOrderId =
+                          myOrders.data?.find(
+                            (order) =>
+                              order.sequenceNumber?.toString() ===
+                              bid.sequenceNumber.toString()
+                          )?.clientOrderId ?? 0;
+                        console.log("clientOrderId", clientOrderId);
+                        cancelOrder.mutate({
+                          clientOrderId: clientOrderId,
+                        });
+                      }}
+                      key={"cancel-" + bid.lastValidSlot}
+                    >
+                      Cancel
+                    </button>
+                  ) : (
+                    <button
+                      onClick={() => {
+                        maybeMintDepositAndSell.mutate({
+                          numBaseTokens: parseFloat(
+                            bid.numBaseTokens.toString()
+                          ),
+                          tokenPrice: bid.tokenPrice,
+                        });
+                      }}
+                      key={"fill-" + bid.lastValidSlot}
+                    >
+                      Fill
+                    </button>
+                  ))}
               </>
             ))}
           </div>
@@ -379,38 +387,41 @@ export default function MarketFeature({
                 <div key={"quantity-" + ask.lastValidSlot}>
                   {ask.numBaseTokens.toString()}
                 </div>
-                {ask.trader.toBase58() === myKey.toBase58() ? (
-                  <button
-                    onClick={() => {
-                      console.log("myOrders", myOrders.data);
-                      const clientOrderId =
-                        myOrders.data?.find(
-                          (order) =>
-                            order.sequenceNumber?.toString() ===
-                            ask.sequenceNumber.toString()
-                        )?.clientOrderId ?? 0;
-                      console.log("clientOrderId", clientOrderId);
-                      cancelOrder.mutate({
-                        clientOrderId: clientOrderId,
-                      });
-                    }}
-                    key={"cancel-" + ask.lastValidSlot}
-                  >
-                    Cancel
-                  </button>
-                ) : (
-                  <button
-                    onClick={() => {
-                      depositAndPlaceBuyOrder.mutate({
-                        numBaseTokens: parseFloat(ask.numBaseTokens.toString()),
-                        tokenPrice: ask.tokenPrice,
-                      });
-                    }}
-                    key={"fill-" + ask.lastValidSlot}
-                  >
-                    Fill
-                  </button>
-                )}
+                {hasSeatBeenClaimed.data &&
+                  (ask.trader.toBase58() === myKey.toBase58() ? (
+                    <button
+                      onClick={() => {
+                        console.log("myOrders", myOrders.data);
+                        const clientOrderId =
+                          myOrders.data?.find(
+                            (order) =>
+                              order.sequenceNumber?.toString() ===
+                              ask.sequenceNumber.toString()
+                          )?.clientOrderId ?? 0;
+                        console.log("clientOrderId", clientOrderId);
+                        cancelOrder.mutate({
+                          clientOrderId: clientOrderId,
+                        });
+                      }}
+                      key={"cancel-" + ask.lastValidSlot}
+                    >
+                      Cancel
+                    </button>
+                  ) : (
+                    <button
+                      onClick={() => {
+                        depositAndPlaceBuyOrder.mutate({
+                          numBaseTokens: parseFloat(
+                            ask.numBaseTokens.toString()
+                          ),
+                          tokenPrice: ask.tokenPrice,
+                        });
+                      }}
+                      key={"fill-" + ask.lastValidSlot}
+                    >
+                      Fill
+                    </button>
+                  ))}
               </>
             ))}
           </div>
@@ -473,16 +484,20 @@ export default function MarketFeature({
             ))}
           </div>
         </div>
-        <div className="flex flex-col gap-4">
-          {/* <QuoteTokenFaucet /> */}
-          {/* <MintPlayerTokens />
+        {hasSeatBeenClaimed.data ? (
+          <div className="flex flex-col gap-4">
+            {/* <QuoteTokenFaucet /> */}
+            {/* <MintPlayerTokens />
           <DepositBase />
           <DepositQuote /> */}
-          <Trade2 />
-          <CancelAllOrders />
-          <WithdrawAll />
-          <Payout />
-        </div>
+            <Trade2 />
+            <CancelAllOrders />
+            <WithdrawAll />
+            <Payout />
+          </div>
+        ) : (
+          <ClaimSeat />
+        )}
       </div>
     </div>
   );

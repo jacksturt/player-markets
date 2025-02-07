@@ -10,6 +10,7 @@ import {
   useQuoteToken,
   useMyMarket,
   usePlayerToken,
+  useManifestClient,
 } from "./market-data-access";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -18,8 +19,8 @@ import { Label } from "@/components/ui/label";
 import TrendDownIcon from "../icons/trend-down";
 import TrendUpIcon from "../icons/trend-up";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
-import { Switch } from "@radix-ui/react-switch";
 import { usePlayerMarketCardStore } from "@/lib/zustand";
+import { Switch } from "@/components/ui/switch";
 export const Trade = ({
   defaultOrderType = "buy",
 }: {
@@ -659,6 +660,23 @@ export function CloseMintAccounts() {
       disabled={closeMintAccounts.isPending}
     >
       Close Mint Accounts {closeMintAccounts.isPending && "..."}
+    </button>
+  );
+}
+
+export function ClaimSeat() {
+  const { market } = usePlayerMarketWithParams();
+  const { claimSeat } = useManifestClient({
+    marketAddress: market.data?.address!,
+  });
+
+  return (
+    <button
+      className="btn btn-xs lg:btn-md btn-primary"
+      onClick={() => claimSeat.mutateAsync()}
+      disabled={claimSeat.isPending}
+    >
+      Claim Seat {claimSeat.isPending && "..."}
     </button>
   );
 }

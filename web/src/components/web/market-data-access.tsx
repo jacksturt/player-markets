@@ -27,7 +27,7 @@ import { ManifestClient } from "manifest/src/client";
 import { CapsuleSolanaWeb3Signer } from "@usecapsule/solana-web3.js-v1-integration";
 import { capsule } from "@/lib/capsule";
 import { OrderType } from "manifest/src/manifest";
-import { Market, Wrapper } from "manifest/src";
+import { Market, Wrapper, WrapperMarketInfo, WrapperData } from "manifest/src";
 import { api } from "@/trpc/react";
 import { useParams } from "next/navigation";
 import { bignum } from "@metaplex-foundation/beet";
@@ -1047,9 +1047,78 @@ export const useCapsuleWallet = () => {
   return { capsulePubkey, solanaSigner };
 };
 
+export const useManifestClient = ({
+  marketAddress,
+}: {
+  marketAddress: string;
+}) => {
+  const provider = useAnchorProvider();
+  const { publicKey, wallet } = useWallet();
+  const { capsulePubkey } = useCapsuleWallet();
+  const marketPK = marketAddress ? new PublicKey(marketAddress) : null;
+
+  const hasSeatBeenClaimed = useQuery({
+    queryKey: ["has-seat-been-claimed", { marketAddress }],
+    queryFn: async () => {
+      const userWrapper = await ManifestClient.fetchFirstUserWrapper(
+        provider.connection,
+        publicKey ?? capsulePubkey.data!
+      );
+      if (!userWrapper) {
+        return false;
+      }
+      const wrapperData: WrapperData = Wrapper.deserializeWrapperBuffer(
+        userWrapper.account.data
+      );
+      const existingMarketInfos: WrapperMarketInfo[] =
+        wrapperData.marketInfos.filter((marketInfo: WrapperMarketInfo) => {
+          return marketInfo.market.toBase58() == marketPK?.toBase58();
+        });
+      if (existingMarketInfos.length > 0) {
+        return true;
+      }
+      return false;
+    },
+    enabled: !!marketPK,
+  });
+
+  const claimSeat = useMutation({
+    mutationKey: ["claim-seat", { marketAddress }],
+    mutationFn: async () => {
+      const client = await ManifestClient.getClientForMarket(
+        provider,
+        marketPK!,
+        wallet || undefined
+      );
+    },
+  });
+
+  const manifestClient = useQuery({
+    queryKey: ["manifest-client", { marketAddress }],
+    queryFn: async () => {
+      if (!hasSeatBeenClaimed.data) {
+        return null;
+      }
+      return await ManifestClient.getClientForMarket(
+        provider,
+        marketPK!,
+        wallet || undefined
+      );
+    },
+    enabled: !!hasSeatBeenClaimed.data,
+  });
+
+  return { manifestClient, hasSeatBeenClaimed, claimSeat };
+};
+
 export function useMyMarket({ marketAddress }: { marketAddress: string }) {
   const { playerId, timestamp, vault, mintConfigAccount, playerStatsAccount } =
     usePlayerMarket({ marketAddress });
+
+  const { manifestClient, hasSeatBeenClaimed } = useManifestClient({
+    marketAddress,
+  });
+  const client = manifestClient.data!;
   const {
     playerTokenMint,
     playerTokenAccount,
@@ -1156,11 +1225,9 @@ export function useMyMarket({ marketAddress }: { marketAddress: string }) {
   const balances = useQuery({
     queryKey: ["market", "balances", { playerMintPK: marketPK }],
     queryFn: async () => {
-      const client = await ManifestClient.getClientForMarket(
-        provider,
-        marketPK!,
-        wallet || undefined
-      );
+      if (!hasSeatBeenClaimed.data) {
+        return null;
+      }
       const payer = publicKey ?? capsulePubkey.data!;
       const balances = await client.market.getBalances(payer);
       return balances;
@@ -1180,11 +1247,6 @@ export function useMyMarket({ marketAddress }: { marketAddress: string }) {
       numBaseTokens: number;
       tokenPrice: number;
     }) => {
-      const client = await ManifestClient.getClientForMarket(
-        provider,
-        marketPK!,
-        wallet || undefined
-      );
       const withdrawableQuote = balances.data?.quoteWithdrawableBalanceTokens;
       if (withdrawableQuote === undefined) {
         throw new Error("No withdrawable quote tokens");
@@ -1299,11 +1361,6 @@ export function useMyMarket({ marketAddress }: { marketAddress: string }) {
       if (!publicKey && !capsulePubkey.data) {
         throw new Error("No public key found");
       }
-      const client = await ManifestClient.getClientForMarket(
-        provider,
-        marketPK!,
-        wallet || undefined
-      );
       const mintConfig = PublicKey.findProgramAddressSync(
         [
           Buffer.from("config"),
@@ -1475,11 +1532,6 @@ export function useMyMarket({ marketAddress }: { marketAddress: string }) {
   const cancelAllOrders = useMutation({
     mutationKey: ["market", "cancel-all-orders", { playerMintPK: marketPK }],
     mutationFn: async () => {
-      const client = await ManifestClient.getClientForMarket(
-        provider,
-        marketPK!,
-        wallet || undefined
-      );
       const cancelAllOrdersIx = client.cancelAllIx();
       const blockhash = await provider.connection.getLatestBlockhash();
       const transaction = new Transaction({
@@ -1510,11 +1562,6 @@ export function useMyMarket({ marketAddress }: { marketAddress: string }) {
   const cancelOrder = useMutation({
     mutationKey: ["market", "cancel-order", { playerMintPK: marketPK }],
     mutationFn: async ({ clientOrderId }: { clientOrderId: number }) => {
-      const client = await ManifestClient.getClientForMarket(
-        provider,
-        marketPK!,
-        wallet || undefined
-      );
       const cancelOrderIx = client.cancelOrderIx({
         clientOrderId,
       });
@@ -1643,11 +1690,6 @@ export function useMyMarket({ marketAddress }: { marketAddress: string }) {
   const withdrawAll = useMutation({
     mutationKey: ["market", "withdraw-all", { playerMintPK: marketAddress }],
     mutationFn: async () => {
-      const client = await ManifestClient.getClientForMarket(
-        provider,
-        new PublicKey(marketAddress),
-        wallet || undefined
-      );
       const withdrawIx = await client.withdrawAllIx();
       const feePayer = publicKey ?? capsulePubkey.data!;
       const blockhash = await provider.connection.getLatestBlockhash();
