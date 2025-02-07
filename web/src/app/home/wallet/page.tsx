@@ -17,7 +17,7 @@ const balanceData = {
 
 export default async function WalletPage() {
   return (
-    <div className="w-full h-full overflow-y-auto flex flex-col gap-5 bg-gradient-to-b from-[#1E1E1E] via-[#050505] to-black text-white pt-7">
+    <div className="w-full min-h-screen overflow-y-auto flex flex-col flex-1 gap-5 bg-gradient-to-b from-[#1E1E1E] via-[#050505] to-black text-white pt-5">
       <Navbar />
       {/* two columns */}
       <div className="w-full h-full flex items-start gap-[70px] px-[120px] pt-8">
