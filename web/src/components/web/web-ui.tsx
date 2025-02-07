@@ -805,7 +805,7 @@ export const Position = ({
           </AvatarFallback>
         </Avatar>
         <p className="text-white font-clashGroteskMed text-[15px] leading-[15px]">
-          <span className="font-clashGroteskMed bg-chiefs-gradient text-transparent bg-clip-text">
+          <span className="font-clashGroteskMed bg-chiefs-gradient-text text-transparent bg-clip-text">
             {amount}
           </span>{" "}
           {ticker}
@@ -852,7 +852,7 @@ export const TradeHistoryItem = ({
             <p className="text-white font-clashGroteskMed text-[15px] leading-[15px] uppercase">
               {type === "sell" ? "Sold" : "Bought"}
             </p>
-            <p className="bg-chiefs-gradient text-transparent bg-clip-text font-clashGroteskMed text-[15px] leading-[15px]">
+            <p className="bg-chiefs-gradient-text text-transparent bg-clip-text font-clashGroteskMed text-[15px] leading-[15px]">
               {ticker}
             </p>
           </div>

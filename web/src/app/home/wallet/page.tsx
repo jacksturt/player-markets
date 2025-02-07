@@ -1,8 +1,4 @@
-import BackArrow from "@/components/icons/back-arrow";
-import DataTablesUser from "@/components/wallet/data-tables-user";
-import Link from "next/link";
 import React from "react";
-import PnL from "./pnl";
 import TrendDown from "@/components/icons/trend-down";
 import TrendUp from "@/components/icons/trend-up";
 import { cn } from "@/lib/utils";
@@ -33,7 +29,7 @@ export default async function WalletPage() {
             <div className="flex flex-col gap-2">
               <p className="uppercase">My Balance</p>
               <div className="flex items-end gap-3">
-                <p className="text-[50px] leading-[50px] font-clashMed">
+                <p className="text-[50px] leading-[50px] font-clashMed bg-chiefs-gradient-bg text-transparent bg-clip-text">
                   ${1920.08}
                 </p>
                 <div className="flex gap-2">

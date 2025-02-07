@@ -18,33 +18,31 @@ const LeaderboardTableItem = () => {
             <Image
               src="/player-temp/diggs.webp"
               alt="user"
-              width={30}
-              height={30}
+              width={40}
+              height={40}
             />
           </AvatarFallback>
         </Avatar>
         <div className="flex flex-col gap-1">
-          <p className="text-white font-clashMed text-[15px] leading-[15px]">
-            matt.sol
-          </p>
+          <p className="text-white font-clashMed text-lg">matt.sol</p>
           {/* stat pills */}
           <div className="flex items-center gap-2">
-            <div className="border border-[#2F2F2F] rounded-full px-[9px] py-[2.5px]">
-              <p className="text-[#888888] font-clash text-[7px] leading-[7px]">
+            <div className="border border-[#2F2F2F] rounded-full px-[9px] py-1">
+              <p className="text-[#888888] text-[8px] leading-[8px]">
                 Vol:{" "}
-                <span className="text-white font-clashSemiBold">$1369.02</span>
+                <span className="text-white font-sfProSemibold">$1369.02</span>
               </p>
             </div>
-            <div className="border border-[#2F2F2F] rounded-full px-[9px] py-[2.5px]">
-              <p className="text-[#888888] font-clash text-[7px] leading-[7px]">
+            <div className="border border-[#2F2F2F] rounded-full px-[9px] py-1">
+              <p className="text-[#888888] text-[8px] leading-[8px]">
                 P&L:{" "}
-                <span className="text-white font-clashSemiBold">$1369.02</span>
+                <span className="text-white font-sfProSemibold">$1369.02</span>
               </p>
             </div>
-            <div className="border border-[#2F2F2F] rounded-full px-[9px] py-[2.5px]">
-              <p className="text-[#888888] font-clash text-[7px] leading-[7px]">
+            <div className="border border-[#2F2F2F] rounded-full px-[9px] py-1">
+              <p className="text-[#888888] text-[8px] leading-[8px]">
                 Avg. Bet:{" "}
-                <span className="text-white font-clashSemiBold">$1369.02</span>
+                <span className="text-white font-sfProSemibold">$1369.02</span>
               </p>
             </div>
           </div>

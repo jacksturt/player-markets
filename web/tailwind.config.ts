@@ -18,6 +18,9 @@ const config: Config = {
         clashBold: ["Clash Display Bold", "sans-serif"],
         clashGrotesk: ["Clash Grotesk Reg", "sans-serif"],
         clashGroteskMed: ["Clash Grotesk Med", "sans-serif"],
+        sfProReg: ["SF Pro Reg", "sans-serif"],
+        sfProMed: ["SF Pro Med", "sans-serif"],
+        sfProSemibold: ["SF Pro Semibold", "sans-serif"],
       },
       colors: {
         background: "hsl(var(--background))",

@@ -12,6 +12,7 @@ import {
 } from "../ui/dropdown-menu";
 import { ChevronDown } from "lucide-react";
 import { ListFilter } from "lucide-react";
+import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 
 const filterOptions = [
   {
@@ -116,13 +117,13 @@ function PopularMarketCard() {
             PATRICK MAHOMES
           </span>
           <div className="flex items-center gap-2 mt-1">
-            <div className="flex items-center gap-0.5 text-[7px] border border-[#2f2f2f] rounded-full px-[11px] py-[2.5px]">
-              <span className="text-[#888888]">Buy Vol:</span>
-              <span className="text-[#44E865]">$4305.35</span>
+            <div className="flex items-center gap-0.5 text-[8px] leading-[8px] border border-[#2f2f2f] rounded-full px-[11px] py-[2.5px]">
+              <p className="text-[#888888]">Buy Vol:</p>
+              <p className="text-[#44E865] font-sfProSemibold">$4305.35</p>
             </div>
-            <div className="flex items-center gap-0.5 text-[7px] border border-[#2f2f2f] rounded-full px-[11px] py-[2.5px]">
-              <span className="text-[#888888]">Sell Vol:</span>
-              <span className="text-[#EC4545]">$4305.35</span>
+            <div className="flex items-center gap-0.5 text-[8px] leading-[8px] border border-[#2f2f2f] rounded-full px-[11px] py-[2.5px]">
+              <p className="text-[#888888]">Sell Vol:</p>
+              <p className="text-[#EC4545] font-sfProSemibold">$4305.35</p>
             </div>
           </div>
         </div>
@@ -141,25 +142,29 @@ function BestBetsCard() {
   return (
     <div className="w-full h-[83px] bg-black/50 rounded-[20px] px-6 py-4 flex items-center justify-between">
       <div className="flex items-center gap-4">
-        <Image
-          src="/player-temp/diggs.webp"
-          alt="Player"
-          className="w-[35px] h-[35px] rounded-full object-cover"
-          width={35}
-          height={35}
-        />
+        <Avatar>
+          <AvatarImage src="/player-temp/diggs.webp" />
+          <AvatarFallback>
+            <Image
+              src="/player-temp/diggs.webp"
+              alt="user"
+              width={40}
+              height={40}
+            />
+          </AvatarFallback>
+        </Avatar>
         <div className="flex flex-col">
           <span className="text-white font-clash text-base">
             PATRICK MAHOMES
           </span>
           <div className="flex items-center gap-2 mt-1">
-            <div className="flex items-center gap-0.5 text-[7px] border border-[#2f2f2f] rounded-full px-[11px] py-[2.5px]">
-              <span className="text-[#888888]">Buy Vol:</span>
-              <span className="text-[#44E865]">$4305.35</span>
+            <div className="flex items-center gap-0.5 text-[8px] leading-[8px] border border-[#2f2f2f] rounded-full px-[11px] py-[2.5px]">
+              <p className="text-[#888888]">Buy Vol:</p>
+              <p className="text-[#44E865] font-sfProSemibold">$4305.35</p>
             </div>
-            <div className="flex items-center gap-0.5 text-[7px] border border-[#2f2f2f] rounded-full px-[11px] py-[2.5px]">
-              <span className="text-[#888888]">Sell Vol:</span>
-              <span className="text-[#EC4545]">$4305.35</span>
+            <div className="flex items-center gap-0.5 text-[8px] leading-[8px] border border-[#2f2f2f] rounded-full px-[11px] py-[2.5px]">
+              <p className="text-[#888888]">Sell Vol:</p>
+              <p className="text-[#EC4545] font-sfProSemibold">$4305.35</p>
             </div>
           </div>
         </div>

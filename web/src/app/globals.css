@@ -130,4 +130,29 @@
     font-style: normal;
     font-display: swap;
   }
+  @font-face {
+    font-family: "SF Pro Reg";
+    src: url("/fonts/SF-Pro-Regular.otf") format("opentype");
+    font-weight: 400;
+    font-style: normal;
+    font-display: swap;
+  }
+  @font-face {
+    font-family: "SF Pro Med";
+    src: url("/fonts/SF-Pro-Medium.otf") format("opentype");
+    font-weight: 500;
+    font-style: normal;
+    font-display: swap;
+  }
+  @font-face {
+    font-family: "SF Pro Semibold";
+    src: url("/fonts/SF-Pro-Semibold.otf") format("opentype");
+    font-weight: 600;
+    font-style: normal;
+    font-display: swap;
+  }
+}
+
+p {
+  @apply font-sfProReg;
 }

@@ -54,7 +54,7 @@ export default function Navbar() {
           />
           <p
             className={cn(
-              pathname === "/home/wallet" && "text-chiefs-gradient"
+              pathname === "/home/wallet" && "text-chiefs-gradient-text"
             )}
           >
             My Bags

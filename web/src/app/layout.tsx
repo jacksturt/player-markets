@@ -14,7 +14,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className="bg-background">
+    <html lang="en" className="bg-black">
       <body className="h-screen bg-[url('/background.png')] bg-cover bg-center bg-fixed">
         {/* Dark overlay */}
         <SessionProvider>
