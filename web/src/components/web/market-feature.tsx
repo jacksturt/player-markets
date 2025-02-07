@@ -61,8 +61,15 @@ export default function MarketFeature({
   const [tradeData, setTradeData] = useState<{ date: number; price: number }[]>(
     []
   );
-  const { bids, asks, trades, lastTradePrice, playerStatsAccount, market } =
-    usePlayerMarketWithParams();
+  const {
+    bids,
+    asks,
+    trades,
+    lastTradePrice,
+    playerStatsAccount,
+    market,
+    mintConfigAccount,
+  } = usePlayerMarketWithParams();
 
   const { playerTokenBalance } = usePlayerToken({ marketAddress });
 
@@ -244,7 +251,13 @@ export default function MarketFeature({
               </>
             )}
           </>
-          <h1>Your Balances</h1>
+          <h1>Timestamp</h1>
+          <h1>{market.data?.baseMint.timestamp}</h1>
+          <h2>Is Minting Enabled</h2>
+          <h1>{mintConfigAccount.data?.mintingEnabled.toString()}</h1>
+          <h2>Is Payout Enabled</h2>
+          <h1>{mintConfigAccount.data?.payoutEnabled.toString()}</h1>
+          <h2>Your Balances</h2>
           <div className="flex flex-col gap-2">
             <div className="flex flex-row gap-4 items-center">
               <div>Quote Token</div>

@@ -1378,6 +1378,82 @@ export type Tradetalk = {
       args: [];
     },
     {
+      name: "setIsMintEnabled";
+      discriminator: [32, 216, 128, 169, 132, 227, 175, 85];
+      accounts: [
+        {
+          name: "config";
+          writable: true;
+          pda: {
+            seeds: [
+              {
+                kind: "const";
+                value: [99, 111, 110, 102, 105, 103];
+              },
+              {
+                kind: "account";
+                path: "config.player_id";
+                account: "playerMintConfig";
+              },
+              {
+                kind: "account";
+                path: "config.timestamp";
+                account: "playerMintConfig";
+              }
+            ];
+          };
+        },
+        {
+          name: "authority";
+          signer: true;
+        }
+      ];
+      args: [
+        {
+          name: "isMintEnabled";
+          type: "bool";
+        }
+      ];
+    },
+    {
+      name: "setIsPayoutEnabled";
+      discriminator: [223, 16, 3, 87, 197, 83, 169, 4];
+      accounts: [
+        {
+          name: "config";
+          writable: true;
+          pda: {
+            seeds: [
+              {
+                kind: "const";
+                value: [99, 111, 110, 102, 105, 103];
+              },
+              {
+                kind: "account";
+                path: "config.player_id";
+                account: "playerMintConfig";
+              },
+              {
+                kind: "account";
+                path: "config.timestamp";
+                account: "playerMintConfig";
+              }
+            ];
+          };
+        },
+        {
+          name: "authority";
+          signer: true;
+        }
+      ];
+      args: [
+        {
+          name: "isPayoutEnabled";
+          type: "bool";
+        }
+      ];
+    },
+    {
       name: "testMintRewardsOnly";
       discriminator: [138, 24, 220, 27, 88, 39, 141, 117];
       accounts: [
@@ -2208,14 +2284,6 @@ export type Tradetalk = {
         },
         {
           name: "isProjected";
-          type: "bool";
-        },
-        {
-          name: "mintEnabled";
-          type: "bool";
-        },
-        {
-          name: "payoutEnabled";
           type: "bool";
         }
       ];

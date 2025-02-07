@@ -58,11 +58,27 @@ pub mod tradetalk {
         ctx: Context<UpdateProjectionOracle>,
         points: f64,
         is_projected: bool,
-        mint_enabled: bool,
-        payout_enabled: bool,
     ) -> Result<()> {
         ctx.accounts
-            .update_projection_oracle(points, is_projected, mint_enabled, payout_enabled)
+            .update_projection_oracle(points, is_projected)
+            .unwrap();
+        Ok(())
+    }
+
+    pub fn set_is_mint_enabled(
+        ctx: Context<SetIsMintEnabled>,
+        is_mint_enabled: bool,
+    ) -> Result<()> {
+        ctx.accounts.set_is_mint_enabled(is_mint_enabled).unwrap();
+        Ok(())
+    }
+
+    pub fn set_is_payout_enabled(
+        ctx: Context<SetIsPayoutEnabled>,
+        is_payout_enabled: bool,
+    ) -> Result<()> {
+        ctx.accounts
+            .set_is_payout_enabled(is_payout_enabled)
             .unwrap();
         Ok(())
     }

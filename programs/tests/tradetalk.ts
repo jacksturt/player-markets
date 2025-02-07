@@ -180,23 +180,6 @@ describe("tradetalk", () => {
       .then(log);
   });
 
-  xit("Can Init Quote provider!", async () => {
-    const tx = await program.methods
-      .initQuote()
-      .accountsStrict({
-        payer: provider.publicKey,
-        quoteTokenMint: quote_token_mint,
-        config: quoteConfig,
-        tokenProgram: TOKEN_PROGRAM_ID,
-        systemProgram: SystemProgram.programId,
-        associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
-      })
-      // .signers([maker])
-      .rpc()
-      .then(confirm)
-      .then(log);
-  });
-
   it("Create mints and mint to", async () => {
     makerAtaQuote = (
       await getOrCreateAssociatedTokenAccount(
@@ -229,37 +212,6 @@ describe("tradetalk", () => {
 
     console.log(`Your mint ata is: ${makerAtaQuote.toBase58()}`);
     // Mint to ATA
-  });
-
-  xit("Can Faucet Quote provider!", async () => {
-    const providerAtaQuote = await getAssociatedTokenAddress(
-      quote_token_mint,
-      provider.publicKey
-    );
-    const context = {
-      payer: provider.publicKey,
-      quoteTokenMint: quote_token_mint,
-      config: quoteConfig,
-      destination: providerAtaQuote,
-      tokenProgram: TOKEN_PROGRAM_ID,
-      systemProgram: SystemProgram.programId,
-      associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
-    };
-
-    Object.entries(context).forEach(([key, value]) => {
-      console.log(key, value.toBase58());
-    });
-
-    const tx = await program.methods
-      .faucetQuote(new anchor.BN(100000000000))
-      .accountsStrict(context)
-      .rpc()
-      .then(confirm)
-      .then(log)
-      .then(async () => {
-        const quote = await getAccount(connection, providerAtaQuote);
-        console.log("maker quote amount after", quote.amount);
-      });
   });
 
   it("Can Faucet Quote!", async () => {
@@ -397,7 +349,7 @@ describe("tradetalk", () => {
     );
     console.log("playerStatsAccount", playerStatsAccount);
     const tx = await program.methods
-      .updateProjectionOracle(projection1, true, true, false)
+      .updateProjectionOracle(projection1, true)
       .accountsStrict({
         authority: provider.publicKey,
         playerStats,
@@ -492,7 +444,7 @@ describe("tradetalk", () => {
     );
     console.log("playerStatsAccount", playerStatsAccount);
     const tx = await program.methods
-      .updateProjectionOracle(projection2, true, true, false)
+      .updateProjectionOracle(projection2, true)
       .accountsStrict({
         authority: provider.publicKey,
         playerStats,
@@ -637,10 +589,9 @@ describe("tradetalk", () => {
     );
     console.log("playerStatsAccount", playerStatsAccount);
     const tx = await program.methods
-      .updateProjectionOracle(projection2, false, false, false)
+      .setIsMintEnabled(false)
       .accountsStrict({
         authority: provider.publicKey,
-        playerStats,
         config: mintConfig,
       })
       .rpc()
@@ -1063,7 +1014,7 @@ describe("tradetalk", () => {
     );
     console.log("playerStatsAccount", playerStatsAccount);
     const tx = await program.methods
-      .updateProjectionOracle(actual, false, false, true)
+      .updateProjectionOracle(actual, false)
       .accountsStrict({
         authority: provider.publicKey,
         playerStats,
@@ -1073,88 +1024,27 @@ describe("tradetalk", () => {
       .then(confirm)
       .then(log)
       .then(async () => {
-        const mintConfigAccount = await program.account.playerMintConfig.fetch(
-          mintConfig
-        );
-        console.log("mintConfigAccount", mintConfigAccount);
-        console.log(
-          "totalDepositedAmount",
-          mintConfigAccount.totalDepositedAmount.toString()
-        );
-
-        assert(mintConfigAccount.payoutEnabled === true);
         const projectionOracleAccount = await program.account.playerStats.fetch(
           playerStats
         );
         console.log("projectionOracleAccount", projectionOracleAccount);
         assert(projectionOracleAccount.projectedPoints === projection2);
         assert(projectionOracleAccount.actualPoints === actual);
-      });
-  });
-
-  xit("Payout provider", async () => {
-    const mintRecordProvider = PublicKey.findProgramAddressSync(
-      [
-        Buffer.from("mint_record"),
-        mintConfig.toBuffer(),
-        provider.publicKey.toBuffer(),
-      ],
-      program.programId
-    )[0];
-    const providerAtaQuote = await getAssociatedTokenAddress(
-      quote_token_mint,
-      provider.publicKey
-    );
-    const providerAtaPlayer = await getAssociatedTokenAddress(
-      player_token_mint,
-      provider.publicKey
-    );
-    const mintConfigAccount = await program.account.playerMintConfig.fetch(
-      mintConfig
-    );
-    console.log("mintConfigAccount", mintConfigAccount.totalDepositedAmount);
-    const mintRecordProviderAccount = await program.account.mintRecord.fetch(
-      mintRecordProvider
-    );
-    console.log(
-      "mintRecordProviderAccount",
-      mintRecordProviderAccount.depositedAmount
-    );
-
-    const providerQuoteBefore = await getAccount(connection, providerAtaQuote);
-    console.log("provider quote before", providerQuoteBefore.amount);
-
-    const context = {
-      payer: provider.publicKey,
-      quoteTokenMint: quote_token_mint,
-      payerQuoteTokenAccount: providerAtaQuote,
-      playerTokenMint: player_token_mint,
-      payerPlayerTokenAccount: providerAtaPlayer,
-      mintConfig,
-      playerStats,
-      vault,
-      mintRecord: mintRecordProvider,
-      tokenProgram: TOKEN_PROGRAM_ID,
-      associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
-      systemProgram: SystemProgram.programId,
-    };
-
-    Object.entries(context).forEach(([key, value]) => {
-      console.log(key, value.toBase58());
-    });
-
-    const tx = await program.methods
-      .payout()
-      .accountsStrict(context)
-      // .signers([maker])
-      .rpc()
-      .then(confirm)
-      .then(log)
-      .then(async () => {
-        const providerQuote = await getAccount(connection, providerAtaQuote);
-        console.log("provider quote amount after", providerQuote.amount);
-        const providerPlayer = await getAccount(connection, providerAtaPlayer);
-        console.log("provider player amount after", providerPlayer.amount);
+        await program.methods
+          .setIsPayoutEnabled(true)
+          .accountsStrict({
+            authority: provider.publicKey,
+            config: mintConfig,
+          })
+          .rpc()
+          .then(confirm)
+          .then(log)
+          .then(async () => {
+            const mintConfigAccount =
+              await program.account.playerMintConfig.fetch(mintConfig);
+            console.log("mintConfigAccount", mintConfigAccount);
+            assert(mintConfigAccount.payoutEnabled === true);
+          });
       });
   });
 

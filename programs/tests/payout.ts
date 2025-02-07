@@ -353,7 +353,7 @@ describe("payout", () => {
     );
     console.log("playerStatsAccount", playerStatsAccount);
     const tx = await program.methods
-      .updateProjectionOracle(projection1, true, true, false)
+      .updateProjectionOracle(projection1, true)
       .accountsStrict({
         authority: provider.publicKey,
         playerStats,
@@ -458,7 +458,7 @@ describe("payout", () => {
     );
     console.log("playerStatsAccount", playerStatsAccount);
     const tx = await program.methods
-      .updateProjectionOracle(projection2, true, true, false)
+      .updateProjectionOracle(projection2, true)
       .accountsStrict({
         authority: provider.publicKey,
         playerStats,
@@ -560,10 +560,9 @@ describe("payout", () => {
     );
     console.log("playerStatsAccount", playerStatsAccount);
     const tx = await program.methods
-      .updateProjectionOracle(actual, false, false, true)
+      .setIsMintEnabled(false)
       .accountsStrict({
         authority: provider.publicKey,
-        playerStats,
         config: mintConfig,
       })
       .rpc()
@@ -599,7 +598,7 @@ describe("payout", () => {
       });
   });
 
-  xit("Payout fails before payout is enabled.", async () => {
+  it("Payout fails before payout is enabled.", async () => {
     const mintConfigAccount = await program.account.playerMintConfig.fetch(
       mintConfig
     );
@@ -655,13 +654,13 @@ describe("payout", () => {
     }
   });
 
-  xit("Can enable payout!", async () => {
+  it("Can enable payout!", async () => {
     let playerStatsAccount = await program.account.playerStats.fetch(
       playerStats
     );
     console.log("playerStatsAccount", playerStatsAccount);
     const tx = await program.methods
-      .updateProjectionOracle(actual, false, false, true)
+      .updateProjectionOracle(actual, false)
       .accountsStrict({
         authority: provider.publicKey,
         playerStats,
@@ -671,22 +670,27 @@ describe("payout", () => {
       .then(confirm)
       .then(log)
       .then(async () => {
-        const mintConfigAccount = await program.account.playerMintConfig.fetch(
-          mintConfig
-        );
-        console.log("mintConfigAccount", mintConfigAccount);
-        console.log(
-          "totalDepositedAmount",
-          mintConfigAccount.totalDepositedAmount.toString()
-        );
-
-        assert(mintConfigAccount.payoutEnabled === true);
         const projectionOracleAccount = await program.account.playerStats.fetch(
           playerStats
         );
         console.log("projectionOracleAccount", projectionOracleAccount);
         assert(projectionOracleAccount.projectedPoints === projection2);
         assert(projectionOracleAccount.actualPoints === actual);
+        await program.methods
+          .setIsPayoutEnabled(true)
+          .accountsStrict({
+            authority: provider.publicKey,
+            config: mintConfig,
+          })
+          .rpc()
+          .then(confirm)
+          .then(log)
+          .then(async () => {
+            const mintConfigAccount =
+              await program.account.playerMintConfig.fetch(mintConfig);
+            console.log("mintConfigAccount", mintConfigAccount);
+            assert(mintConfigAccount.payoutEnabled === true);
+          });
       });
   });
 
@@ -1128,70 +1132,6 @@ describe("payout", () => {
             console.log("expected payout", expectedPayout);
             assert(Number(thirdPartyPaidOutAfterBurn) === expectedPayout);
           });
-      });
-  });
-
-  xit("Close Accounts", async () => {
-    const context = {
-      admin: provider.publicKey,
-      quoteTokenMint: quote_token_mint,
-      playerStats,
-      mintConfig,
-      vault,
-      tokenProgram: TOKEN_PROGRAM_ID,
-      associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
-      systemProgram: SystemProgram.programId,
-    };
-
-    Object.entries(context).forEach(([key, value]) => {
-      console.log(key, value.toBase58());
-    });
-    console.log("close accounts before");
-
-    const tx = await program.methods
-      .closeAccounts()
-      .accountsStrict(context)
-      .rpc()
-      .then(confirm)
-      .then(log)
-      .then(async () => {
-        console.log("close accounts after1");
-
-        try {
-          const mintConfigAccount =
-            await program.account.playerMintConfig.fetch(mintConfig);
-          assert(false, "mint config account should not exist");
-        } catch (e) {
-          console.log(e);
-          assert(
-            e
-              .toString()
-              .includes("Error: Account does not exist or has no data")
-          );
-        }
-        console.log("close accounts after2");
-
-        try {
-          const playerStatsAccount = await program.account.playerStats.fetch(
-            playerStats
-          );
-          assert(false, "player stats account should not exist");
-        } catch (e) {
-          console.log(e);
-          assert(
-            e
-              .toString()
-              .includes("Error: Account does not exist or has no data")
-          );
-        }
-        console.log("close accounts after3");
-        try {
-          const vaultAccount = await getAccount(connection, vault);
-          assert(false, "vault account should not exist");
-        } catch (e) {
-          console.log(e);
-          assert(e.toString().includes("TokenAccountNotFoundError"));
-        }
       });
   });
 });

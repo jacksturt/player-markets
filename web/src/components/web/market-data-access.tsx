@@ -376,7 +376,7 @@ export function useMarketAdmin() {
                   transactionToast(initSignature);
 
                   const updateSignature = await program.methods
-                    .updateProjectionOracle(data.projection, true, true, false)
+                    .updateProjectionOracle(data.projection, true)
                     .accountsStrict({
                       authority: provider.publicKey,
                       config: data.mintConfig,
@@ -526,7 +526,7 @@ export function useMarketAdmin() {
                   transactionToast(initSignature);
 
                   const updateSignature = await program.methods
-                    .updateProjectionOracle(data.projection, true, true, false)
+                    .updateProjectionOracle(data.projection, true)
                     .accountsStrict({
                       authority: provider.publicKey,
                       config: data.mintConfig,
@@ -604,7 +604,7 @@ export function useMarketAdmin() {
       transactionToast(initSignature);
 
       const updateSignature = await program.methods
-        .updateProjectionOracle(projection, true, false, false)
+        .updateProjectionOracle(projection, true)
         .accountsStrict({
           authority: provider.publicKey,
           config: mintConfig,
@@ -630,15 +630,11 @@ export function useMarketAdmin() {
       timestamp,
       projection,
       isProjected,
-      isMintingEnabled,
-      isPayoutEnabled,
     }: {
       playerId: string;
       timestamp: string;
       projection: number;
       isProjected: boolean;
-      isMintingEnabled: boolean;
-      isPayoutEnabled: boolean;
     }) => {
       const mintConfig = PublicKey.findProgramAddressSync(
         [Buffer.from("config"), Buffer.from(playerId), Buffer.from(timestamp)],
@@ -653,12 +649,7 @@ export function useMarketAdmin() {
         program.programId
       )[0];
       const signature = await program.methods
-        .updateProjectionOracle(
-          projection,
-          isProjected,
-          isMintingEnabled,
-          isPayoutEnabled
-        )
+        .updateProjectionOracle(projection, isProjected)
         .accountsStrict({
           authority: provider.publicKey,
           config: mintConfig,
@@ -674,6 +665,68 @@ export function useMarketAdmin() {
       );
       console.log("playerStatsAccount", playerStatsAccount);
 
+      return accounts.refetch();
+    },
+    onError: () => toast.error("Failed to initialize account"),
+  });
+
+  const setMintingEnabled = useMutation({
+    mutationKey: ["markets", "set-minting-enabled"],
+    mutationFn: async ({
+      playerId,
+      timestamp,
+      isMintingEnabled,
+    }: {
+      playerId: string;
+      timestamp: string;
+      isMintingEnabled: boolean;
+    }) => {
+      const mintConfig = PublicKey.findProgramAddressSync(
+        [Buffer.from("config"), Buffer.from(playerId), Buffer.from(timestamp)],
+        program.programId
+      )[0];
+      const signature = await program.methods
+        .setIsMintEnabled(isMintingEnabled)
+        .accountsStrict({
+          authority: provider.publicKey,
+          config: mintConfig,
+        })
+        .rpc();
+      return { signature, mintConfig };
+    },
+    onSuccess: async (data: { signature: string; mintConfig: PublicKey }) => {
+      transactionToast(data.signature);
+      return accounts.refetch();
+    },
+    onError: () => toast.error("Failed to initialize account"),
+  });
+
+  const setPayoutEnabled = useMutation({
+    mutationKey: ["markets", "set-payout-enabled"],
+    mutationFn: async ({
+      playerId,
+      timestamp,
+      isPayoutEnabled,
+    }: {
+      playerId: string;
+      timestamp: string;
+      isPayoutEnabled: boolean;
+    }) => {
+      const mintConfig = PublicKey.findProgramAddressSync(
+        [Buffer.from("config"), Buffer.from(playerId), Buffer.from(timestamp)],
+        program.programId
+      )[0];
+      const signature = await program.methods
+        .setIsPayoutEnabled(isPayoutEnabled)
+        .accountsStrict({
+          authority: provider.publicKey,
+          config: mintConfig,
+        })
+        .rpc();
+      return { signature, mintConfig };
+    },
+    onSuccess: async (data: { signature: string; mintConfig: PublicKey }) => {
+      transactionToast(data.signature);
       return accounts.refetch();
     },
     onError: () => toast.error("Failed to initialize account"),
@@ -728,6 +781,8 @@ export function useMarketAdmin() {
     updateProjectionOracle,
     createTeam,
     closeMintAccounts,
+    setMintingEnabled,
+    setPayoutEnabled,
     finishCreatingMarket,
     initializeTeamMint,
   };
@@ -779,10 +834,7 @@ export function useMarkets() {
 export function usePlayerMarket({ marketAddress }: { marketAddress: string }) {
   const transactionToast = useTransactionToast();
   const { program, accounts, quoteToken } = useQuoteToken();
-  const createOrder = api.order.create.useMutation();
   const provider = useAnchorProvider();
-  const { publicKey, wallet } = useWallet();
-  const queryClient = useQueryClient();
 
   const market = api.market.read.useQuery(
     {

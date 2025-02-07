@@ -69,8 +69,6 @@ export async function GET(request: Request) {
         homeTeam.sportsDataId.toString(),
         homeTeam.mint!.timestamp,
         homeTeamScore,
-        false,
-        true,
         false
       );
     }
@@ -87,8 +85,6 @@ export async function GET(request: Request) {
         awayTeam.sportsDataId.toString(),
         awayTeam.mint!.timestamp,
         awayTeamScore,
-        false,
-        true,
         false
       );
     }
@@ -107,9 +103,7 @@ function updateProjectionOracle(
   playerId: string,
   timestamp: string,
   projection: number,
-  isProjected: boolean,
-  mintingEnabled: boolean,
-  payoutEnabled: boolean
+  isProjected: boolean
 ) {
   const connection = new Connection(process.env.RPC_URL!);
   const wallet = new EnvWallet();
@@ -129,12 +123,7 @@ function updateProjectionOracle(
     program.programId
   )[0];
   return program.methods
-    .updateProjectionOracle(
-      projection,
-      isProjected,
-      mintingEnabled,
-      payoutEnabled
-    )
+    .updateProjectionOracle(projection, isProjected)
     .accountsStrict({
       authority: provider.publicKey,
       config: mintConfig,

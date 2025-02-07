@@ -1527,6 +1527,114 @@
       "args": []
     },
     {
+      "name": "set_is_mint_enabled",
+      "discriminator": [
+        32,
+        216,
+        128,
+        169,
+        132,
+        227,
+        175,
+        85
+      ],
+      "accounts": [
+        {
+          "name": "config",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "config.player_id",
+                "account": "PlayerMintConfig"
+              },
+              {
+                "kind": "account",
+                "path": "config.timestamp",
+                "account": "PlayerMintConfig"
+              }
+            ]
+          }
+        },
+        {
+          "name": "authority",
+          "signer": true
+        }
+      ],
+      "args": [
+        {
+          "name": "is_mint_enabled",
+          "type": "bool"
+        }
+      ]
+    },
+    {
+      "name": "set_is_payout_enabled",
+      "discriminator": [
+        223,
+        16,
+        3,
+        87,
+        197,
+        83,
+        169,
+        4
+      ],
+      "accounts": [
+        {
+          "name": "config",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "config.player_id",
+                "account": "PlayerMintConfig"
+              },
+              {
+                "kind": "account",
+                "path": "config.timestamp",
+                "account": "PlayerMintConfig"
+              }
+            ]
+          }
+        },
+        {
+          "name": "authority",
+          "signer": true
+        }
+      ],
+      "args": [
+        {
+          "name": "is_payout_enabled",
+          "type": "bool"
+        }
+      ]
+    },
+    {
       "name": "test_mint_rewards_only",
       "discriminator": [
         138,
@@ -2429,14 +2537,6 @@
         },
         {
           "name": "is_projected",
-          "type": "bool"
-        },
-        {
-          "name": "mint_enabled",
-          "type": "bool"
-        },
-        {
-          "name": "payout_enabled",
           "type": "bool"
         }
       ]

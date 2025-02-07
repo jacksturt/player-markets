@@ -5,6 +5,8 @@ pub mod initialize_projection_oracle;
 pub mod initialize_quote;
 pub mod mint_tokens;
 pub mod payout;
+pub mod set_is_mint_enabled;
+pub mod set_is_payout_enabled;
 pub mod update_projection_oracle;
 
 pub use close_mint_accounts::*;
@@ -14,4 +16,6 @@ pub use initialize_projection_oracle::*;
 pub use initialize_quote::*;
 pub use mint_tokens::*;
 pub use payout::*;
+pub use set_is_mint_enabled::*;
+pub use set_is_payout_enabled::*;
 pub use update_projection_oracle::*;

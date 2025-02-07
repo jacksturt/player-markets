@@ -84,8 +84,6 @@ export async function GET(request: Request) {
             player.sportsDataId.toString(),
             player.mint!.timestamp,
             camelCaseData.actualFantasyPointsPpr,
-            false,
-            true,
             false
           );
         }
@@ -140,9 +138,7 @@ export async function GET(request: Request) {
             player.sportsDataId.toString(),
             player.mint!.timestamp,
             camelCaseData.projectedFantasyPointsPpr,
-            true,
-            true,
-            false
+            true
           );
         }
       }
@@ -218,9 +214,7 @@ function updateProjectionOracle(
   playerId: string,
   timestamp: string,
   projection: number,
-  isProjected: boolean,
-  isMintingEnabled: boolean,
-  isPayoutEnabled: boolean
+  isProjected: boolean
 ) {
   const connection = new Connection(process.env.RPC_URL!);
   const wallet = new EnvWallet();
@@ -240,12 +234,7 @@ function updateProjectionOracle(
     program.programId
   )[0];
   return program.methods
-    .updateProjectionOracle(
-      projection,
-      isProjected,
-      isMintingEnabled,
-      isPayoutEnabled
-    )
+    .updateProjectionOracle(projection, isProjected)
     .accountsStrict({
       authority: provider.publicKey,
       config: mintConfig,

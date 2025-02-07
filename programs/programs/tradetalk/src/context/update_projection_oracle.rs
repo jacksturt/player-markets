@@ -22,38 +22,12 @@ pub struct UpdateProjectionOracle<'info> {
 }
 
 impl<'info> UpdateProjectionOracle<'info> {
-    pub fn update_projection_oracle(
-        &mut self,
-        points: f64,
-        is_projected: bool,
-        mint_enabled: bool,
-        payout_enabled: bool,
-    ) -> Result<()> {
+    pub fn update_projection_oracle(&mut self, points: f64, is_projected: bool) -> Result<()> {
         require!(
             self.authority.key().to_string() == UPDATE_PLAYER_PROJECTIONS_PUBKEY
                 || self.authority.key().to_string() == ADMIN_PUBKEY,
             OracleError::UnauthorizedAuthority
         );
-        msg!("mint_enabled: {}", mint_enabled);
-        msg!("payout_enabled: {}", payout_enabled);
-
-        if self.config.minting_enabled != mint_enabled {
-            require!(
-                self.authority.key().to_string() == ADMIN_PUBKEY,
-                OracleError::AdminOnlyUnlock
-            );
-            msg!("Setting minting_enabled to {}", mint_enabled);
-            self.config.minting_enabled = mint_enabled;
-        }
-
-        if self.config.payout_enabled != payout_enabled {
-            require!(
-                self.authority.key().to_string() == ADMIN_PUBKEY,
-                OracleError::AdminOnlyUnlock
-            );
-            msg!("Setting payout_enabled to {}", payout_enabled);
-            self.config.payout_enabled = payout_enabled;
-        }
 
         // Update player statistics
         if is_projected {

@@ -11,6 +11,8 @@ import {
   CloseMintAccounts,
   FinishCreatingMarket,
   VaultsList,
+  SetMintingEnabled,
+  SetPayoutEnabled,
 } from "./web-ui";
 import { PublicKey } from "@solana/web3.js";
 
@@ -30,7 +32,7 @@ export default function MarketAdmin() {
   }
 
   return (
-    <div className="w-full">
+    <div className="w-full bg-white">
       <div className=" w-full">
         <div className="flex flex-col gap-4">
           <QuoteTokenCreate />
@@ -42,6 +44,8 @@ export default function MarketAdmin() {
           <CloseMintAccounts />
           <FinishCreatingMarket />
           <VaultsList />
+          <SetMintingEnabled />
+          <SetPayoutEnabled />
         </div>
       </div>
     </div>

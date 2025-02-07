@@ -604,8 +604,6 @@ export function UpdateProjectionOracle() {
   const projection = 30.5;
   const timestamp = "1738892110488";
   const isProjected = true;
-  const isMintingEnabled = true;
-  const isPayoutEnabled = false;
 
   return (
     <button
@@ -616,8 +614,6 @@ export function UpdateProjectionOracle() {
           timestamp,
           projection,
           isProjected,
-          isMintingEnabled,
-          isPayoutEnabled,
         })
       }
       disabled={updateProjectionOracle.isPending}
@@ -639,6 +635,54 @@ export function CancelAllOrders() {
       disabled={cancelAllOrders.isPending}
     >
       Cancel All Orders {cancelAllOrders.isPending && "..."}
+    </button>
+  );
+}
+
+export function SetMintingEnabled() {
+  const { setMintingEnabled } = useMarketAdmin();
+  const playerId = "SF";
+  const timestamp = "1738891799449";
+  const isMintingEnabled = true;
+
+  return (
+    <button
+      className="btn btn-xs lg:btn-md btn-primary"
+      onClick={() =>
+        setMintingEnabled.mutateAsync({
+          playerId,
+          timestamp,
+          isMintingEnabled,
+        })
+      }
+      disabled={setMintingEnabled.isPending}
+    >
+      Set Minting {isMintingEnabled ? "Enabled" : "Disabled"} for {playerId}
+      {setMintingEnabled.isPending && "..."}
+    </button>
+  );
+}
+
+export function SetPayoutEnabled() {
+  const { setPayoutEnabled } = useMarketAdmin();
+  const playerId = "SF";
+  const timestamp = "1738891799449";
+  const isPayoutEnabled = false;
+
+  return (
+    <button
+      className="btn btn-xs lg:btn-md btn-primary"
+      onClick={() =>
+        setPayoutEnabled.mutateAsync({
+          playerId,
+          timestamp,
+          isPayoutEnabled,
+        })
+      }
+      disabled={setPayoutEnabled.isPending}
+    >
+      Set Payout {isPayoutEnabled ? "Enabled" : "Disabled"} for {playerId}
+      {setPayoutEnabled.isPending && "..."}
     </button>
   );
 }
