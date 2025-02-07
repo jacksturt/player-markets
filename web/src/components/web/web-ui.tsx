@@ -6,7 +6,6 @@ import {
   useMarkets,
   useMarketAdmin,
   usePlayerMarket,
-  usePlayerMarketWithParams,
   useQuoteToken,
   useMyMarket,
   usePlayerToken,
@@ -28,10 +27,7 @@ export const Trade = ({
 }) => {
   const [price, setPrice] = useState("");
   const [quantity, setQuantity] = useState("");
-  const { market } = usePlayerMarketWithParams();
-  const { depositAndPlaceBuyOrder, maybeMintDepositAndSell } = useMyMarket({
-    marketAddress: market.data?.address!,
-  });
+  const { depositAndPlaceBuyOrder, maybeMintDepositAndSell } = useMyMarket();
 
   const { selectedOrderType, setSelectedOrderType } =
     usePlayerMarketCardStore();
@@ -236,14 +232,10 @@ export const Trade2 = () => {
   const [quantity, setQuantity] = useState("");
   const [actualCost, setActualCost] = useState(0);
   const { quoteTokenBalance } = useQuoteToken();
-  const { playerStatsAccount, market } = usePlayerMarketWithParams();
+  const { playerStatsAccount, market } = usePlayerMarket();
   const { depositAndPlaceBuyOrder, maybeMintDepositAndSell, balances } =
-    useMyMarket({
-      marketAddress: market.data?.address!,
-    });
-  const { playerTokenBalance } = usePlayerToken({
-    marketAddress: market.data?.address!,
-  });
+    useMyMarket();
+  const { playerTokenBalance } = usePlayerToken();
   const [placeOrderError, setPlaceOrderError] = useState("");
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -600,9 +592,7 @@ export function VaultsList() {
 
 export function UpdateProjectionOracle() {
   const { updateProjectionOracle } = useMarketAdmin();
-  const playerId = "DET";
   const projection = 30.5;
-  const timestamp = "1738892110488";
   const isProjected = true;
 
   return (
@@ -610,8 +600,6 @@ export function UpdateProjectionOracle() {
       className="btn btn-xs lg:btn-md btn-primary"
       onClick={() =>
         updateProjectionOracle.mutateAsync({
-          playerId,
-          timestamp,
           projection,
           isProjected,
         })
@@ -624,10 +612,7 @@ export function UpdateProjectionOracle() {
 }
 
 export function CancelAllOrders() {
-  const { market } = usePlayerMarketWithParams();
-  const { cancelAllOrders } = useMyMarket({
-    marketAddress: market.data?.address!,
-  });
+  const { cancelAllOrders } = useMyMarket();
   return (
     <button
       className="btn btn-xs lg:btn-md btn-primary"
@@ -650,8 +635,6 @@ export function SetMintingEnabled() {
       className="btn btn-xs lg:btn-md btn-primary"
       onClick={() =>
         setMintingEnabled.mutateAsync({
-          playerId,
-          timestamp,
           isMintingEnabled,
         })
       }
@@ -674,8 +657,6 @@ export function SetPayoutEnabled() {
       className="btn btn-xs lg:btn-md btn-primary"
       onClick={() =>
         setPayoutEnabled.mutateAsync({
-          playerId,
-          timestamp,
           isPayoutEnabled,
         })
       }
@@ -695,12 +676,7 @@ export function CloseMintAccounts() {
   return (
     <button
       className="btn btn-xs lg:btn-md btn-primary"
-      onClick={() =>
-        closeMintAccounts.mutateAsync({
-          playerId,
-          timestamp,
-        })
-      }
+      onClick={() => closeMintAccounts.mutateAsync()}
       disabled={closeMintAccounts.isPending}
     >
       Close Mint Accounts {closeMintAccounts.isPending && "..."}
@@ -709,10 +685,7 @@ export function CloseMintAccounts() {
 }
 
 export function ClaimSeat() {
-  const { market } = usePlayerMarketWithParams();
-  const { claimSeat } = useManifestClient({
-    marketAddress: market.data?.address!,
-  });
+  const { claimSeat } = useManifestClient();
 
   return (
     <button
@@ -726,10 +699,7 @@ export function ClaimSeat() {
 }
 
 export function WithdrawAll() {
-  const { market } = usePlayerMarketWithParams();
-  const { withdrawAll } = useMyMarket({
-    marketAddress: market.data?.address!,
-  });
+  const { withdrawAll } = useMyMarket();
 
   return (
     <button
@@ -743,8 +713,7 @@ export function WithdrawAll() {
 }
 
 export function Payout() {
-  const { market } = usePlayerMarketWithParams();
-  const { payout } = useMyMarket({ marketAddress: market.data?.address! });
+  const { payout } = useMyMarket();
 
   return (
     <button

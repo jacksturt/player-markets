@@ -31,6 +31,22 @@ import { Market, Wrapper, WrapperMarketInfo, WrapperData } from "manifest/src";
 import { api } from "@/trpc/react";
 import { useParams } from "next/navigation";
 import { bignum } from "@metaplex-foundation/beet";
+export function useCurrentMarket() {
+  const [marketAddress, setMarketAddress] = useState<string>("");
+
+  const marketPublicKey = useMemo(() => {
+    if (marketAddress && marketAddress !== "")
+      return new PublicKey(marketAddress);
+    return null;
+  }, [marketAddress]);
+
+  return {
+    marketPublicKey,
+    setMarketAddress,
+    marketAddress,
+  };
+}
+
 export function useQuoteToken() {
   const { connection } = useConnection();
   const transactionToast = useTransactionToast();
@@ -195,11 +211,10 @@ export function useQuoteToken() {
 
 export function useMarketAdmin() {
   const transactionToast = useTransactionToast();
+  const { marketAddress } = useCurrentMarket();
+  const { market, playerId, timestamp } = usePlayerMarket();
   const { program, accounts, quoteToken } = useQuoteToken();
   const provider = useAnchorProvider();
-  const [playerId, setPlayerId] = useState<string>("");
-  const [timestamp, setTimestamp] = useState<string>("");
-  const [playerTokenMint, setPlayerTokenMint] = useState<string>("");
   const createMint = api.mint.create.useMutation();
   const createMarketAPI = api.market.create.useMutation();
   const createTeamAPI = api.team.create.useMutation();
@@ -273,9 +288,6 @@ export function useMarketAdmin() {
           associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
         })
         .rpc();
-      setPlayerId(playerId);
-      setTimestamp(timestamp);
-      setPlayerTokenMint(player_token_mint.toBase58());
       return {
         signature,
         playerId,
@@ -443,9 +455,6 @@ export function useMarketAdmin() {
           associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
         })
         .rpc();
-      setPlayerId(playerId);
-      setTimestamp(timestamp);
-      setPlayerTokenMint(team_token_mint.toBase58());
       return {
         signature,
         teamId,
@@ -626,25 +635,25 @@ export function useMarketAdmin() {
   const updateProjectionOracle = useMutation({
     mutationKey: ["markets", "update-projection-oracle"],
     mutationFn: async ({
-      playerId,
-      timestamp,
       projection,
       isProjected,
     }: {
-      playerId: string;
-      timestamp: string;
       projection: number;
       isProjected: boolean;
     }) => {
       const mintConfig = PublicKey.findProgramAddressSync(
-        [Buffer.from("config"), Buffer.from(playerId), Buffer.from(timestamp)],
+        [
+          Buffer.from("config"),
+          Buffer.from(playerId.data!),
+          Buffer.from(timestamp.data!),
+        ],
         program.programId
       )[0];
       const playerStats = PublicKey.findProgramAddressSync(
         [
           Buffer.from("player_stats"),
-          Buffer.from(playerId),
-          Buffer.from(timestamp),
+          Buffer.from(playerId.data!),
+          Buffer.from(timestamp.data!),
         ],
         program.programId
       )[0];
@@ -672,17 +681,13 @@ export function useMarketAdmin() {
 
   const setMintingEnabled = useMutation({
     mutationKey: ["markets", "set-minting-enabled"],
-    mutationFn: async ({
-      playerId,
-      timestamp,
-      isMintingEnabled,
-    }: {
-      playerId: string;
-      timestamp: string;
-      isMintingEnabled: boolean;
-    }) => {
+    mutationFn: async ({ isMintingEnabled }: { isMintingEnabled: boolean }) => {
       const mintConfig = PublicKey.findProgramAddressSync(
-        [Buffer.from("config"), Buffer.from(playerId), Buffer.from(timestamp)],
+        [
+          Buffer.from("config"),
+          Buffer.from(playerId.data!),
+          Buffer.from(timestamp.data!),
+        ],
         program.programId
       )[0];
       const signature = await program.methods
@@ -703,17 +708,13 @@ export function useMarketAdmin() {
 
   const setPayoutEnabled = useMutation({
     mutationKey: ["markets", "set-payout-enabled"],
-    mutationFn: async ({
-      playerId,
-      timestamp,
-      isPayoutEnabled,
-    }: {
-      playerId: string;
-      timestamp: string;
-      isPayoutEnabled: boolean;
-    }) => {
+    mutationFn: async ({ isPayoutEnabled }: { isPayoutEnabled: boolean }) => {
       const mintConfig = PublicKey.findProgramAddressSync(
-        [Buffer.from("config"), Buffer.from(playerId), Buffer.from(timestamp)],
+        [
+          Buffer.from("config"),
+          Buffer.from(playerId.data!),
+          Buffer.from(timestamp.data!),
+        ],
         program.programId
       )[0];
       const signature = await program.methods
@@ -734,22 +735,20 @@ export function useMarketAdmin() {
 
   const closeMintAccounts = useMutation({
     mutationKey: ["markets", "close-mint-accounts"],
-    mutationFn: async ({
-      playerId,
-      timestamp,
-    }: {
-      playerId: string;
-      timestamp: string;
-    }) => {
+    mutationFn: async () => {
       const mintConfig = PublicKey.findProgramAddressSync(
-        [Buffer.from("config"), Buffer.from(playerId), Buffer.from(timestamp)],
+        [
+          Buffer.from("config"),
+          Buffer.from(playerId.data!),
+          Buffer.from(timestamp.data!),
+        ],
         program.programId
       )[0];
       const playerStats = PublicKey.findProgramAddressSync(
         [
           Buffer.from("player_stats"),
-          Buffer.from(playerId),
-          Buffer.from(timestamp),
+          Buffer.from(playerId.data!),
+          Buffer.from(timestamp.data!),
         ],
         program.programId
       )[0];
@@ -831,7 +830,8 @@ export function useMarkets() {
   };
 }
 
-export function usePlayerMarket({ marketAddress }: { marketAddress: string }) {
+export function usePlayerMarket() {
+  const { marketAddress, marketPublicKey } = useCurrentMarket();
   const transactionToast = useTransactionToast();
   const { program, accounts, quoteToken } = useQuoteToken();
   const provider = useAnchorProvider();
@@ -854,11 +854,6 @@ export function usePlayerMarket({ marketAddress }: { marketAddress: string }) {
       refetchInterval: 10000,
     }
   );
-
-  const marketPK = useQuery({
-    queryKey: ["market-pk", { marketAddress }],
-    queryFn: () => new PublicKey(marketAddress),
-  });
 
   const timestamp = useQuery({
     queryKey: ["timestamp", { marketAddress }],
@@ -944,11 +939,12 @@ export function usePlayerMarket({ marketAddress }: { marketAddress: string }) {
     queryFn: async () => {
       const market = await Market.loadFromAddress({
         connection: provider.connection,
-        address: marketPK.data!,
+        address: marketPublicKey!,
       });
       const bids = await market.bids();
       return bids;
     },
+    enabled: !!marketPublicKey,
     refetchInterval: 10000,
   });
 
@@ -957,11 +953,12 @@ export function usePlayerMarket({ marketAddress }: { marketAddress: string }) {
     queryFn: async () => {
       const market = await Market.loadFromAddress({
         connection: provider.connection,
-        address: marketPK.data!,
+        address: marketPublicKey!,
       });
       const asks = await market.asks();
       return asks;
     },
+    enabled: !!marketPublicKey,
     refetchInterval: 10000,
   });
 
@@ -990,17 +987,14 @@ export function usePlayerMarket({ marketAddress }: { marketAddress: string }) {
   };
 }
 
-export const usePlayerToken = ({
-  marketAddress,
-}: {
-  marketAddress: string;
-}) => {
+export const usePlayerToken = () => {
+  const { marketAddress } = useCurrentMarket();
   const { program, accounts, quoteToken } = useQuoteToken();
   const createOrder = api.order.create.useMutation();
   const provider = useAnchorProvider();
   const { publicKey, wallet } = useWallet();
   const { capsulePubkey, solanaSigner } = useCapsuleWallet();
-  const { playerId, timestamp } = usePlayerMarket({ marketAddress });
+  const { playerId, timestamp } = usePlayerMarket();
   const playerTokenMint = useQuery({
     queryKey: ["player-token-mint"],
     queryFn: () => {
@@ -1099,11 +1093,8 @@ export const useCapsuleWallet = () => {
   return { capsulePubkey, solanaSigner };
 };
 
-export const useManifestClient = ({
-  marketAddress,
-}: {
-  marketAddress: string;
-}) => {
+export const useManifestClient = () => {
+  const { marketAddress } = useCurrentMarket();
   const provider = useAnchorProvider();
   const { publicKey, wallet } = useWallet();
   const { capsulePubkey } = useCapsuleWallet();
@@ -1163,20 +1154,19 @@ export const useManifestClient = ({
   return { manifestClient, hasSeatBeenClaimed, claimSeat };
 };
 
-export function useMyMarket({ marketAddress }: { marketAddress: string }) {
+export function useMyMarket() {
+  const { marketAddress } = useCurrentMarket();
   const { playerId, timestamp, vault, mintConfigAccount, playerStatsAccount } =
-    usePlayerMarket({ marketAddress });
+    usePlayerMarket();
 
-  const { manifestClient, hasSeatBeenClaimed } = useManifestClient({
-    marketAddress,
-  });
+  const { manifestClient, hasSeatBeenClaimed } = useManifestClient();
   const client = manifestClient.data!;
   const {
     playerTokenMint,
     playerTokenAccount,
     playerTokenBalance,
     playerTokenMintAccount,
-  } = usePlayerToken({ marketAddress });
+  } = usePlayerToken();
   const { quoteTokenAccount } = useQuoteToken();
   const transactionToast = useTransactionToast();
   const lastOrderId = api.order.getLastOrderIdForUser.useQuery(
@@ -1789,13 +1779,4 @@ export function useMyMarket({ marketAddress }: { marketAddress: string }) {
     mintRecord,
     currentMinterRewards,
   };
-}
-
-export function usePlayerMarketWithParams() {
-  const { marketAddress: marketAddressParam } = useParams();
-  const marketAddress =
-    typeof marketAddressParam === "string"
-      ? marketAddressParam
-      : marketAddressParam[0];
-  return usePlayerMarket({ marketAddress: marketAddress! });
 }

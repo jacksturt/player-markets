@@ -1,11 +1,11 @@
 "use client";
+import MarketAdmin from "@/components/web/market-admin";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import MarketFeature from "@/components/web/market-feature";
 import { useCurrentMarket } from "@/components/web/market-data-access";
 import { useEffect } from "react";
 
-export default function MarketPage({
+export default function AdminPage({
   params,
 }: {
   params: { marketAddress: string[] };
@@ -26,5 +26,5 @@ export default function MarketPage({
     return null;
   }
 
-  return <MarketFeature />;
+  return <MarketAdmin />;
 }

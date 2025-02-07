@@ -35,8 +35,8 @@ export default function MarketAdmin() {
     <div className="w-full bg-white">
       <div className=" w-full">
         <div className="flex flex-col gap-4">
-          <QuoteTokenCreate />
-          <QuoteTokenFaucet />
+          {/* <QuoteTokenCreate /> */}
+          {/* <QuoteTokenFaucet /> */}
           <CreateTeam />
           <InitTeamMint />
           <InitPlayerMint />

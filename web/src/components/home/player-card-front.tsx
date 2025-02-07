@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { NFL_POSITIONS } from "@/lib/constants";
 import { TrendingDown, TrendingUp } from "lucide-react";
 import Link from "next/link";
-import { usePlayerMarket } from "../web/market-data-access";
+import { useCurrentMarket, usePlayerMarket } from "../web/market-data-access";
 import { CardView, usePlayerMarketCardStore } from "@/lib/zustand";
 
 export default function PlayerCardFront({
@@ -11,9 +11,8 @@ export default function PlayerCardFront({
 }: {
   marketAddress: string;
 }) {
-  const { market: offChainMarket } = usePlayerMarket({
-    marketAddress,
-  });
+  const { market: offChainMarket } = usePlayerMarket();
+  const { setMarketAddress } = useCurrentMarket();
   const { setSelectedOrderType, setCardView, setActivePlayerMarket } =
     usePlayerMarketCardStore();
 
@@ -66,6 +65,7 @@ export default function PlayerCardFront({
             onClick={(e) => {
               e.stopPropagation();
               setActivePlayerMarket(marketAddress);
+              setMarketAddress(marketAddress);
               setSelectedOrderType("buy");
               setCardView(CardView.BACK);
             }}
@@ -78,6 +78,7 @@ export default function PlayerCardFront({
             onClick={(e) => {
               e.stopPropagation();
               setActivePlayerMarket(marketAddress);
+              setMarketAddress(marketAddress);
               setSelectedOrderType("sell");
               setCardView(CardView.BACK);
             }}

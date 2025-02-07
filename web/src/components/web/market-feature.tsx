@@ -6,7 +6,6 @@ import {
   useMarkets,
   useMyMarket,
   usePlayerMarket,
-  usePlayerMarketWithParams,
   usePlayerToken,
   useQuoteToken,
 } from "./market-data-access";
@@ -45,11 +44,7 @@ const sb = SendbirdChat.init({
   modules: [new OpenChannelModule()],
 }) as SendbirdOpenChat;
 
-export default function MarketFeature({
-  marketAddress,
-}: {
-  marketAddress: string;
-}) {
+export default function MarketFeature() {
   const [username, setUsername] = useState<string>("");
   const [messages, setMessages] = useState<
     {
@@ -69,9 +64,9 @@ export default function MarketFeature({
     playerStatsAccount,
     market,
     mintConfigAccount,
-  } = usePlayerMarketWithParams();
+  } = usePlayerMarket();
 
-  const { playerTokenBalance } = usePlayerToken({ marketAddress });
+  const { playerTokenBalance } = usePlayerToken();
 
   const {
     currentMinterRewards,
@@ -80,16 +75,12 @@ export default function MarketFeature({
     myOrders,
     depositAndPlaceBuyOrder,
     maybeMintDepositAndSell,
-  } = useMyMarket({
-    marketAddress,
-  });
+  } = useMyMarket();
 
   const { publicKey } = useWallet();
   const { quoteTokenBalance } = useQuoteToken();
   const { capsulePubkey } = useCapsuleWallet();
-  const { hasSeatBeenClaimed } = useManifestClient({
-    marketAddress,
-  });
+  const { hasSeatBeenClaimed } = useManifestClient();
   const queryClient = useQueryClient();
   const utils = api.useUtils();
   const myKey = publicKey ?? capsulePubkey.data!;
