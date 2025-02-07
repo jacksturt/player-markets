@@ -7,7 +7,7 @@ import HomeIcon from "../icons/home";
 import WalletIcon from "../icons/wallet";
 import TrendUpIcon from "../icons/trend-up";
 import Link from "next/link";
-import { LogOut } from "lucide-react";
+import AccountButtons from "@/components/wallet/account-buttons";
 import { cn } from "@/lib/utils";
 
 export default function Navbar() {
@@ -63,8 +63,9 @@ export default function Navbar() {
       </div>
       {/* login/logout */}
       <div className="flex items-center gap-2">
-        <LogOut className="w-4 h-4 text-white" />
-        <p className="text-white text-sm font-clashGroteskMed">Logout</p>
+        {/* <LogOut className="w-4 h-4 text-white" />
+        <p className="text-white text-sm font-clashGroteskMed">Logout</p> */}
+        <AccountButtons />
       </div>
     </div>
   );

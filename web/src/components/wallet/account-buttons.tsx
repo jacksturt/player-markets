@@ -1,49 +1,17 @@
 "use client";
 
-import { Suspense } from "react";
-import "./globals.css";
-import { SolanaProvider } from "@/components/solana/solana-provider";
-import { ReactQueryProvider } from "./react-query-provider";
-import { TRPCReactProvider } from "@/trpc/react";
-import { SessionProvider } from "next-auth/react";
-import { Toaster } from "react-hot-toast";
+import { useState, useEffect } from "react";
+import { useSession } from "next-auth/react";
+import { useRouter, usePathname } from "next/navigation";
+import { PublicKey } from "@solana/web3.js";
+import { useWallet } from "@solana/wallet-adapter-react";
+import { Button } from "@/components/ui/button";
+import { capsule } from "@/lib/capsule";
+import { shortenAddress } from "@/lib/utils";
+import { IconCopy } from "@tabler/icons-react";
+import { WalletButton } from "@/components/solana/solana-provider";
 
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
-  return (
-    <html lang="en" className="bg-background">
-      <body className="h-screen bg-[url('/background.png')] bg-cover bg-center bg-fixed">
-        {/* Dark overlay */}
-        <SessionProvider>
-          <ReactQueryProvider>
-            <SolanaProvider>
-              <TRPCReactProvider>
-                <Toaster />
-                <Suspense
-                  fallback={
-                    <div className="text-center my-32">
-                      <span className="loading loading-spinner loading-lg"></span>
-                    </div>
-                  }
-                >
-                  <main className="relative max-w-screen min-h-screen">
-                    {children}
-                  </main>
-                </Suspense>
-              </TRPCReactProvider>
-            </SolanaProvider>
-          </ReactQueryProvider>
-        </SessionProvider>
-      </body>
-    </html>
-  );
-}
-<<<<<<< HEAD
-
-function AccountButtons() {
+export default function AccountButtons() {
   const [isActive, setIsActive] = useState(false);
   const router = useRouter();
   const pathname = usePathname();
@@ -116,5 +84,3 @@ function AccountButtons() {
     </div>
   );
 }
-=======
->>>>>>> 578a3fd7aed4240adbee69d5383ee983859e968b
