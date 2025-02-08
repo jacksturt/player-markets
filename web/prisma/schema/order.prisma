@@ -8,8 +8,8 @@ model Order {
     type           OrderType
     isBid          Boolean
     price          Decimal
-    numBaseTokens  Int
-    numQuoteTokens Int
+    numBaseTokens  Decimal
+    numQuoteTokens Decimal
     sequenceNumber Int?
     clientOrderId  Int         @default(0)
 
@@ -29,7 +29,7 @@ model Order {
 
 enum OrderStatus {
     PENDING
-    COMPLETED
+    FILLED
     CANCELLED
 }
 

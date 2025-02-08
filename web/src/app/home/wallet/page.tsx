@@ -102,32 +102,7 @@ export default async function WalletPage() {
               <Button>Cancel all</Button>
             </div>
             {/* TODO: open orders.map */}
-            <div className="w-full flex flex-col gap-2 pt-7">
-              <TradeHistoryItem
-                image="/player-temp/diggs.webp"
-                type="buy"
-                ticker="MAHOMES"
-                amount={523}
-                usdValue={869.0}
-                timestamp="Feb 9, 2025 at 7:58:06PM"
-              />
-              <TradeHistoryItem
-                image="/player-temp/diggs.webp"
-                type="sell"
-                ticker="MAHOMES"
-                amount={190}
-                usdValue={341.0}
-                timestamp="Feb 8, 2025 at 6:36:46PM"
-              />
-              <TradeHistoryItem
-                image="/player-temp/diggs.webp"
-                type="buy"
-                ticker="MAHOMES"
-                amount={45}
-                usdValue={23.0}
-                timestamp="Feb 8, 2025 at 5:33:11PM"
-              />
-            </div>
+            <div className="w-full flex flex-col gap-2 pt-7"></div>
           </div>
           {/* trade history */}
           <div className="w-full flex flex-col">
@@ -138,32 +113,7 @@ export default async function WalletPage() {
               </p>
             </div>
             {/* TODO: trade history.map */}
-            <div className="w-full flex flex-col gap-2 pt-7">
-              <TradeHistoryItem
-                image="/player-temp/diggs.webp"
-                type="buy"
-                ticker="MAHOMES"
-                amount={523}
-                usdValue={869.0}
-                timestamp="Feb 9, 2025 at 7:58:06PM"
-              />
-              <TradeHistoryItem
-                image="/player-temp/diggs.webp"
-                type="sell"
-                ticker="MAHOMES"
-                amount={190}
-                usdValue={341.0}
-                timestamp="Feb 8, 2025 at 6:36:46PM"
-              />
-              <TradeHistoryItem
-                image="/player-temp/diggs.webp"
-                type="buy"
-                ticker="MAHOMES"
-                amount={45}
-                usdValue={23.0}
-                timestamp="Feb 8, 2025 at 5:33:11PM"
-              />
-            </div>
+            <div className="w-full flex flex-col gap-2 pt-7"></div>
           </div>
         </div>
         <ProfileCard />

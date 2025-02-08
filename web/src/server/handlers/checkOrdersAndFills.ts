@@ -11,7 +11,14 @@ import { bs58 } from "@coral-xyz/anchor/dist/cjs/utils/bytes";
 import { PlaceOrderLogResult } from "@/lib/types/manifest";
 import { FillLogResult } from "@/lib/types/manifest";
 import { convertU128 } from "manifest/src/utils/numbers";
-import { Market, Mint, OrderType, Player, Team } from "@prisma/client";
+import {
+  Market,
+  Mint,
+  OrderStatus,
+  OrderType,
+  Player,
+  Team,
+} from "@prisma/client";
 
 export async function checkOrdersAndFills(marketAddress: string) {
   const market = await db.market.findUnique({
@@ -60,6 +67,7 @@ export async function checkOrdersAndFills(marketAddress: string) {
     }
     const handleSignaturesPromiseArray = signatures.map(
       async (marketAddressAndSignature) => {
+        await new Promise((resolve) => setTimeout(resolve, 1000));
         await handleSignature(marketAddressAndSignature, market);
       }
     );
@@ -113,7 +121,7 @@ async function handleSignature(
     console.log("No program datas");
     return;
   }
-
+  console.log("programDatas", programDatas);
   for (const programDataEntry of programDatas) {
     const programData = programDataEntry.split(" ")[2];
     const byteArray: Uint8Array = Uint8Array.from(atob(programData), (c) =>
@@ -129,7 +137,7 @@ async function handleSignature(
       });
       if (maybeTrade) {
         console.log("Skipping already processed trade", signature.signature);
-        return;
+        continue;
       }
       const deserializedFillLog: FillLog = FillLog.deserialize(
         buffer.subarray(8)
@@ -177,6 +185,15 @@ async function handleSignature(
 
       if (!makerOrder) {
         console.warn("Maker order not found");
+      } else {
+        await db.order.update({
+          where: {
+            id: makerOrder.id,
+          },
+          data: {
+            status: OrderStatus.FILLED,
+          },
+        });
       }
 
       const takerOrder = await db.order.findFirst({
@@ -189,6 +206,15 @@ async function handleSignature(
 
       if (!takerOrder) {
         console.warn("Taker order not found");
+      } else {
+        await db.order.update({
+          where: {
+            id: takerOrder.id,
+          },
+          data: {
+            status: OrderStatus.FILLED,
+          },
+        });
       }
       if (market.player) {
         const buyAndSellData = fillData.takerIsBuy
@@ -196,17 +222,21 @@ async function handleSignature(
               buyOrderId: takerOrder?.id,
               buyerId: takerWallet?.user.id,
               buyerWalletId: takerWallet?.id,
+              buyerSequenceNumber: parseInt(fillData.takerSequenceNumber),
               sellOrderId: makerOrder?.id,
               sellerId: makerWallet?.user.id,
               sellerWalletId: makerWallet?.id,
+              sellerSequenceNumber: parseInt(fillData.makerSequenceNumber),
             }
           : {
               buyOrderId: makerOrder?.id,
               buyerId: makerWallet?.user.id,
               buyerWalletId: makerWallet?.id,
+              buyerSequenceNumber: parseInt(fillData.makerSequenceNumber),
               sellOrderId: takerOrder?.id,
               sellerId: takerWallet?.user.id,
               sellerWalletId: takerWallet?.id,
+              sellerSequenceNumber: parseInt(fillData.takerSequenceNumber),
             };
         const trade = await db.trade.create({
           data: {
@@ -227,17 +257,21 @@ async function handleSignature(
               buyOrderId: takerOrder?.id,
               buyerId: takerWallet?.user.id,
               buyerWalletId: takerWallet?.id,
+              buyerSequenceNumber: parseInt(fillData.takerSequenceNumber),
               sellOrderId: makerOrder?.id,
               sellerId: makerWallet?.user.id,
               sellerWalletId: makerWallet?.id,
+              sellerSequenceNumber: parseInt(fillData.makerSequenceNumber),
             }
           : {
               buyOrderId: makerOrder?.id,
               buyerId: makerWallet?.user.id,
               buyerWalletId: makerWallet?.id,
+              buyerSequenceNumber: parseInt(fillData.makerSequenceNumber),
               sellOrderId: takerOrder?.id,
               sellerId: takerWallet?.user.id,
               sellerWalletId: takerWallet?.id,
+              sellerSequenceNumber: parseInt(fillData.takerSequenceNumber),
             };
         const trade = await db.trade.create({
           data: {
@@ -292,14 +326,56 @@ async function handleSignature(
         },
       });
 
+      const sequenceNumber = parseInt(orderData.orderSequenceNumber);
+      const isBid = orderData.isBid;
+      const tradeWhere = isBid
+        ? {
+            marketId: market?.id,
+            buyerSequenceNumber: sequenceNumber,
+          }
+        : {
+            marketId: market?.id,
+            sellerSequenceNumber: sequenceNumber,
+          };
+
+      console.log("tradeWhere", tradeWhere);
+
+      const maybeTrade = await db.trade.findFirst({
+        where: tradeWhere,
+      });
+      console.log("maybeTrade", maybeTrade);
       const order = await db.order.update({
         where: {
           id: maybeOrder?.id,
         },
         data: {
           sequenceNumber: parseInt(orderData.orderSequenceNumber),
+          status: maybeTrade ? OrderStatus.FILLED : OrderStatus.PENDING,
         },
       });
+
+      if (maybeTrade) {
+        if (isBid && !maybeTrade.buyOrderId) {
+          await db.trade.update({
+            where: {
+              id: maybeTrade.id,
+            },
+            data: {
+              buyOrderId: maybeOrder?.id,
+            },
+          });
+        } else if (!isBid && !maybeTrade.sellOrderId) {
+          await db.trade.update({
+            where: {
+              id: maybeTrade.id,
+            },
+            data: {
+              sellOrderId: maybeOrder?.id,
+            },
+          });
+        }
+      }
+
       await db.market.update({
         where: {
           id: market?.id,
