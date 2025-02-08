@@ -25,6 +25,7 @@ model Order {
     sellTrades Trade[] @relation("sellOrder")
 
     @@unique([marketId, sequenceNumber, userId, price, type, isBid, numBaseTokens, numQuoteTokens])
+    @@unique([marketId, sequenceNumber, userId])
 }
 
 enum OrderStatus {

@@ -1242,6 +1242,9 @@ export function useMyMarket() {
   const { publicKey, wallet } = useWallet();
   const queryClient = useQueryClient();
   const { capsulePubkey, solanaSigner } = useCapsuleWallet();
+  const cancelOrderDB = api.order.cancelOrderForMarketByUser.useMutation();
+  const cancelAllOrdersDB =
+    api.order.cancelAllOrdersForMarketByUser.useMutation();
 
   const mintRecord = useQuery({
     queryKey: ["mint-record", { marketAddress }],
@@ -1653,6 +1656,9 @@ export function useMyMarket() {
     },
     onSuccess: (signature) => {
       transactionToast(`${signature}`);
+      cancelAllOrdersDB.mutate({
+        marketAddress: marketPK!.toBase58(),
+      });
       return accounts.refetch();
     },
     onError: () => toast.error("Failed to cancel all orders"),
@@ -1675,16 +1681,21 @@ export function useMyMarket() {
         const signature = await provider.connection.sendRawTransaction(
           signed.serialize()
         );
-        return signature;
+        return { signature, clientOrderId };
       } else {
-        return wallet?.adapter.sendTransaction(
+        const signature = await wallet?.adapter.sendTransaction(
           transaction,
           provider.connection
         );
+        return { signature, clientOrderId };
       }
     },
-    onSuccess: (signature) => {
+    onSuccess: ({ signature, clientOrderId }) => {
       transactionToast(`${signature}`);
+      cancelOrderDB.mutate({
+        marketAddress: marketPK!.toBase58(),
+        orderSequenceNumber: clientOrderId,
+      });
       return accounts.refetch();
     },
     onError: () => toast.error("Failed to cancel order"),
