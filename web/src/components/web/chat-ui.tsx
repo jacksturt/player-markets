@@ -1,93 +1,178 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { useCapsuleWallet } from "./market-data-access";
 import Image from "next/image";
 import SendbirdChat from "@sendbird/chat";
-import { OpenChannelModule } from "@sendbird/chat/openChannel";
-import { SendbirdOpenChat } from "node_modules/@sendbird/chat/lib/__definition";
+import {
+  OpenChannelModule,
+  SendbirdOpenChat,
+} from "@sendbird/chat/openChannel";
+import { BaseMessage } from "@sendbird/chat/message";
+import { OpenChannelHandler } from "@sendbird/chat/openChannel";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuTrigger,
 } from "../ui/dropdown-menu";
 import { Button } from "../ui/button";
+import { X } from "lucide-react";
+import MaximizeIcon from "../icons/maximize";
+import { timestampToTime } from "@/utils/sendbird";
 
 const sb = SendbirdChat.init({
   appId: "434D4E2C-4EEF-41DB-AE99-30D00B5AFF1D",
   modules: [new OpenChannelModule()],
 }) as SendbirdOpenChat;
 
+interface FormattedMessage {
+  message: string;
+  sender: string;
+  image: string;
+  timestamp: string;
+}
+
 export default function ChatUI() {
   const { publicKey } = useWallet();
   const { capsulePubkey } = useCapsuleWallet();
-  const [messages, setMessages] = useState<
-    {
-      message: string;
-      sender: string;
-      image: string;
-    }[]
-  >([]);
-  const [username, setUsername] = useState<string>("temp");
+  const [messages, setMessages] = useState<FormattedMessage[]>([]);
   const myKey = publicKey ?? capsulePubkey.data!;
+  const [open, setOpen] = useState(false);
+  const [message, setMessage] = useState("");
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  const scrollToBottom = (item: HTMLDivElement | null, smooth: boolean) => {
+    item?.scrollTo({
+      top: item.scrollHeight,
+      behavior: smooth ? "smooth" : "instant",
+    });
+  };
+
+  const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter") {
+      sendMessage();
+    }
+  };
+
+  const sendMessage = async () => {
+    if (!message.trim()) return;
+
+    try {
+      const channel = await sb.openChannel.getChannel("market");
+      const userMessageParams = {
+        message: message.trim(),
+        data: JSON.stringify({
+          profileUrl: "/player-temp/allen.jpg",
+        }),
+        customType: "userMessage",
+      };
+
+      const userMessage = await channel.sendUserMessage(userMessageParams);
+
+      setMessages((prev) => [
+        ...prev,
+        {
+          message: message.trim(), // Use the message directly
+          sender:
+            myKey.toBase58().slice(0, 5) + "..." + myKey.toBase58().slice(-5),
+          image: "/player-temp/allen.jpg",
+          timestamp: timestampToTime(Date.now()),
+        },
+      ]);
+
+      setMessage("");
+    } catch (err) {
+      console.error("Error sending message:", err);
+    }
+  };
+
+  const formatMessages = (messages: BaseMessage[]) => {
+    return messages.map((message) => {
+      const sender = message.isUserMessage() ? message.sender : null;
+      const senderName = sender
+        ? sender.nickname !== ""
+          ? sender.nickname
+          : sender.userId
+        : null;
+      const timestamp = message.createdAt;
+      let profileUrl = sender?.profileUrl ?? "";
+
+      // Try to get profile URL from data field if it exists
+      if (message.isUserMessage() && message.data) {
+        try {
+          const data = JSON.parse(message.data);
+          profileUrl = data.profileUrl || profileUrl;
+        } catch (e) {
+          console.error("Error parsing message data:", e);
+        }
+      }
+
+      return {
+        message: message.message,
+        sender: senderName ?? "Market",
+        image: profileUrl || "/player-temp/allen.jpg",
+        timestamp: timestampToTime(timestamp),
+      };
+    });
+  };
 
   const connectToChat = async () => {
     const uniqueID = myKey.toBase58();
+    const userNickname = uniqueID.slice(0, 5) + "..." + uniqueID.slice(-5);
+
     await sb.connect(uniqueID);
     await sb.updateCurrentUserInfo({
-      nickname:
-        myKey.toBase58().slice(0, 5) + "..." + myKey.toBase58().slice(-5),
+      nickname: userNickname,
       profileUrl: "/player-temp/allen.jpg",
     });
-    const open_channel_params = {
-      channelUrl: "market",
-      name: "Market",
-    };
-    // const channel = await sb.openChannel.createChannel(open_channel_params);
-    sb.openChannel.getChannel("market").then(async (channel) => {
-      channel.enter();
-      const chat_params = {
-        // UserMessageCreateParams can be imported from @sendbird/chat/message.
-        message: "Hello2",
-      };
-      const params = {
-        prevResultSize: 100,
-        nextResultSize: 100,
-      };
-      const ts = Date.now() - 1000 * 60 * 60 * 24;
-      const messages = await channel.getMessagesByTimestamp(ts, params);
-      setMessages(
-        messages.map((message) => {
-          const sender = message.isUserMessage() ? message.sender : null;
-          const senderName = sender
-            ? sender.nickname !== ""
-              ? sender.nickname
-              : sender.userId
-            : null;
-          return {
+
+    // Add channel handler to listen for real-time updates
+    // TODO: this doesn't seem to be working
+    const channelHandler = new OpenChannelHandler({
+      onMessageReceived: (channel, message) => {
+        // When new message arrives, update messages state
+        const sender = message.isUserMessage() ? message.sender : null;
+        const senderName = sender
+          ? sender.nickname !== ""
+            ? sender.nickname
+            : sender.userId
+          : null;
+        const timestamp = message.createdAt;
+        setMessages((prev) => [
+          ...prev,
+          {
             message: message.message,
             sender: senderName ?? "Market",
             image: sender?.profileUrl ?? "",
-          };
-        })
-      );
+            timestamp: timestampToTime(timestamp),
+          },
+        ]);
+      },
+    });
 
-      channel
-        .sendUserMessage(chat_params)
-        .onPending((message) => {
-          // The pending message for the message being sent has been created.
-          // The pending message has the same reqId value as the corresponding failed/succeeded message.
-        })
-        .onFailed((err, message) => {
-          console.log(err);
-        })
-        .onSucceeded((message) => {
-          // The message is successfully sent to the channel.
-          // The current user can receive messages from other users through the onMessageReceived() method of an event handler.
-        });
+    // Add the channel handler
+    sb.openChannel.addOpenChannelHandler("UNIQUE_HANDLER_ID", channelHandler);
+
+    // Get initial messages
+    sb.openChannel.getChannel("market").then(async (channel) => {
+      channel.enter();
+      const params = {
+        prevResultSize: 50,
+        nextResultSize: 20,
+      };
+      const ts = Date.now() - 1000 * 60 * 60 * 24;
+      const messages = await channel.getMessagesByTimestamp(ts, params);
+      setMessages(formatMessages(messages));
     });
   };
+
+  // Clean up handler when component unmounts
+  useEffect(() => {
+    return () => {
+      sb.openChannel.removeOpenChannelHandler("UNIQUE_HANDLER_ID");
+    };
+  }, []);
 
   useEffect(() => {
     if (myKey) {
@@ -95,9 +180,17 @@ export default function ChatUI() {
     }
   }, [myKey]);
 
+  useEffect(() => {
+    scrollToBottom(messagesEndRef.current, false);
+  }, [messages]);
+
+  useEffect(() => {
+    scrollToBottom(messagesEndRef.current, true);
+  }, [messages]);
+
   return (
     <div className="fixed bottom-[20px] right-[20px]">
-      <DropdownMenu>
+      <DropdownMenu open={open} onOpenChange={setOpen}>
         <DropdownMenuTrigger>
           <Button className="w-[51px] h-[51px] p-0 rounded-full bg-white flex items-center justify-center">
             <Image src="/icon.png" alt="chat" width={30.1} height={34.36} />
@@ -105,7 +198,7 @@ export default function ChatUI() {
         </DropdownMenuTrigger>
         <DropdownMenuContent
           side="top"
-          className="w-[350px] h-[600px] mr-[22px] mb-4 rounded-[22px] z-50 px-3 py-5"
+          className="w-[350px] h-[600px] mr-[22px] mb-4 rounded-[22px] z-50 px-3 py-5 flex flex-col"
         >
           {/* <div>
             <input
@@ -118,9 +211,24 @@ export default function ChatUI() {
             <button onClick={connectToChat}>Connect</button>
           </div> */}
           {/* <div> */}
-          <div className="h-full overflow-y-auto flex flex-col gap-3">
+
+          {/* header */}
+          <div className="h-[51px] flex items-center justify-between px-[5px]">
+            <div className="flex items-center gap-[26px]">
+              {/* x button to close the dropdown */}
+              <button onClick={() => setOpen(false)}>
+                <X className="w-4 h-4" strokeWidth={4} color="#000" />
+              </button>
+              <p className="font-clashMedium">General Chat</p>
+            </div>
+            {/* TODO: function to open expanded chat (page?) */}
+            <MaximizeIcon />
+          </div>
+          <div className="h-[1px] bg-black opacity-[.12] w-full" />
+          {/* messages */}
+          <div className="flex-1 overflow-y-auto flex flex-col gap-3 pt-[5.5px]">
             {messages.map((message, index) => (
-              <div key={"message-" + index} className="flex items-end gap-3">
+              <div key={"message-" + index} className={`flex items-end gap-3`}>
                 <Image
                   src={message.image}
                   alt="profile"
@@ -129,15 +237,35 @@ export default function ChatUI() {
                   height={28}
                 />
                 <div className="flex flex-col gap-1">
-                  <div className="text-xs font-bold">{message.sender}</div>
+                  <div className="text-xs font-bold">
+                    {message.sender ===
+                    myKey.toBase58().slice(0, 5) +
+                      "..." +
+                      myKey.toBase58().slice(-5)
+                      ? "You"
+                      : message.sender.length > 12
+                      ? message.sender.slice(0, 12) + "..."
+                      : message.sender}
+                  </div>
                   <div className="text-sm px-3 py-2 rounded-[16px] bg-[#EEEEEE]">
                     {message.message}
                   </div>
                 </div>
+                <p className="text-xs text-black/50">{message.timestamp}</p>
               </div>
             ))}
+            <div ref={messagesEndRef} />
           </div>
-          {/* </div> */}
+          <div className="w-full pt-6">
+            <input
+              type="text"
+              className="border border-[#DADADA] bg-white text-black rounded-full py-2 px-4 w-full h-[48px]"
+              placeholder="Enter Message"
+              value={message}
+              onChange={(e) => setMessage(e.target.value)}
+              onKeyDown={(e) => handleKeyPress(e)}
+            />
+          </div>
         </DropdownMenuContent>
       </DropdownMenu>
     </div>
