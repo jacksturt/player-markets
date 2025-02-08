@@ -31,6 +31,7 @@ import { Market, Wrapper, WrapperMarketInfo, WrapperData } from "manifest/src";
 import { api } from "@/trpc/react";
 import { useParams } from "next/navigation";
 import { bignum } from "@metaplex-foundation/beet";
+import { useSession } from "next-auth/react";
 export function useCurrentMarket() {
   const queryClient = useQueryClient();
 
@@ -849,6 +850,7 @@ export function usePlayerMarket() {
   const transactionToast = useTransactionToast();
   const { program, accounts, quoteToken } = useQuoteToken();
   const provider = useAnchorProvider();
+  const { data: session } = useSession();
 
   const orders = api.order.readOrdersForMarket.useQuery(
     {
@@ -965,17 +967,22 @@ export function usePlayerMarket() {
         address: marketPublicKey!,
       });
       const bids = await market.bids();
+      console.log("bids", bids);
       if (orders.data) {
         const compoundBids = bids.map((bid) => {
           const order = orders.data.find(
-            (order) => order.sequenceNumber === bid.sequenceNumber
+            (order) =>
+              order.sequenceNumber?.toString() ===
+              bid.sequenceNumber?.toString()
           );
           return {
-            ...bid,
             ...order,
+            ...bid,
             sequenceNumber: bid.sequenceNumber,
+            isMyOrder: order?.userId === session?.user.id,
           };
         });
+        return compoundBids;
       }
       return [];
     },
@@ -991,17 +998,21 @@ export function usePlayerMarket() {
         address: marketPublicKey!,
       });
       const asks = await market.asks();
+      console.log("asks", asks);
       if (orders.data) {
         const compoundAsks = asks.map((ask) => {
           const order = orders.data.find(
-            (order) => order.sequenceNumber === ask.sequenceNumber
+            (order) =>
+              order.sequenceNumber?.toString() === ask.sequenceNumber.toString()
           );
           return {
-            ...ask,
             ...order,
+            ...ask,
             sequenceNumber: ask.sequenceNumber,
+            isMyOrder: order?.userId === session?.user.id,
           };
         });
+        return compoundAsks;
       }
       return [];
     },
@@ -1336,10 +1347,9 @@ export function useMyMarket() {
       numBaseTokens: number;
       tokenPrice: number;
     }) => {
-      const withdrawableQuote = balances.data?.quoteWithdrawableBalanceTokens;
-      if (withdrawableQuote === undefined) {
-        throw new Error("No withdrawable quote tokens");
-      }
+      const withdrawableQuote =
+        balances.data?.quoteWithdrawableBalanceTokens ?? 0;
+
       const neededQuote = tokenPrice * numBaseTokens;
       console.log("neededQuote", neededQuote);
       console.log("withdrawableQuote", withdrawableQuote);

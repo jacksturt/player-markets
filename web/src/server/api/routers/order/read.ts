@@ -40,6 +40,7 @@ export const readOrdersForMarket = protectedProcedure
       include: {
         user: true,
         market: true,
+        baseMint: true,
       },
     });
     return orders;

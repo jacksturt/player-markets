@@ -61,12 +61,14 @@ export const Trade = () => {
   };
 
   useEffect(() => {
+    console.log("balances", balances.data?.quoteWithdrawableBalanceTokens);
     setQuoteTokenWithdrawable(
       balances.data?.quoteWithdrawableBalanceTokens ?? 0
     );
   }, [balances.data]);
 
   useEffect(() => {
+    console.log("playerTokenBalance", balances.data);
     const playerTokens = parseInt(playerTokenBalance.data ?? "0") / 10 ** 6;
     const withdrawableTokens =
       balances.data?.baseWithdrawableBalanceTokens ?? 0;
@@ -139,6 +141,7 @@ export const Trade = () => {
     playerStatsAccount.data,
     balances.data,
     playerTokenBalance.data,
+    market.data,
   ]);
 
   return (
@@ -411,6 +414,9 @@ export const Trade = () => {
                 </>
               )}
             </div>
+            {placeOrderError && (
+              <p className="text-red-500">{placeOrderError}</p>
+            )}
 
             <Button
               type="submit"
@@ -419,6 +425,7 @@ export const Trade = () => {
                   ? "bg-green-500 hover:bg-green-600"
                   : "bg-red-500 hover:bg-red-600"
               } text-black font-medium rounded-[9.5px] transition-colors`}
+              disabled={placeOrderError !== ""}
             >
               {orderType === "buy" ? "Long" : "Short"}
             </Button>
@@ -538,6 +545,7 @@ export const Trade2 = () => {
     playerStatsAccount.data,
     balances.data,
     playerTokenBalance.data,
+    market.data,
   ]);
 
   return (
@@ -1076,17 +1084,29 @@ export const Position = ({
 export type OrderRouterObject =
   RouterOutputs["order"]["readOrdersForMarket"][number];
 
-export type OrderType = RestingOrder & OrderRouterObject;
+export type OrderType = RestingOrder &
+  OrderRouterObject & { isMyOrder: boolean };
 
 export const OrderHistoryItem = ({ order }: { order?: OrderType }) => {
+  const { cancelOrder, maybeMintDepositAndSell, depositAndPlaceBuyOrder } =
+    useMyMarket();
   if (!order) return null;
-  const { price, numBaseTokens, user, market, createdAt, isBid } = order;
-  const ticker = market?.name ?? "";
+  const {
+    price,
+    numBaseTokens,
+    user,
+    market,
+    createdAt,
+    isBid,
+    baseMint,
+    tokenPrice,
+  } = order;
+  const ticker = baseMint?.symbol ?? "";
   const image = user.image ?? "/player-temp/diggs.webp";
   console.log(typeof price);
-  const priceFloat = parseFloat(price.toString());
+  const priceFloat = parseFloat(tokenPrice.toFixed(2));
   const formattedPrice = priceFloat.toFixed(2);
-  const quantityFloat = parseFloat(numBaseTokens.toString()) / 10 ** 6;
+  const quantityFloat = parseFloat(numBaseTokens.toString());
   const formattedQuantity = quantityFloat.toFixed(2);
   const formattedCost = (priceFloat * quantityFloat).toFixed(2);
   return (
@@ -1124,13 +1144,40 @@ export const OrderHistoryItem = ({ order }: { order?: OrderType }) => {
               isBid ? "text-[#44E865]" : "text-[#FF4646]"
             }`}
           >
-            {`${isBid ? "-" : "+"}${formattedQuantity} ${ticker}`}
+            {`${isBid ? "+" : "-"}${formattedQuantity} ${ticker}`}
           </p>
         </div>
         <p className="text-[#6a6a6a] font-clashGroteskMed text-[13px] leading-[13px]">
           {`${isBid ? "-" : "+"}$${formattedCost}`}
         </p>
       </div>
+      {order.isMyOrder ? (
+        <button
+          onClick={() => {
+            cancelOrder.mutate({
+              clientOrderId: order.clientOrderId,
+            });
+          }}
+        >
+          Cancel
+        </button>
+      ) : (
+        <button
+          onClick={() => {
+            order.isBid
+              ? maybeMintDepositAndSell.mutate({
+                  numBaseTokens: parseFloat(order.numBaseTokens.toString()),
+                  tokenPrice: order.tokenPrice,
+                })
+              : depositAndPlaceBuyOrder.mutate({
+                  numBaseTokens: parseFloat(order.numBaseTokens.toString()),
+                  tokenPrice: order.tokenPrice,
+                });
+          }}
+        >
+          Fill
+        </button>
+      )}
     </div>
   );
 };
