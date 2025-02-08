@@ -16,7 +16,7 @@ wallet = "~/.config/solana/id.json"
 
 [scripts]
 # test = "yarn run ts-mocha -p ./tsconfig.json -t 1000000 tests/tradetalk.ts"
-test = "yarn run ts-mocha -p ./tsconfig.json -t 1000000 tests/payout.ts"
+test = "yarn run ts-mocha -p ./tsconfig.json -t 1000000 tests/tradetalk.ts"
 
 [test]
 startup_wait = 5000

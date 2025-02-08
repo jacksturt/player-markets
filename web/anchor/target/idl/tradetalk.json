@@ -2637,6 +2637,10 @@
           {
             "name": "deposited_amount",
             "type": "u64"
+          },
+          {
+            "name": "amount_minted",
+            "type": "u64"
           }
         ]
       }

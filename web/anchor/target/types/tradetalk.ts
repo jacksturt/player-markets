@@ -2348,6 +2348,10 @@ export type Tradetalk = {
           {
             name: "depositedAmount";
             type: "u64";
+          },
+          {
+            name: "amountMinted";
+            type: "u64";
           }
         ];
       };

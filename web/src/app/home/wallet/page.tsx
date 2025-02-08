@@ -20,7 +20,7 @@ const balanceData = {
 };
 
 export default function WalletPage() {
-  const { myTrades, myOpenOrders } = useMyBags();
+  const { myTrades, myOpenOrders, myPositions } = useMyBags();
 
   return (
     <div className="w-full min-h-screen overflow-y-auto flex flex-col flex-1 gap-5 bg-gradient-to-b from-[#1E1E1E] via-[#050505] to-black text-white pt-5">
@@ -41,24 +41,16 @@ export default function WalletPage() {
             </div>
             {/* TODO: positions.map */}
             <div className="w-full flex flex-col gap-2 pt-7">
-              <Position
-                image="/player-temp/diggs.webp"
-                ticker="MAHOMES"
-                amount={190}
-                usdValue={869.0}
-              />
-              <Position
-                image="/player-temp/diggs.webp"
-                ticker="BARKLEY"
-                amount={427}
-                usdValue={169.98}
-              />
-              <Position
-                image="/player-temp/diggs.webp"
-                ticker="HURTS"
-                amount={3112}
-                usdValue={13669.34}
-              />
+              {myPositions.data?.map((position) => (
+                <Position
+                  key={position.marketInfo?.baseMint.id}
+                  shortPositionPayout={position.shortPositionPayout}
+                  shortPositionMinted={position.shortPositionMinted}
+                  longPositionPayout={position.longPositionPayout}
+                  longPositionHeld={position.longPositionHeld}
+                  marketInfo={position.marketInfo!}
+                />
+              ))}
             </div>
           </div>
           {/* open orders */}

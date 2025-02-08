@@ -22,6 +22,8 @@ import { usePlayerMarketCardStore } from "@/lib/zustand";
 import { Switch } from "@/components/ui/switch";
 import { type RouterOutputs } from "@/trpc/react";
 import { RestingOrder } from "manifest/src";
+import { BN, ProgramAccount } from "@coral-xyz/anchor";
+import { PublicKey } from "@solana/web3.js";
 export const Trade = () => {
   const { playerStatsAccount, market } = usePlayerMarket();
 
@@ -1020,22 +1022,28 @@ export const UserStats = () => {
   );
 };
 
+export type MarketRouterObject =
+  RouterOutputs["market"]["readAllMarkets"][number];
+
 export const Position = ({
-  image,
-  ticker,
-  amount,
-  usdValue,
+  shortPositionPayout,
+  shortPositionMinted,
+  longPositionPayout,
+  longPositionHeld,
+  marketInfo,
 }: {
-  image: string;
-  ticker: string;
-  amount: number;
-  usdValue: number;
+  shortPositionPayout: number;
+  shortPositionMinted: number;
+  longPositionPayout: number;
+  longPositionHeld: number;
+  marketInfo: MarketRouterObject;
 }) => {
+  const ticker = marketInfo.baseMint.symbol;
   return (
     <div className="w-full h-[41px] flex items-center justify-between">
       <div className="flex items-center gap-3">
         <Avatar>
-          <AvatarImage src={image} />
+          <AvatarImage src={marketInfo.baseMint.image} />
           <AvatarFallback>
             <Image
               src="/player-temp/diggs.webp"
@@ -1046,15 +1054,19 @@ export const Position = ({
           </AvatarFallback>
         </Avatar>
         <p className="text-white font-clashGroteskMed text-[15px] leading-[15px]">
-          <span className="font-clashGroteskMed bg-chiefs-gradient-text text-transparent bg-clip-text">
-            {amount}
-          </span>{" "}
           {ticker}
         </p>
       </div>
-      <p className="text-white font-clashMed text-[20px] leading-[20px]">
-        ${usdValue}
-      </p>
+      {shortPositionMinted > 0 && (
+        <p className="text-white font-clashMed text-[20px] leading-[20px]">
+          Shorted {shortPositionMinted} pays out ${shortPositionPayout}
+        </p>
+      )}
+      {longPositionHeld > 0 && (
+        <p className="text-white font-clashMed text-[20px] leading-[20px]">
+          Longed {longPositionHeld} pays out ${longPositionPayout}
+        </p>
+      )}
     </div>
   );
 };
@@ -1084,7 +1096,6 @@ export const OrderHistoryItem = ({
   const tokenPrice = order.hasOwnProperty("tokenPrice")
     ? (order as AskOrBidType).tokenPrice
     : parseFloat(order.price.toString());
-  console.log(typeof tokenPrice);
   const priceFloat = parseFloat(tokenPrice.toFixed(2));
   const formattedPrice = priceFloat.toFixed(2);
   const quantityFloat = parseFloat(numBaseTokens.toString());
@@ -1171,7 +1182,6 @@ export const TradeHistoryItem = ({ trade }: { trade: TradeRouterObject }) => {
   const ticker = baseMint?.symbol ?? "";
   const sellerImage = seller.image ?? "/player-temp/diggs.webp";
   const buyerImage = buyer.image ?? "/playerImages/Patrick-Mahomes.png";
-  console.log(typeof price);
   const priceFloat = parseFloat(price.toString());
   const formattedPrice = priceFloat.toFixed(2);
   const quantityFloat = parseFloat(quantity.toString()) / 10 ** 6;

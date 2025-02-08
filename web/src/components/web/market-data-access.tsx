@@ -18,6 +18,7 @@ import { useTransactionToast } from "../ui/ui-layout";
 import {
   ASSOCIATED_TOKEN_PROGRAM_ID,
   getAccount,
+  getMultipleAccounts,
   getAssociatedTokenAddressSync,
   getMint,
   TOKEN_PROGRAM_ID,
@@ -32,6 +33,7 @@ import { api } from "@/trpc/react";
 import { useParams } from "next/navigation";
 import { bignum } from "@metaplex-foundation/beet";
 import { useSession } from "next-auth/react";
+import { MarketRouterObject } from "./web-ui";
 export function useCurrentMarket() {
   const queryClient = useQueryClient();
 
@@ -1849,11 +1851,120 @@ export function useMyMarket() {
   };
 }
 
+const useMyPubkey = () => {
+  const { publicKey } = useWallet();
+  const { capsulePubkey } = useCapsuleWallet();
+  return publicKey ?? capsulePubkey.data!;
+};
+
 export function useMyBags() {
+  const { markets, allMarkets } = useMarkets();
   const myTrades = api.trade.readMyTrades.useQuery();
   const myOpenOrders = api.order.getAllMyOpenOrders.useQuery();
+  const { program } = useQuoteToken();
+  const provider = useAnchorProvider();
+  const pubkey = useMyPubkey();
+  const myPositions = useQuery({
+    queryKey: ["my-mint-records"],
+    queryFn: async () => {
+      console.log("myPositions");
+      const mintRecordAddresses = markets.data!.map((market) => {
+        const mintRecordAddress = PublicKey.findProgramAddressSync(
+          [
+            Buffer.from("mint_record"),
+            market.publicKey.toBuffer(),
+            pubkey.toBuffer(),
+          ],
+          program.programId
+        )[0];
+        return mintRecordAddress;
+      });
+      const mintRecords = await program.account.mintRecord.fetchMultiple(
+        mintRecordAddresses
+      );
+      console.log("mintRecords", mintRecords);
+      const playerStatsAddresses = markets.data!.map((market) => {
+        const playerStatsAddress = PublicKey.findProgramAddressSync(
+          [
+            Buffer.from("player_stats"),
+            Buffer.from(market.account.playerId),
+            Buffer.from(market.account.timestamp),
+          ],
+          program.programId
+        )[0];
+        return playerStatsAddress;
+      });
+      const playerStats = await program.account.playerStats.fetchMultiple(
+        playerStatsAddresses
+      );
+      console.log("playerStats", playerStats);
+
+      const positions: {
+        shortPositionPayout: number;
+        shortPositionMinted: number;
+        longPositionPayout: number;
+        longPositionHeld: number;
+        marketInfo: MarketRouterObject;
+      }[] = [];
+
+      const promiseMap = markets.data!.map(async (market, index) => {
+        console.log("market", market.publicKey.toBase58());
+        console.log(
+          "allMarkets",
+          allMarkets.data?.map((m) => m.address)
+        );
+        const playerTokenAccountAddress = getAssociatedTokenAddressSync(
+          market.account.playerTokenMint,
+          pubkey,
+          true
+        );
+        const actualPoints = playerStats[index]?.actualPoints ?? 0;
+        const totalDeposited = Number(mintRecords[index]?.depositedAmount) ?? 0;
+        const amountMinted = Number(mintRecords[index]?.amountMinted) ?? 0;
+
+        const shortPositionPayout =
+          totalDeposited - amountMinted * actualPoints;
+        const marketInfo = allMarkets.data?.find(
+          (m) => m.baseMint.timestamp === market.account.timestamp
+        );
+        if (!marketInfo) return;
+
+        try {
+          const playerTokenAccount = await getAccount(
+            provider.connection,
+            playerTokenAccountAddress
+          );
+          const playerTokenSupply =
+            (Number(playerTokenAccount.amount) ?? 0) / 10 ** 6;
+          const longPositionPayout = playerTokenSupply * actualPoints;
+          positions.push({
+            shortPositionPayout,
+            shortPositionMinted: amountMinted,
+            longPositionPayout,
+            longPositionHeld: playerTokenSupply,
+            marketInfo,
+          });
+        } catch (e) {
+          console.log("error", e);
+          positions.push({
+            shortPositionPayout,
+            shortPositionMinted: amountMinted,
+            longPositionPayout: 0,
+            longPositionHeld: 0,
+            marketInfo,
+          });
+        }
+      });
+      await Promise.all(promiseMap);
+      console.log("positions", positions);
+      return positions;
+    },
+    enabled: markets.data !== undefined && allMarkets.data !== undefined,
+  });
+
   return {
     myTrades,
     myOpenOrders,
+    myPositions,
   };
 }

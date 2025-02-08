@@ -113,6 +113,7 @@ impl<'info> MintTokens<'info> {
         )?;
 
         self.mint_record.deposited_amount += total_collateral;
+        self.mint_record.amount_minted += quantity;
         self.config.total_deposited_amount += total_collateral;
 
         Ok(())
