@@ -1,3 +1,4 @@
+"use client";
 import React from "react";
 import TrendDown from "@/components/icons/trend-down";
 import TrendUp from "@/components/icons/trend-up";
@@ -9,14 +10,18 @@ import {
   ProfileCard,
   UserStats,
   TradeHistoryItem,
+  OrderHistoryItem,
 } from "@/components/web/web-ui";
+import { useMyBags } from "@/components/web/market-data-access";
 
 const balanceData = {
   "24h_pct_change": 10,
   "24h_amount_change": 100,
 };
 
-export default async function WalletPage() {
+export default function WalletPage() {
+  const { myTrades, myOpenOrders } = useMyBags();
+
   return (
     <div className="w-full min-h-screen overflow-y-auto flex flex-col flex-1 gap-5 bg-gradient-to-b from-[#1E1E1E] via-[#050505] to-black text-white pt-5">
       <Navbar />
@@ -24,41 +29,6 @@ export default async function WalletPage() {
       <div className="w-full h-full flex items-start gap-[70px] px-[120px] pt-8">
         {/* left column - balance, stats, positions etc */}
         <div className="w-full flex flex-col gap-[58px] pb-20">
-          <div className="flex items-end justify-between">
-            {/* balance */}
-            <div className="flex flex-col gap-2">
-              <p className="uppercase">My Balance</p>
-              <div className="flex items-end gap-3">
-                <p className="text-[50px] leading-[50px] font-clashMed bg-chiefs-gradient-bg text-transparent bg-clip-text">
-                  ${1920.08}
-                </p>
-                <div className="flex gap-2">
-                  <div className="flex items-center gap-1">
-                    {balanceData["24h_amount_change"] > 0 ? (
-                      <TrendUp size={16} />
-                    ) : (
-                      <TrendDown size={16} />
-                    )}
-                    <p
-                      className={cn(
-                        "text-sm",
-                        balanceData["24h_amount_change"] > 0
-                          ? "text-green-500"
-                          : "text-red-500"
-                      )}
-                    >
-                      {balanceData["24h_pct_change"]}%
-                    </p>
-                  </div>
-                  <p>+$1369.02</p>
-                </div>
-              </div>
-            </div>
-            <Button className="bg-white text-black font-clashMed rounded-full py-[17px] px-[28px] hover:bg-white/80">
-              Cashout Balance
-            </Button>
-          </div>
-          <UserStats />
           {/* current positions */}
           <div className="w-full flex flex-col">
             <p className="text-2xl text-white font-clashMed">Positions</p>
@@ -101,8 +71,18 @@ export default async function WalletPage() {
               </p>
               <Button>Cancel all</Button>
             </div>
-            {/* TODO: open orders.map */}
-            <div className="w-full flex flex-col gap-2 pt-7"></div>
+            {myOpenOrders.data && myOpenOrders.data.length > 0 ? (
+              myOpenOrders.data.map((order) => (
+                <OrderHistoryItem
+                  key={order.id}
+                  order={{ ...order, isMyOrder: true }}
+                />
+              ))
+            ) : (
+              <div className="w-full flex flex-col gap-2 pt-7">
+                <p className="text-white text-center">No open orders</p>
+              </div>
+            )}
           </div>
           {/* trade history */}
           <div className="w-full flex flex-col">
@@ -112,8 +92,16 @@ export default async function WalletPage() {
                 These are your past trades. Embarrassed yet?
               </p>
             </div>
-            {/* TODO: trade history.map */}
-            <div className="w-full flex flex-col gap-2 pt-7"></div>
+
+            {myTrades.data && myTrades.data.length > 0 ? (
+              myTrades.data.map((trade) => (
+                <TradeHistoryItem key={trade.id} trade={trade} />
+              ))
+            ) : (
+              <div className="w-full flex flex-col gap-2 pt-7">
+                <p className="text-white text-center">No trades yet</p>
+              </div>
+            )}
           </div>
         </div>
         <ProfileCard />

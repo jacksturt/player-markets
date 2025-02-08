@@ -83,3 +83,20 @@ export const getLastOrderIdForUser = protectedProcedure
     });
     return order?.clientOrderId ?? 0;
   });
+
+export const getAllMyOpenOrders = protectedProcedure.query(async ({ ctx }) => {
+  const userId = ctx.session.user.id;
+  const orders = await db.order.findMany({
+    where: {
+      userId: userId,
+      status: OrderStatus.PENDING,
+    },
+
+    include: {
+      user: true,
+      market: true,
+      baseMint: true,
+    },
+  });
+  return orders;
+});

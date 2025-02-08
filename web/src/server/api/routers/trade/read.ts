@@ -28,3 +28,22 @@ export const readTradesForMarket = protectedProcedure
     });
     return trades;
   });
+
+export const readMyTrades = protectedProcedure.query(async ({ ctx }) => {
+  const userId = ctx.session.user.id;
+  const trades = await db.trade.findMany({
+    where: {
+      OR: [{ buyerId: userId }, { sellerId: userId }],
+    },
+    include: {
+      baseMint: true,
+      buyer: true,
+      buyerWallet: true,
+      seller: true,
+      sellerWallet: true,
+      player: true,
+      team: true,
+    },
+  });
+  return trades;
+});

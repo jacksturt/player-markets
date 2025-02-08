@@ -1848,3 +1848,12 @@ export function useMyMarket() {
     currentMinterRewards,
   };
 }
+
+export function useMyBags() {
+  const myTrades = api.trade.readMyTrades.useQuery();
+  const myOpenOrders = api.order.getAllMyOpenOrders.useQuery();
+  return {
+    myTrades,
+    myOpenOrders,
+  };
+}

@@ -978,29 +978,6 @@ export const ProfileCard = () => {
             TODO: NFL team dropdown
           </p>
         </div>
-        {/* network */}
-        <div className="flex items-center gap-5 justify-center">
-          <p className="text-white font-clashGroteskMed text-[22px] leading-[21px]">
-            139 <span className="text-[#B8B5B5] text-xs">Followers</span>
-          </p>
-          <p className="text-white font-clashGroteskMed text-[22px] leading-[21px]">
-            139 <span className="text-[#B8B5B5] text-xs">Following</span>
-          </p>
-        </div>
-        {/* actions */}
-        <div className="w-full flex flex-col gap-2">
-          <div className="w-full flex gap-2">
-            <Button className="w-1/2 h-[58.36px] bg-[#2B2B2B] hover:bg-[#3B3B3B] text-white">
-              Cancel Orders
-            </Button>
-            <Button className="w-1/2 h-[58.36px] bg-[#2B2B2B] hover:bg-[#3B3B3B] text-white">
-              Close All Trades
-            </Button>
-          </div>
-          <Button className="w-full h-[58.36px] bg-[#2B2B2B] hover:bg-[#3B3B3B] text-white">
-            Cashout Balance
-          </Button>
-        </div>
       </CardContent>
     </Card>
   );
@@ -1084,26 +1061,30 @@ export const Position = ({
 export type OrderRouterObject =
   RouterOutputs["order"]["readOrdersForMarket"][number];
 
-export type OrderType = RestingOrder &
+export type MyOrderRouterObject =
+  RouterOutputs["order"]["getAllMyOpenOrders"][number] & {
+    isMyOrder: boolean;
+  };
+
+export type AskOrBidType = RestingOrder &
   OrderRouterObject & { isMyOrder: boolean };
 
-export const OrderHistoryItem = ({ order }: { order?: OrderType }) => {
+export const OrderHistoryItem = ({
+  order,
+}: {
+  order?: AskOrBidType | MyOrderRouterObject;
+}) => {
   const { cancelOrder, maybeMintDepositAndSell, depositAndPlaceBuyOrder } =
     useMyMarket();
   if (!order) return null;
-  const {
-    price,
-    numBaseTokens,
-    user,
-    market,
-    createdAt,
-    isBid,
-    baseMint,
-    tokenPrice,
-  } = order;
+  const { price, numBaseTokens, user, market, createdAt, isBid, baseMint } =
+    order;
   const ticker = baseMint?.symbol ?? "";
   const image = user.image ?? "/player-temp/diggs.webp";
-  console.log(typeof price);
+  const tokenPrice = order.hasOwnProperty("tokenPrice")
+    ? (order as AskOrBidType).tokenPrice
+    : parseFloat(order.price.toString());
+  console.log(typeof tokenPrice);
   const priceFloat = parseFloat(tokenPrice.toFixed(2));
   const formattedPrice = priceFloat.toFixed(2);
   const quantityFloat = parseFloat(numBaseTokens.toString());
@@ -1167,11 +1148,11 @@ export const OrderHistoryItem = ({ order }: { order?: OrderType }) => {
             order.isBid
               ? maybeMintDepositAndSell.mutate({
                   numBaseTokens: parseFloat(order.numBaseTokens.toString()),
-                  tokenPrice: order.tokenPrice,
+                  tokenPrice,
                 })
               : depositAndPlaceBuyOrder.mutate({
                   numBaseTokens: parseFloat(order.numBaseTokens.toString()),
-                  tokenPrice: order.tokenPrice,
+                  tokenPrice,
                 });
           }}
         >

@@ -5,6 +5,7 @@ import {
   getLastOrderIdForUser,
   readOrdersForUserByMarket,
   readOrdersForMarket,
+  getAllMyOpenOrders,
 } from "./read";
 import {
   cancelAllOrdersForMarketByUser,
@@ -18,4 +19,5 @@ export const orderRouter = createTRPCRouter({
   readOrdersForMarket: readOrdersForMarket,
   cancelOrderForMarketByUser: cancelOrderForMarketByUser,
   cancelAllOrdersForMarketByUser: cancelAllOrdersForMarketByUser,
+  getAllMyOpenOrders: getAllMyOpenOrders,
 });
