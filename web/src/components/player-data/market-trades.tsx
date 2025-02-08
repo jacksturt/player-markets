@@ -13,7 +13,7 @@ const MarketTrades: React.FC = () => {
       {/* TODO: trade history.map */}
       <div className="w-full flex flex-col gap-2 pt-7">
         {trades.data?.map((trade) => (
-          <TradeHistoryItem trade={trade} />
+          <TradeHistoryItem trade={trade} key={trade.id} />
         ))}
       </div>
     </div>

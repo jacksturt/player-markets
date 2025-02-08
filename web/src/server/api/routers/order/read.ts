@@ -30,7 +30,6 @@ export const readOrdersForMarket = protectedProcedure
     })
   )
   .query(async ({ input, ctx }) => {
-    const userId = ctx.session.user.id;
     const orders = await db.order.findMany({
       where: {
         market: {

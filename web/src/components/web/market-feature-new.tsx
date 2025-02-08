@@ -17,7 +17,7 @@ import { PlaceOrderLogResult } from "@/lib/types";
 import { useQueryClient } from "@tanstack/react-query";
 import { api } from "@/trpc/react";
 import DataTablesPlayer from "../player-data/data-tables-player";
-
+import { CashoutAll } from "./web-ui";
 const PlayerCard = () => {
   const { market } = usePlayerMarket();
   return (
@@ -59,7 +59,7 @@ export default function MarketFeatureNew() {
   const [tradeData, setTradeData] = useState<{ date: number; price: number }[]>(
     []
   );
-  const { trades } = usePlayerMarket();
+  const { trades, mintConfigAccount } = usePlayerMarket();
   const { marketAddress } = useCurrentMarket();
   const { quoteTokenBalance } = useQuoteToken();
   const queryClient = useQueryClient();
@@ -157,7 +157,8 @@ export default function MarketFeatureNew() {
           <DataTablesPlayer />
         </div>
         <div className="w-[450px]">
-          <Trade />
+          {mintConfigAccount.data?.mintingEnabled && <Trade />}
+          {mintConfigAccount.data?.payoutEnabled && <CashoutAll />}
         </div>
       </div>
     </div>

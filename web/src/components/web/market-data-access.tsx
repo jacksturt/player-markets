@@ -22,6 +22,8 @@ import {
   getAssociatedTokenAddressSync,
   getMint,
   TOKEN_PROGRAM_ID,
+  createAccount,
+  createAssociatedTokenAccountInstruction,
 } from "@solana/spl-token";
 import { createMarketTX } from "manifest/instructions/createMarket";
 import { ManifestClient } from "manifest/src/client";
@@ -33,7 +35,7 @@ import { api } from "@/trpc/react";
 import { useParams } from "next/navigation";
 import { bignum } from "@metaplex-foundation/beet";
 import { useSession } from "next-auth/react";
-import { MarketRouterObject } from "./web-ui";
+import { AskOrBidType, MarketRouterObject } from "./web-ui";
 export function useCurrentMarket() {
   const queryClient = useQueryClient();
 
@@ -753,6 +755,8 @@ export function useMarketAdmin() {
   const closeMintAccounts = useMutation({
     mutationKey: ["markets", "close-mint-accounts"],
     mutationFn: async () => {
+      const playerId = { data: "18890" };
+      const timestamp = { data: "1738715534348" };
       const mintConfig = PublicKey.findProgramAddressSync(
         [
           Buffer.from("config"),
@@ -773,7 +777,7 @@ export function useMarketAdmin() {
       const context = {
         admin: provider.publicKey,
         quoteTokenMint: quoteToken,
-        playerStats,
+        playerStats: null,
         mintConfig,
         vault,
         tokenProgram: TOKEN_PROGRAM_ID,
@@ -830,6 +834,9 @@ export function useMarkets() {
         );
         try {
           const vault = await getAccount(provider.connection, vaultAddress);
+          console.log("vault", vault.address.toString());
+          console.log("playerId", market.account.playerId);
+          console.log("timestamp", market.account.timestamp);
           vaults.push(vault);
         } catch (error) {
           console.error(error);
@@ -892,6 +899,26 @@ export function usePlayerMarket() {
     queryKey: ["playerId", { marketAddress }],
     queryFn: () => market.data?.baseMint.mintSlug,
     enabled: !!market.data,
+  });
+
+  const mintConfig = useQuery({
+    queryKey: ["mint-config", { marketAddress }],
+    queryFn: () => {
+      if (!playerId.data || !timestamp.data) return;
+      console.log("playerId.data", playerId.data);
+      console.log("timestamp.data", timestamp.data);
+      const mintConfig = PublicKey.findProgramAddressSync(
+        [
+          Buffer.from("config"),
+          Buffer.from(playerId.data ?? ""),
+          Buffer.from(timestamp.data ?? ""),
+        ],
+        program.programId
+      )[0];
+      console.log("mintConfig", mintConfig.toBase58());
+      return mintConfig;
+    },
+    enabled: !!playerId.data && !!timestamp.data,
   });
 
   const playerStatsAccount = useQuery({
@@ -961,7 +988,7 @@ export function usePlayerMarket() {
     enabled: !!playerId.data && !!timestamp.data,
   });
 
-  const bids = useQuery({
+  const bids = useQuery<AskOrBidType[]>({
     queryKey: ["market", "bids", { marketAddress }],
     queryFn: async () => {
       const market = await Market.loadFromAddress({
@@ -977,14 +1004,23 @@ export function usePlayerMarket() {
               order.sequenceNumber?.toString() ===
               bid.sequenceNumber?.toString()
           );
+          if (!order) return;
           return {
-            ...order,
             ...bid,
+            ...order,
             sequenceNumber: bid.sequenceNumber,
             isMyOrder: order?.userId === session?.user.id,
+            market: order?.market,
+            numBaseTokens: order?.numBaseTokens,
+            createdAt: order.createdAt,
+            user: {
+              image: order.user.image,
+            },
           };
         });
-        return compoundBids;
+        return compoundBids.filter(
+          (bid): bid is AskOrBidType => bid !== undefined
+        );
       }
       return [];
     },
@@ -1007,14 +1043,23 @@ export function usePlayerMarket() {
             (order) =>
               order.sequenceNumber?.toString() === ask.sequenceNumber.toString()
           );
+          if (!order) return;
           return {
             ...order,
             ...ask,
             sequenceNumber: ask.sequenceNumber,
             isMyOrder: order?.userId === session?.user.id,
+            market: order?.market,
+            numBaseTokens: order?.numBaseTokens,
+            createdAt: order.createdAt,
+            user: {
+              image: order.user.image,
+            },
           };
         });
-        return compoundAsks;
+        return compoundAsks.filter(
+          (ask): ask is AskOrBidType => ask !== undefined
+        );
       }
       return [];
     },
@@ -1044,6 +1089,7 @@ export function usePlayerMarket() {
     timestamp,
     vault,
     mintConfigAccount,
+    mintConfig,
   };
 }
 
@@ -1216,8 +1262,14 @@ export const useManifestClient = () => {
 
 export function useMyMarket() {
   const { marketAddress } = useCurrentMarket();
-  const { playerId, timestamp, vault, mintConfigAccount, playerStatsAccount } =
-    usePlayerMarket();
+  const {
+    playerId,
+    timestamp,
+    vault,
+    mintConfigAccount,
+    playerStatsAccount,
+    mintConfig,
+  } = usePlayerMarket();
 
   const { manifestClient, hasSeatBeenClaimed } = useManifestClient();
   const client = manifestClient.data!;
@@ -1706,25 +1758,9 @@ export function useMyMarket() {
   const payout = useMutation({
     mutationKey: ["market", "init-payout", { playerMintPK: marketAddress }],
     mutationFn: async () => {
-      const mintConfig = PublicKey.findProgramAddressSync(
-        [
-          Buffer.from("config"),
-          Buffer.from(playerId.data ?? ""),
-          Buffer.from(timestamp.data ?? ""),
-        ],
-        program.programId
-      )[0];
-      const player_token_mint = PublicKey.findProgramAddressSync(
-        [
-          Buffer.from("mint"),
-          Buffer.from(playerId.data ?? ""),
-          Buffer.from(timestamp.data ?? ""),
-        ],
-        program.programId
-      )[0];
       const feePayer = publicKey ?? capsulePubkey.data!;
       const playerTokenAccount = getAssociatedTokenAddressSync(
-        player_token_mint,
+        playerTokenMint.data!,
         feePayer
       );
       const quoteTokenAccount = getAssociatedTokenAddressSync(
@@ -1741,11 +1777,15 @@ export function useMyMarket() {
         program.programId
       )[0];
 
-      const vault = getAssociatedTokenAddressSync(quoteToken, mintConfig, true);
+      const vault = getAssociatedTokenAddressSync(
+        quoteToken,
+        mintConfig.data!,
+        true
+      );
       const mintRecord = PublicKey.findProgramAddressSync(
         [
           Buffer.from("mint_record"),
-          mintConfig.toBuffer(),
+          mintConfig.data!.toBuffer(),
           feePayer.toBuffer(),
         ],
         program.programId
@@ -1754,12 +1794,12 @@ export function useMyMarket() {
       const context = {
         payer: feePayer,
         quoteTokenMint: quoteToken,
-        playerTokenMint: player_token_mint,
+        playerTokenMint: playerTokenMint.data!,
         vault,
         mintRecord,
         payerQuoteTokenAccount: quoteTokenAccount,
         payerPlayerTokenAccount: playerTokenAccount,
-        mintConfig,
+        mintConfig: mintConfig.data!,
         playerStats,
         tokenProgram: TOKEN_PROGRAM_ID,
         associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
@@ -1836,6 +1876,132 @@ export function useMyMarket() {
     onError: () => toast.error("Failed to withdraw all"),
   });
 
+  const cancelAndWithdrawAllToPayout = useMutation({
+    mutationKey: [
+      "market",
+      "cancel-and-withdraw-all-to-payout",
+      { playerMintPK: marketPK },
+    ],
+    mutationFn: async () => {
+      const cancelAllOrdersIx = client.cancelAllIx();
+      const withdrawAllIx = await client.withdrawAllIx();
+      const blockhash = await provider.connection.getLatestBlockhash();
+      const feePayer = publicKey ?? capsulePubkey.data!;
+      const playerTokenAccount = getAssociatedTokenAddressSync(
+        playerTokenMint.data!,
+        feePayer,
+        true
+      );
+      console.log("playerTokenAccount", playerTokenAccount.toBase58());
+
+      const quoteTokenAccount = getAssociatedTokenAddressSync(
+        quoteToken,
+        feePayer
+      );
+      const mintConfig = PublicKey.findProgramAddressSync(
+        [
+          Buffer.from("config"),
+          Buffer.from(playerId.data ?? ""),
+          Buffer.from(timestamp.data ?? ""),
+        ],
+        program.programId
+      )[0];
+      console.log("mintConfig", mintConfig.toBase58());
+      const playerStats = PublicKey.findProgramAddressSync(
+        [
+          Buffer.from("player_stats"),
+          Buffer.from(playerId.data ?? ""),
+          Buffer.from(timestamp.data ?? ""),
+        ],
+        program.programId
+      )[0];
+
+      const vault = getAssociatedTokenAddressSync(quoteToken, mintConfig, true);
+      const mintRecord = PublicKey.findProgramAddressSync(
+        [
+          Buffer.from("mint_record"),
+          mintConfig.toBuffer(),
+          feePayer.toBuffer(),
+        ],
+        program.programId
+      )[0];
+      let doesMintRecordExist = false;
+      try {
+        const mintRecordInfo = await program.account.mintRecord.fetch(
+          mintRecord
+        );
+        console.log("mintRecordInfo", mintRecordInfo);
+        doesMintRecordExist = true;
+      } catch (e) {
+        console.log("error", e);
+      }
+
+      const context = {
+        payer: feePayer,
+        quoteTokenMint: quoteToken,
+        playerTokenMint: playerTokenMint.data!,
+        vault,
+        mintRecord: doesMintRecordExist ? mintRecord : null,
+        payerQuoteTokenAccount: quoteTokenAccount,
+        payerPlayerTokenAccount: playerTokenAccount,
+        mintConfig,
+        playerStats,
+        tokenProgram: TOKEN_PROGRAM_ID,
+        associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
+        systemProgram: SystemProgram.programId,
+      };
+
+      const ix = await program.methods
+        .payout()
+        .accountsStrict(context)
+        .instruction();
+      const transaction = new Transaction({
+        feePayer: publicKey ?? capsulePubkey.data!,
+        blockhash: blockhash.blockhash,
+        lastValidBlockHeight: blockhash.lastValidBlockHeight,
+      });
+
+      try {
+        const playerTokenAccountInfo = await getAccount(
+          provider.connection,
+          playerTokenAccount
+        );
+        console.log("playerTokenAccount", playerTokenAccountInfo);
+      } catch (e) {
+        console.log("error", e);
+        const createAccountIx = createAssociatedTokenAccountInstruction(
+          feePayer,
+          playerTokenAccount,
+          feePayer,
+          playerTokenMint.data!
+        );
+        transaction.add(createAccountIx);
+      }
+
+      transaction.add(cancelAllOrdersIx, ...withdrawAllIx, ix);
+      if (!publicKey) {
+        const signed = await solanaSigner.data!.signTransaction(transaction);
+        const signature = await provider.connection.sendRawTransaction(
+          signed.serialize()
+        );
+        return signature;
+      } else {
+        return wallet?.adapter.sendTransaction(
+          transaction,
+          provider.connection
+        );
+      }
+    },
+    onSuccess: (signature) => {
+      transactionToast(`${signature}`);
+      cancelAllOrdersDB.mutate({
+        marketAddress: marketPK!.toBase58(),
+      });
+      return accounts.refetch();
+    },
+    onError: () => toast.error("Failed to fully cash out"),
+  });
+
   return {
     withdrawAll,
     payout,
@@ -1843,7 +2009,7 @@ export function useMyMarket() {
     cancelOrder,
     depositAndPlaceBuyOrder,
     maybeMintDepositAndSell,
-
+    cancelAndWithdrawAllToPayout,
     balances,
     myOrders,
     mintRecord,
@@ -1920,7 +2086,8 @@ export function useMyBags() {
         );
         const actualPoints = playerStats[index]?.actualPoints ?? 0;
         const totalDeposited = Number(mintRecords[index]?.depositedAmount) ?? 0;
-        const amountMinted = Number(mintRecords[index]?.amountMinted) ?? 0;
+        const amountMinted = 0;
+        // const amountMinted = Number(mintRecords[index]?.amountMinted) ?? 0;
 
         const shortPositionPayout =
           totalDeposited - amountMinted * actualPoints;

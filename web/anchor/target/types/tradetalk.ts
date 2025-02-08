@@ -122,6 +122,7 @@ export type Tradetalk = {
         {
           name: "playerStats";
           writable: true;
+          optional: true;
           pda: {
             seeds: [
               {
@@ -2347,10 +2348,6 @@ export type Tradetalk = {
         fields: [
           {
             name: "depositedAmount";
-            type: "u64";
-          },
-          {
-            name: "amountMinted";
             type: "u64";
           }
         ];

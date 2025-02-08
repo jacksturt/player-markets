@@ -18,13 +18,14 @@ export default function MarketPage({
     ? params.marketAddress[0]
     : params.marketAddress;
 
+  useEffect(() => {
+    setMarketAddress(marketAddress);
+  }, [marketAddress, setMarketAddress]);
+
   if (!session) {
     router.push(`/auth/signin?callbackUrl=/home/players/${marketAddress}`);
     return null;
   }
-  useEffect(() => {
-    setMarketAddress(marketAddress);
-  }, [marketAddress]);
 
   // return <MarketFeature marketAddress={marketAddress} />;
   return (

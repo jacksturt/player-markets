@@ -50,11 +50,11 @@ const MarketDisplay: React.FC = () => {
           <p className="text-xl font-bold">{totalPot.toFixed(4)}</p>
         </div>
         <div>
-          <h2 className="text-gray-400">Longer's Pool</h2>
+          <h2 className="text-gray-400">Longer&apos;s Pool</h2>
           <p className="text-xl font-bold">{longerPoolDecimal.toFixed(4)}</p>
         </div>
         <div>
-          <h2 className="text-gray-400">Shorter's Pool</h2>
+          <h2 className="text-gray-400">Shorter&apos;s Pool</h2>
           <p className="text-xl font-bold">{shorterPool.toFixed(4)}</p>
         </div>
         <div>

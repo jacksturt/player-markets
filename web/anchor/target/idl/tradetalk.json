@@ -125,6 +125,7 @@
         {
           "name": "player_stats",
           "writable": true,
+          "optional": true,
           "pda": {
             "seeds": [
               {
@@ -2636,10 +2637,6 @@
         "fields": [
           {
             "name": "deposited_amount",
-            "type": "u64"
-          },
-          {
-            "name": "amount_minted",
             "type": "u64"
           }
         ]

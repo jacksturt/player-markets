@@ -12,7 +12,7 @@ export default function Markets() {
   const { markets, allMarkets } = useMarkets();
 
   return publicKey ? (
-    <div className="w-full grid grid-cols-6 gap-4 py-10 px-10">
+    <div className="w-full grid grid-cols-6 gap-4 py-10 px-10 bg-white">
       {allMarkets.data?.map((market) => (
         <Link
           key={market.id}

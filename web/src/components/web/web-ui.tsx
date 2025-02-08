@@ -24,6 +24,8 @@ import { type RouterOutputs } from "@/trpc/react";
 import { RestingOrder } from "manifest/src";
 import { BN, ProgramAccount } from "@coral-xyz/anchor";
 import { PublicKey } from "@solana/web3.js";
+import { bignum } from "@metaplex-foundation/beet";
+import { Decimal } from "@prisma/client/runtime/library";
 export const Trade = () => {
   const { playerStatsAccount, market } = usePlayerMarket();
 
@@ -849,9 +851,9 @@ export function CancelAllOrders() {
 
 export function SetMintingEnabled() {
   const { setMintingEnabled } = useMarketAdmin();
-  const playerId = "SF";
-  const timestamp = "1738891799449";
-  const isMintingEnabled = true;
+  const { market } = usePlayerMarket();
+  const marketId = market?.data?.baseMint.symbol;
+  const isMintingEnabled = false;
 
   return (
     <button
@@ -863,7 +865,7 @@ export function SetMintingEnabled() {
       }
       disabled={setMintingEnabled.isPending}
     >
-      Set Minting {isMintingEnabled ? "Enabled" : "Disabled"} for {playerId}
+      Set Minting {isMintingEnabled ? "Enabled" : "Disabled"} for {marketId}
       {setMintingEnabled.isPending && "..."}
     </button>
   );
@@ -871,9 +873,9 @@ export function SetMintingEnabled() {
 
 export function SetPayoutEnabled() {
   const { setPayoutEnabled } = useMarketAdmin();
-  const playerId = "SF";
-  const timestamp = "1738891799449";
-  const isPayoutEnabled = false;
+  const { market } = usePlayerMarket();
+  const marketId = market?.data?.baseMint.symbol;
+  const isPayoutEnabled = true;
 
   return (
     <button
@@ -885,7 +887,7 @@ export function SetPayoutEnabled() {
       }
       disabled={setPayoutEnabled.isPending}
     >
-      Set Payout {isPayoutEnabled ? "Enabled" : "Disabled"} for {playerId}
+      Set Payout {isPayoutEnabled ? "Enabled" : "Disabled"} for {marketId}
       {setPayoutEnabled.isPending && "..."}
     </button>
   );
@@ -893,8 +895,7 @@ export function SetPayoutEnabled() {
 
 export function CloseMintAccounts() {
   const { closeMintAccounts } = useMarketAdmin();
-  const playerId = "18890";
-  const timestamp = "1738715534348";
+  const { vault } = usePlayerMarket();
 
   return (
     <button
@@ -902,7 +903,8 @@ export function CloseMintAccounts() {
       onClick={() => closeMintAccounts.mutateAsync()}
       disabled={closeMintAccounts.isPending}
     >
-      Close Mint Accounts {closeMintAccounts.isPending && "..."}
+      Close Mint Accounts {vault?.data?.address.toString()}{" "}
+      {closeMintAccounts.isPending && "..."}
     </button>
   );
 }
@@ -945,6 +947,20 @@ export function Payout() {
       disabled={payout.isPending}
     >
       Payout {payout.isPending && "..."}
+    </button>
+  );
+}
+
+export function CashoutAll() {
+  const { cancelAndWithdrawAllToPayout } = useMyMarket();
+
+  return (
+    <button
+      className="w-full h-[58.36px] bg-[#2B2B2B] hover:bg-[#3B3B3B] text-white"
+      onClick={() => cancelAndWithdrawAllToPayout.mutateAsync()}
+      disabled={cancelAndWithdrawAllToPayout.isPending}
+    >
+      Cashout Balance {cancelAndWithdrawAllToPayout.isPending && "..."}
     </button>
   );
 }
@@ -1070,6 +1086,7 @@ export const Position = ({
     </div>
   );
 };
+
 export type OrderRouterObject =
   RouterOutputs["order"]["readOrdersForMarket"][number];
 
@@ -1079,7 +1096,9 @@ export type MyOrderRouterObject =
   };
 
 export type AskOrBidType = RestingOrder &
-  OrderRouterObject & { isMyOrder: boolean };
+  OrderRouterObject & { isMyOrder: boolean } & {
+    numBaseTokens: Decimal | BN;
+  };
 
 export const OrderHistoryItem = ({
   order,

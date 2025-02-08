@@ -22,7 +22,7 @@ export default function AdminPage({
   }, [marketAddress]);
 
   if (!session) {
-    router.push(`/auth/signin?callbackUrl=/markets/${marketAddress}`);
+    router.push(`/auth/signin?callbackUrl=/markets/admin/${marketAddress}`);
     return null;
   }
 
