@@ -5,17 +5,16 @@ resolution = true
 skip-lint = false
 
 [programs.mainnet]
-tradetalk = "AMNTpN6ykSqt6VUs5tnypD433naSCNbjS8fsEJLVHSsh"
+tradetalk = "A13hqcQX4g2o57dW4vRQKem5G7YykugzPGyvda5YXijV"
 
 [registry]
 url = "https://quaint-hardworking-fire.solana-mainnet.quiknode.pro/5229b2c3c59e9aea2a1c583bafb9ad2d334d751a"
 
 [provider]
-cluster = "localnet"
+cluster = "Localnet"
 wallet = "~/.config/solana/id.json"
 
 [scripts]
-# test = "yarn run ts-mocha -p ./tsconfig.json -t 1000000 tests/tradetalk.ts"
 test = "yarn run ts-mocha -p ./tsconfig.json -t 1000000 tests/tradetalk.ts"
 
 [test]

@@ -2,14 +2,19 @@
 
 import { useSession } from "next-auth/react";
 import {
+  QuoteTokenCreate,
+  QuoteTokenFaucet,
+  InitPlayerMint,
   UpdateProjectionOracle,
+  CreateTeam,
   CloseMintAccounts,
+  VaultsList,
   SetMintingEnabled,
   SetPayoutEnabled,
 } from "./web-ui";
 import { PublicKey } from "@solana/web3.js";
 
-export default function MarketAdmin() {
+export default function MarketAdminAll() {
   const { data: session } = useSession();
 
   if (!session) {
@@ -30,10 +35,10 @@ export default function MarketAdmin() {
         <div className="flex flex-col gap-4">
           {/* <QuoteTokenCreate /> */}
           {/* <QuoteTokenFaucet /> */}
-          <UpdateProjectionOracle />
+          <CreateTeam />
+          <InitPlayerMint />
+          <VaultsList />
           <CloseMintAccounts />
-          <SetMintingEnabled />
-          <SetPayoutEnabled />
         </div>
       </div>
     </div>

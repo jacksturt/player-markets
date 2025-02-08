@@ -21,6 +21,12 @@ export const createMint = protectedProcedure
       playerSportsdataId: z.optional(z.number()),
       teamName: z.optional(z.string()),
       teamSportsdataId: z.optional(z.string()),
+      projectedPoints: z.number(),
+      network: z.enum(["MAINNET", "DEVNET"]),
+      season: z.string(),
+      week: z.string(),
+      marketName: z.string(),
+      address: z.string(),
     })
   )
   .mutation(async ({ input }) => {
@@ -51,6 +57,44 @@ export const createMint = protectedProcedure
           },
         },
       });
+      const market = await db.market.create({
+        data: {
+          name: input.marketName,
+          description: input.description,
+          address: input.address,
+          season: input.season,
+          week: input.week,
+          network: input.network,
+          baseMint: {
+            connect: {
+              id: mint.id,
+            },
+          },
+          player: {
+            connect: {
+              id: player.id,
+            },
+          },
+        },
+      });
+      await db.mint.update({
+        where: {
+          id: mint.id,
+        },
+        data: {
+          marketId: market.id,
+        },
+      });
+      await db.player.update({
+        where: {
+          id: player.id,
+        },
+        data: {
+          marketId: market.id,
+          mintId: mint.id,
+        },
+      });
+
       return mint;
     } else {
       let team = await db.team.findUniqueOrThrow({
@@ -80,6 +124,49 @@ export const createMint = protectedProcedure
           mint: {
             connect: {
               id: mint.id,
+            },
+          },
+        },
+      });
+      const market = await db.market.create({
+        data: {
+          name: input.marketName,
+          description: input.description,
+          address: input.address,
+          season: input.season,
+          week: input.week,
+          network: input.network,
+          baseMint: {
+            connect: {
+              id: mint.id,
+            },
+          },
+          team: {
+            connect: {
+              id: team.id,
+            },
+          },
+        },
+      });
+      await db.mint.update({
+        where: {
+          id: mint.id,
+        },
+        data: {
+          marketId: market.id,
+        },
+      });
+      await db.team.update({
+        where: {
+          id: team.id,
+        },
+        data: {
+          marketId: market.id,
+          mintId: mint.id,
+          stats: {
+            create: {
+              actualPoints: 0,
+              projectedPoints: input.projectedPoints,
             },
           },
         },

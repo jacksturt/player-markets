@@ -5,7 +5,7 @@
  * IDL can be found at `target/idl/tradetalk.json`.
  */
 export type Tradetalk = {
-  address: "AMNTpN6ykSqt6VUs5tnypD433naSCNbjS8fsEJLVHSsh";
+  address: "A13hqcQX4g2o57dW4vRQKem5G7YykugzPGyvda5YXijV";
   metadata: {
     name: "tradetalk";
     version: "0.1.0";
@@ -2348,6 +2348,10 @@ export type Tradetalk = {
         fields: [
           {
             name: "depositedAmount";
+            type: "u64";
+          },
+          {
+            name: "mintedAmount";
             type: "u64";
           }
         ];

@@ -39,7 +39,7 @@ impl<'info> InitializeProjectionOracle<'info> {
         );
         let player_stats = &mut self.player_stats;
         player_stats.bump = bumps.player_stats;
-        player_stats.projected_points = 0.0;
+        player_stats.projected_points = 15.0;
         player_stats.actual_points = 0.0;
         player_stats.last_updated = Clock::get()?.unix_timestamp;
 

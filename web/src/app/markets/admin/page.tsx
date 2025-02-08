@@ -1,5 +1,5 @@
-import MarketAdmin from "@/components/web/market-admin";
+import MarketAdminAll from "@/components/web/market-admin-all";
 
 export default function Page() {
-  return <MarketAdmin />;
+  return <MarketAdminAll />;
 }

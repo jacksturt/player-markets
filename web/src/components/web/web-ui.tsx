@@ -694,49 +694,19 @@ export function CreateTeam() {
   );
 }
 
-export function InitTeamMint() {
-  const { initializeTeamMint } = useMarketAdmin();
-  const teamId = "DET";
-  const mintSymbol = "LIONS";
-  const season = "2023POST";
-  const week = "3";
-  const network = "MAINNET";
-  const projection = 23;
-
-  return (
-    <button
-      className="btn btn-xs lg:btn-md btn-primary"
-      onClick={() =>
-        initializeTeamMint.mutateAsync({
-          teamId,
-          mintSymbol,
-          season,
-          week,
-          network,
-          projection,
-        })
-      }
-      disabled={initializeTeamMint.isPending}
-    >
-      Initialize Team Mint ({teamId}) {initializeTeamMint.isPending && "..."}
-    </button>
-  );
-}
-
 export function InitPlayerMint() {
   const { initialize } = useMarketAdmin();
-  const playerId = "24423";
-  const playerName = "Jake Moody";
-  const playerImage =
-    "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a2/Washington_Commanders_logo.svg/1200px-Washington_Commanders_logo.svg.png";
-  const playerPosition = "K";
+  const playerId = "19766";
+  const playerName = "Saquon Barkley";
+  const playerImage = "/playerImages/Saquon-Barkley.png";
+  const playerPosition = "RB";
   // SF
-  const teamId = "cm6shjtv90004mrscl6knr8xt";
-  const mintSymbol = "JAKE";
-  const season = "2023POST";
-  const week = "3";
+  const teamId = "cm6l90r8j0000rcxnu1blil7n";
+  const mintSymbol = "SAQUON";
+  const season = "2024POST";
+  const week = "4";
   const network = "MAINNET";
-  const projection = 9.22;
+  const projection = 24.13;
 
   return (
     <button
@@ -761,47 +731,6 @@ export function InitPlayerMint() {
     </button>
   );
 }
-
-export function FinishCreatingMarket() {
-  const { finishCreatingMarket } = useMarketAdmin();
-  const playerId = "19063";
-  const playerName = "George Kittle";
-  const playerImage =
-    "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a2/Washington_Commanders_logo.svg/1200px-Washington_Commanders_logo.svg.png";
-  const playerPosition = "TE";
-  // SF
-  const teamId = "cm6shjtv90004mrscl6knr8xt";
-  const mintSymbol = "George";
-  const season = "2023POST";
-  const week = "3";
-  const network = "MAINNET";
-  const projection = 12.88;
-  const timestamp = "1738795137840";
-  const marketAddress = "4KCNsaKKvFSqroMwk1iAhdLtmX954hhvC98STCeEcKCA";
-  const mintAddress = "9nqdVyXub3rp5LXLYy1EkzxRVqafZcvwbe38RhtEyASt";
-  return (
-    <button
-      className="btn btn-xs lg:btn-md btn-primary"
-      onClick={() =>
-        finishCreatingMarket.mutateAsync({
-          playerId,
-          playerName,
-          marketAddress,
-          mintAddress,
-          mintTimestamp: timestamp,
-          season,
-          week,
-          projection,
-        })
-      }
-      disabled={finishCreatingMarket.isPending}
-    >
-      Finish Creating Market ({playerId}){" "}
-      {finishCreatingMarket.isPending && "..."}
-    </button>
-  );
-}
-
 export function VaultsList() {
   const { vaults } = useMarkets();
   return (

@@ -1,5 +1,5 @@
 {
-  "address": "AMNTpN6ykSqt6VUs5tnypD433naSCNbjS8fsEJLVHSsh",
+  "address": "A13hqcQX4g2o57dW4vRQKem5G7YykugzPGyvda5YXijV",
   "metadata": {
     "name": "tradetalk",
     "version": "0.1.0",
@@ -2637,6 +2637,10 @@
         "fields": [
           {
             "name": "deposited_amount",
+            "type": "u64"
+          },
+          {
+            "name": "minted_amount",
             "type": "u64"
           }
         ]

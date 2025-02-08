@@ -18,7 +18,7 @@ export async function createMarketTX(
   provider: AnchorProvider,
   quoteMint: PublicKey,
   baseMint: PublicKey
-): Promise<PublicKey> {
+): Promise<[TransactionInstruction, TransactionInstruction, Keypair]> {
   const marketKeypair: Keypair = Keypair.generate();
   console.log(`Cluster is ${await getClusterFromConnection(connection)}`);
 
@@ -42,17 +42,5 @@ export async function createMarketTX(
     quoteMint,
     marketKeypair.publicKey
   );
-
-  const recentBlockhash = await connection.getLatestBlockhash();
-
-  const tx: Transaction = new Transaction({
-    feePayer: provider.publicKey,
-    blockhash: recentBlockhash.blockhash,
-    lastValidBlockHeight: recentBlockhash.lastValidBlockHeight,
-  });
-  tx.add(createAccountIx);
-  tx.add(createMarketIx);
-  const signature = await provider.sendAndConfirm(tx, [marketKeypair]);
-  console.log(`Created market at ${marketKeypair.publicKey} in ${signature}`);
-  return marketKeypair.publicKey;
+  return [createAccountIx, createMarketIx, marketKeypair];
 }

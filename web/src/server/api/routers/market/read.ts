@@ -29,6 +29,9 @@ export const readMarket = protectedProcedure
 
 export const readAllMarkets = protectedProcedure.query(async () => {
   const markets = await db.market.findMany({
+    where: {
+      network: "MAINNET",
+    },
     include: {
       baseMint: true,
       player: true,

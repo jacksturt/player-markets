@@ -428,10 +428,10 @@ describe("tradetalk", () => {
           mintRecordProviderAccount.depositedAmount.toString() ===
             (300000000 * 2.5 * projection1).toString()
         );
-        // assert(
-        //   mintRecordProviderAccount.amountMinted.toString() ===
-        //     (300000000).toString()
-        // );
+        assert(
+          mintRecordProviderAccount.mintedAmount.toString() ===
+            (300000000).toString()
+        );
         const mintConfigAccount = await program.account.playerMintConfig.fetch(
           mintConfig
         );
@@ -535,10 +535,10 @@ describe("tradetalk", () => {
               300000000 * 2.5 * projection1
             ).toString()
         );
-        // assert(
-        //   mintRecordMakerAccount.amountMinted.toString() ===
-        //     (300000000 + 300000000).toString()
-        // );
+        assert(
+          mintRecordMakerAccount.mintedAmount.toString() ===
+            (300000000 + 300000000).toString()
+        );
         console.log(
           "mintRecordMakerAccount",
           mintRecordMakerAccount.depositedAmount.toString()
