@@ -3,13 +3,13 @@
 import PlayerCardFront from "./player-card-front";
 import { CardView, usePlayerMarketCardStore } from "@/lib/zustand";
 import PlayerCardBack from "./player-card-back";
+import { MarketRouterObject } from "../web/web-ui";
 
-export default function PlayerCard({ market }: { market: any }) {
+export default function PlayerCard({ market }: { market: MarketRouterObject }) {
   const { cardView, activePlayerMarket, selectedOrderType } =
     usePlayerMarketCardStore();
   const isBackView =
-    cardView === CardView.BACK &&
-    activePlayerMarket === market.publicKey.toBase58();
+    cardView === CardView.BACK && activePlayerMarket === market.address;
 
   return (
     <div className="w-[251px] h-[311px] relative [perspective:1000px]">
@@ -19,7 +19,7 @@ export default function PlayerCard({ market }: { market: any }) {
       >
         {!isBackView && (
           <div className="absolute w-full h-full [backface-visibility:hidden]">
-            <PlayerCardFront marketAddress={market.publicKey.toBase58()} />
+            <PlayerCardFront marketAddress={market.address} />
           </div>
           // <div className="w-full h-full bg-red-500">front</div>
         )}

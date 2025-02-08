@@ -5,19 +5,27 @@ import { TrendingDown, TrendingUp } from "lucide-react";
 import Link from "next/link";
 import { useCurrentMarket, usePlayerMarket } from "../web/market-data-access";
 import { CardView, usePlayerMarketCardStore } from "@/lib/zustand";
+import { api } from "@/trpc/react";
 
 export default function PlayerCardFront({
   marketAddress,
 }: {
   marketAddress: string;
 }) {
-  const { market: offChainMarket } = usePlayerMarket();
+  const market = api.market.read.useQuery(
+    {
+      marketAddress: marketAddress ?? "",
+    },
+    {
+      enabled: !!marketAddress,
+    }
+  );
   const { setMarketAddress } = useCurrentMarket();
   const { setSelectedOrderType, setCardView, setActivePlayerMarket } =
     usePlayerMarketCardStore();
 
-  const baseMint = offChainMarket?.data?.baseMint;
-  const playerData = offChainMarket?.data?.player;
+  const baseMint = market.data?.baseMint;
+  const playerData = market.data?.player;
 
   // console.log("player data", playerData);
   return (
