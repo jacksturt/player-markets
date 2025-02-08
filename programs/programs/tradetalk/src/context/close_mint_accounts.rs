@@ -27,7 +27,7 @@ pub struct CloseMintAccounts<'info> {
         seeds = [b"player_stats", mint_config.player_id.as_ref(), mint_config.timestamp.as_ref()],
         bump,
     )]
-    pub player_stats: Account<'info, PlayerStats>,
+    pub player_stats: Option<Account<'info, PlayerStats>>,
     pub system_program: Program<'info, System>,
     pub token_program: Program<'info, Token>,
     pub associated_token_program: Program<'info, AssociatedToken>,
@@ -58,7 +58,14 @@ impl<'info> CloseMintAccounts<'info> {
             );
             close_account(close_account_ctx)?;
 
-            self.player_stats.close(self.admin.to_account_info())?;
+            match &self.player_stats {
+                Some(player_stats) => {
+                    player_stats.close(self.admin.to_account_info())?;
+                }
+                None => {
+                    msg!("Player stats not found");
+                }
+            }
             self.mint_config.close(self.admin.to_account_info())?;
         }
         Ok(())
