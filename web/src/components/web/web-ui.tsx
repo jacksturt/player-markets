@@ -20,35 +20,126 @@ import TrendUpIcon from "../icons/trend-up";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { usePlayerMarketCardStore } from "@/lib/zustand";
 import { Switch } from "@/components/ui/switch";
-export const Trade = ({
-  defaultOrderType = "buy",
-}: {
-  defaultOrderType?: "buy" | "sell";
-}) => {
-  const [price, setPrice] = useState("");
-  const [quantity, setQuantity] = useState("");
-  const { depositAndPlaceBuyOrder, maybeMintDepositAndSell } = useMyMarket();
+import { type RouterOutputs } from "@/trpc/react";
+import { RestingOrder } from "manifest/src";
+export const Trade = () => {
+  const { playerStatsAccount, market } = usePlayerMarket();
 
-  const { selectedOrderType, setSelectedOrderType } =
-    usePlayerMarketCardStore();
-
-  // TODO: use actual balanaces
-  const TEMP_BALANCE = 1000;
-
+  const [orderType, setOrderType] = useState("buy");
+  const [price, setPrice] = useState(
+    `$${playerStatsAccount.data?.projectedPoints?.toString() ?? ""}`
+  );
+  const [safePrice, setSafePrice] = useState(0.0);
+  const [quantity, setQuantity] = useState(0.0);
+  const [useDepositedTokens, setUseDepositedTokens] = useState(true);
+  const [actualCost, setActualCost] = useState(0);
+  const [playerTokenUseable, setPlayerTokenUseable] = useState(0);
+  const [quoteTokenWithdrawable, setQuoteTokenWithdrawable] = useState(0);
+  const { quoteTokenBalance } = useQuoteToken();
+  const quoteTokenBalanceSafe =
+    ((quoteTokenBalance.data?.valueOf() as number) ?? 0) / 10 ** 6;
+  const { depositAndPlaceBuyOrder, maybeMintDepositAndSell, balances } =
+    useMyMarket();
+  const { playerTokenBalance } = usePlayerToken();
+  const [placeOrderError, setPlaceOrderError] = useState("");
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (selectedOrderType === "buy") {
+    console.log("placing order");
+    if (orderType === "buy") {
       depositAndPlaceBuyOrder.mutateAsync({
-        numBaseTokens: parseFloat(quantity),
-        tokenPrice: parseFloat(price),
+        numBaseTokens:
+          quantity +
+          (useDepositedTokens ? quoteTokenWithdrawable * safePrice : 0),
+        tokenPrice: safePrice,
       });
     } else {
       maybeMintDepositAndSell.mutateAsync({
-        numBaseTokens: parseFloat(quantity),
-        tokenPrice: parseFloat(price),
+        numBaseTokens: quantity + (useDepositedTokens ? playerTokenUseable : 0),
+        tokenPrice: safePrice,
       });
     }
   };
+
+  useEffect(() => {
+    setQuoteTokenWithdrawable(
+      balances.data?.quoteWithdrawableBalanceTokens ?? 0
+    );
+  }, [balances.data]);
+
+  useEffect(() => {
+    const playerTokens = parseInt(playerTokenBalance.data ?? "0") / 10 ** 6;
+    const withdrawableTokens =
+      balances.data?.baseWithdrawableBalanceTokens ?? 0;
+    console.log("players", playerTokens, withdrawableTokens);
+    setPlayerTokenUseable(playerTokens + withdrawableTokens);
+  }, [playerTokenBalance.data, balances.data]);
+
+  useEffect(() => {
+    setSafePrice(parseFloat(price.replace("$", "")));
+  }, [price]);
+
+  useEffect(() => {
+    if (orderType === "buy") {
+      if (
+        quoteTokenBalance.data &&
+        quantity * safePrice * 10 ** 6 >
+          parseFloat(quoteTokenBalance.data) +
+            balances.data?.quoteWithdrawableBalanceTokens!
+      ) {
+        setPlaceOrderError("Insufficient quote tokens");
+      } else {
+        console.log(
+          balances.data?.quoteWithdrawableBalanceTokens,
+          quantity,
+          playerStatsAccount.data?.projectedPoints
+        );
+        setActualCost(
+          quantity * safePrice - balances.data?.quoteWithdrawableBalanceTokens!
+        );
+        setPlaceOrderError("");
+      }
+    } else {
+      const playerTokenBalanceSafe = playerTokenBalance.data ?? "0";
+
+      const playerTokensHeld = parseInt(playerTokenBalanceSafe) / 10 ** 6;
+      const amountToMint =
+        quantity -
+        balances.data?.baseWithdrawableBalanceTokens! -
+        playerTokensHeld;
+      if (market.data?.hasGameStarted && amountToMint > 0) {
+        setPlaceOrderError("Minting Is Disabled");
+      }
+      if (
+        quoteTokenBalance.data &&
+        2.5 * playerStatsAccount.data?.projectedPoints! * quantity * 10 ** 6 >
+          parseFloat(quoteTokenBalance.data)
+      ) {
+        setPlaceOrderError("Insufficient quote tokens");
+      } else {
+        setPlaceOrderError("");
+        console.log(
+          balances.data?.baseWithdrawableBalanceTokens,
+          quantity,
+          playerStatsAccount.data?.projectedPoints
+        );
+        setActualCost(
+          2.5 *
+            playerStatsAccount.data?.projectedPoints! *
+            (quantity -
+              balances.data?.baseWithdrawableBalanceTokens! -
+              playerTokensHeld)
+        );
+      }
+    }
+  }, [
+    quoteTokenBalance.data,
+    quantity,
+    safePrice,
+    orderType,
+    playerStatsAccount.data,
+    balances.data,
+    playerTokenBalance.data,
+  ]);
 
   return (
     <Card className="w-full bg-black/50 border-[#2B2B2B] rounded-[30px] !p-0">
@@ -64,27 +155,27 @@ export const Trade = ({
             <div className="flex items-start h-[37px] justify-center gap-4">
               <button
                 className={`h-full flex items-center gap-2 text-white font-clashGroteskMed uppercase px-6 border-b-2 ${
-                  selectedOrderType === "buy"
+                  orderType === "buy"
                     ? "border-[#CCCCCC]"
                     : "border-transparent"
                 }`}
                 type="button"
-                onClick={() => setSelectedOrderType("buy")}
+                onClick={() => setOrderType("buy")}
               >
                 <TrendUpIcon size={16} />
-                Buy
+                Long
               </button>
               <button
                 className={`h-full flex items-center gap-2 text-white font-clashGroteskMed uppercase px-6 border-b-2 ${
-                  selectedOrderType === "sell"
+                  orderType === "sell"
                     ? "border-[#CCCCCC]"
                     : "border-transparent"
                 }`}
                 type="button"
-                onClick={() => setSelectedOrderType("sell")}
+                onClick={() => setOrderType("sell")}
               >
                 <TrendDownIcon size={16} />
-                Sell
+                Short
               </button>
             </div>
           </div>
@@ -94,14 +185,18 @@ export const Trade = ({
               {/* from token */}
               <div className="h-[42px] w-[152px] flex items-center justify-center gap-1.5 bg-[#232323] rounded-full">
                 <Image
-                  src="/player-temp/diggs.webp"
+                  src={
+                    orderType === "buy"
+                      ? "/logos/USDC.svg"
+                      : market.data?.baseMint.image ?? "/player-temp/diggs.webp"
+                  }
                   alt="player"
                   width={29}
                   height={29}
                   className="rounded-full object-cover w-[28px] h-[28px]"
                 />
                 <p className="text-white font-clashGroteskMed text-[15px] leading-[15px]">
-                  FROM TOKEN
+                  {orderType === "buy" ? "USDC" : market.data?.baseMint.symbol}
                 </p>
               </div>
               {/* arrow */}
@@ -124,14 +219,18 @@ export const Trade = ({
               {/* to token */}
               <div className="h-[42px] w-[152px] flex items-center justify-center gap-1.5 bg-[#232323] rounded-full">
                 <Image
-                  src="/player-temp/diggs.webp"
+                  src={
+                    orderType === "buy"
+                      ? market.data?.baseMint.image ?? "/player-temp/diggs.webp"
+                      : "/logos/USDC.svg"
+                  }
                   alt="player"
                   width={29}
                   height={29}
                   className="rounded-full object-cover w-[28px] h-[28px]"
                 />
                 <p className="text-white font-clashGroteskMed text-[15px] leading-[15px]">
-                  TO TOKEN
+                  {orderType === "buy" ? market.data?.baseMint.symbol : "USDC"}
                 </p>
               </div>
             </div>
@@ -143,16 +242,25 @@ export const Trade = ({
                 </span> */}
                 <Input
                   id="price"
-                  type="number"
+                  type="text"
                   min="0"
+                  prefix="$"
                   value={price}
-                  onChange={(e) => setPrice(e.target.value)}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    if (value.includes("$")) {
+                      setPrice(value);
+                    } else {
+                      setPrice(`$${value}`);
+                    }
+                  }}
                   className="!h-[62px] text-white text-center w-full bg-transparent border-none !text-[50px] !leading-[50px] font-clashGroteskMed [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                  placeholder="420.69"
+                  placeholder="$420.69"
                   required
                 />
                 <p className="text-white font-clashGroteskMed text-[13px] leading-[12px]">
-                  $1256 <span className="text-[#676767]">available</span>
+                  ${quoteTokenBalanceSafe.toFixed(2)}{" "}
+                  <span className="text-[#676767]">available</span>
                 </p>
               </div>
 
@@ -161,9 +269,18 @@ export const Trade = ({
                   className="h-[42px] w-full flex items-center justify-center gap-1.5 bg-[#232323] text-white rounded-full"
                   type="button"
                   onClick={() => {
-                    const spend = 0.25 * TEMP_BALANCE;
-                    const quantity = spend / parseFloat(price);
-                    setQuantity(quantity.toString());
+                    if (orderType === "buy") {
+                      const spend = 0.25 * quoteTokenBalanceSafe;
+                      const quantity = spend / safePrice;
+                      const truncatedQuantity = parseFloat(quantity.toFixed(2));
+                      setQuantity(truncatedQuantity);
+                    } else {
+                      const spend = 0.25 * quoteTokenBalanceSafe;
+                      const quantity =
+                        spend / 2.5 / playerStatsAccount.data?.projectedPoints!;
+                      const truncatedQuantity = parseFloat(quantity.toFixed(2));
+                      setQuantity(truncatedQuantity);
+                    }
                   }}
                 >
                   25%
@@ -172,9 +289,18 @@ export const Trade = ({
                   className="h-[42px] w-full flex items-center justify-center gap-1.5 bg-[#232323] text-white rounded-full"
                   type="button"
                   onClick={() => {
-                    const spend = 0.5 * TEMP_BALANCE;
-                    const quantity = spend / parseFloat(price);
-                    setQuantity(quantity.toString());
+                    if (orderType === "buy") {
+                      const spend = 0.5 * quoteTokenBalanceSafe;
+                      const quantity = spend / safePrice;
+                      const truncatedQuantity = parseFloat(quantity.toFixed(2));
+                      setQuantity(truncatedQuantity);
+                    } else {
+                      const spend = 0.5 * quoteTokenBalanceSafe;
+                      const quantity =
+                        spend / 2.5 / playerStatsAccount.data?.projectedPoints!;
+                      const truncatedQuantity = parseFloat(quantity.toFixed(2));
+                      setQuantity(truncatedQuantity);
+                    }
                   }}
                 >
                   50%
@@ -183,41 +309,128 @@ export const Trade = ({
                   className="h-[42px] w-full flex items-center justify-center gap-1.5 bg-[#232323] text-white rounded-full"
                   type="button"
                   onClick={() => {
-                    const spend = TEMP_BALANCE;
-                    const quantity = spend / parseFloat(price);
-                    setQuantity(quantity.toString());
+                    if (orderType === "buy") {
+                      const spend = quoteTokenBalanceSafe;
+                      const quantity = spend / safePrice;
+                      const truncatedQuantity = parseFloat(quantity.toFixed(2));
+                      setQuantity(truncatedQuantity);
+                    } else {
+                      const spend = quoteTokenBalanceSafe;
+                      const quantity =
+                        spend / 2.5 / playerStatsAccount.data?.projectedPoints!;
+                      const truncatedQuantity = parseFloat(quantity.toFixed(2));
+                      setQuantity(truncatedQuantity);
+                    }
                   }}
                 >
                   MAX
                 </button>
               </div>
+              <Input
+                id="quantity"
+                type="number"
+                min="0"
+                step="0.01"
+                pattern="^\d*\.?\d{0,2}$"
+                value={quantity}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  if (value.includes(".") && value.split(".")[1].length > 2) {
+                    return;
+                  }
 
-              {price && quantity && (
-                <div className="p-4 bg-gray-100 rounded-lg">
-                  <p className="text-lg font-medium">
-                    Total: $
-                    {(parseFloat(price) * parseFloat(quantity)).toFixed(2)}
+                  setQuantity(parseFloat(e.target.value));
+                }}
+                className="!h-[62px] text-white text-center w-full bg-transparent border-none !text-[50px] !leading-[50px] font-clashGroteskMed [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                placeholder="1.0"
+                required
+              />
+
+              {useDepositedTokens && (
+                <div className="!h-[62px] text-white text-center w-full bg-transparent border-none !text-[50px] !leading-[50px] font-clashGroteskMed [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none">
+                  <p>
+                    +
+                    {orderType === "buy"
+                      ? quoteTokenWithdrawable
+                      : playerTokenUseable}{" "}
+                    Tokens
                   </p>
                 </div>
+              )}
+
+              <div className="flex items-center justify-between p-4 bg-gray-100 rounded-lg gap-2">
+                <Label
+                  htmlFor="useDepositedTokens"
+                  className="text-lg font-medium"
+                >
+                  Use {orderType === "buy" ? "Deposited" : "Owned"} Tokens
+                </Label>
+                <Switch
+                  id="useDepositedTokens"
+                  checked={useDepositedTokens}
+                  onCheckedChange={(checked) => setUseDepositedTokens(checked)}
+                />
+              </div>
+
+              {orderType === "buy" && safePrice && quantity && (
+                <div className="p-4 bg-gray-100 rounded-lg">
+                  <p className="text-lg font-medium">
+                    Total: ${(safePrice * quantity).toFixed(2)}
+                  </p>
+                </div>
+              )}
+
+              {orderType === "sell" && safePrice && quantity && (
+                <>
+                  <div className="p-4 bg-gray-100 rounded-lg">
+                    <p className="text-lg font-medium">
+                      Mint Cost: $
+                      {(
+                        playerStatsAccount.data?.projectedPoints! * quantity
+                      ).toFixed(2)}
+                    </p>
+                    <p className="text-lg font-medium">
+                      Collateral: $
+                      {(
+                        1.5 *
+                        playerStatsAccount.data?.projectedPoints! *
+                        quantity
+                      ).toFixed(2)}
+                    </p>
+                  </div>
+                  <div className="p-4 bg-gray-100 rounded-lg">
+                    <p className="text-lg font-medium">
+                      Total: $
+                      {(
+                        2.5 *
+                        playerStatsAccount.data?.projectedPoints! *
+                        quantity
+                      ).toFixed(2)}
+                    </p>
+                  </div>
+                </>
               )}
             </div>
 
             <Button
               type="submit"
               className={`w-full h-[58px] ${
-                selectedOrderType === "buy"
+                orderType === "buy"
                   ? "bg-green-500 hover:bg-green-600"
                   : "bg-red-500 hover:bg-red-600"
               } text-black font-medium rounded-[9.5px] transition-colors`}
             >
-              {selectedOrderType === "buy" ? "Long" : "Short"}
+              {orderType === "buy" ? "Long" : "Short"}
             </Button>
 
             {/* TODO: dynamic player and projection data */}
             <p className="text-[#6A6A6A] text-[11px] leading-[11px] max-w-[254px] mx-auto text-center">
               Make money if Patrick Mahomes scores{" "}
-              {selectedOrderType === "buy" ? "more" : "less"} than{" "}
-              <span className="text-white">20.4 fantasy points</span>
+              {orderType === "buy" ? "more" : "less"} than{" "}
+              <span className="text-white">
+                {playerStatsAccount.data?.projectedPoints.toFixed(2)} fantasy
+                points
+              </span>
             </p>
           </div>
         </form>
@@ -860,22 +1073,22 @@ export const Position = ({
     </div>
   );
 };
+export type OrderRouterObject =
+  RouterOutputs["order"]["readOrdersForMarket"][number];
 
-export const TradeHistoryItem = ({
-  type,
-  ticker,
-  image,
-  timestamp,
-  amount,
-  usdValue,
-}: {
-  type: string;
-  ticker: string;
-  image: string;
-  timestamp: string;
-  amount: number;
-  usdValue: number;
-}) => {
+export type OrderType = RestingOrder & OrderRouterObject;
+
+export const OrderHistoryItem = ({ order }: { order?: OrderType }) => {
+  if (!order) return null;
+  const { price, numBaseTokens, user, market, createdAt, isBid } = order;
+  const ticker = market?.name ?? "";
+  const image = user.image ?? "/player-temp/diggs.webp";
+  console.log(typeof price);
+  const priceFloat = parseFloat(price.toString());
+  const formattedPrice = priceFloat.toFixed(2);
+  const quantityFloat = parseFloat(numBaseTokens.toString()) / 10 ** 6;
+  const formattedQuantity = quantityFloat.toFixed(2);
+  const formattedCost = (priceFloat * quantityFloat).toFixed(2);
   return (
     <div className="w-full h-[44px] flex items-center justify-between">
       <div className="flex items-center gap-2">
@@ -893,14 +1106,14 @@ export const TradeHistoryItem = ({
         <div className="flex flex-col gap-1">
           <div className="flex items-center gap-2">
             <p className="text-white font-clashGroteskMed text-[15px] leading-[15px] uppercase">
-              {type === "sell" ? "Sold" : "Bought"}
+              {isBid ? "Bought" : "Sold"}
             </p>
             <p className="bg-chiefs-gradient-text text-transparent bg-clip-text font-clashGroteskMed text-[15px] leading-[15px]">
               {ticker}
             </p>
           </div>
           <p className="text-[#6a6a6a] font-clashGroteskMed text-[13px] leading-[13px]">
-            {timestamp}
+            {createdAt.toLocaleString()}
           </p>
         </div>
       </div>
@@ -908,14 +1121,89 @@ export const TradeHistoryItem = ({
         <div className="flex items-center gap-2">
           <p
             className={`font-clashGroteskMed text-[15px] leading-[15px] ${
-              type === "sell" ? "text-[#FF4646]" : "text-[#44E865]"
+              isBid ? "text-[#44E865]" : "text-[#FF4646]"
             }`}
           >
-            {`${type === "sell" ? "-" : "+"}${amount} ${ticker}`}
+            {`${isBid ? "-" : "+"}${formattedQuantity} ${ticker}`}
           </p>
         </div>
         <p className="text-[#6a6a6a] font-clashGroteskMed text-[13px] leading-[13px]">
-          {`${type === "sell" ? "+" : "-"}$${usdValue}`}
+          {`${isBid ? "-" : "+"}$${formattedCost}`}
+        </p>
+      </div>
+    </div>
+  );
+};
+
+export type TradeRouterObject = RouterOutputs["trade"]["readForMarket"][number];
+
+export const TradeHistoryItem = ({ trade }: { trade: TradeRouterObject }) => {
+  const { price, quantity, seller, buyer, player, team, baseMint, createdAt } =
+    trade;
+  const ticker = baseMint?.symbol ?? "";
+  const sellerImage = seller.image ?? "/player-temp/diggs.webp";
+  const buyerImage = buyer.image ?? "/playerImages/Patrick-Mahomes.png";
+  console.log(typeof price);
+  const priceFloat = parseFloat(price.toString());
+  const formattedPrice = priceFloat.toFixed(2);
+  const quantityFloat = parseFloat(quantity.toString()) / 10 ** 6;
+  const formattedQuantity = quantityFloat.toFixed(2);
+  const formattedCost = (priceFloat * quantityFloat).toFixed(2);
+
+  return (
+    <div className="w-full h-[44px] flex items-center justify-between">
+      <div className="flex items-center gap-2">
+        <Avatar>
+          <AvatarImage src={sellerImage} />
+          <AvatarFallback>
+            <Image
+              src="/player-temp/diggs.webp"
+              alt="player"
+              width={40}
+              height={40}
+            />
+          </AvatarFallback>
+        </Avatar>
+        <div className="flex flex-col gap-1">
+          <div className="flex items-center gap-2">
+            <p className="text-white font-clashGroteskMed text-[15px] leading-[15px] uppercase">
+              {"Sold "}
+            </p>
+            <p className="bg-chiefs-gradient-text text-transparent bg-clip-text font-clashGroteskMed text-[15px] leading-[15px]">
+              {ticker}
+            </p>
+            <p className="text-white font-clashGroteskMed text-[15px] leading-[15px] uppercase">
+              {" TO"}
+            </p>
+          </div>
+
+          <p className="text-[#6a6a6a] font-clashGroteskMed text-[13px] leading-[13px]">
+            AT ${formattedPrice}
+          </p>
+        </div>
+
+        <Avatar>
+          <AvatarImage src={buyerImage} />
+          <AvatarFallback>
+            <Image
+              src="/playerImages/Patrick-Mahomes.png"
+              alt="player"
+              width={40}
+              height={40}
+            />
+          </AvatarFallback>
+        </Avatar>
+      </div>
+      <div className="flex flex-col items-end gap-1">
+        <div className="flex items-center gap-2">
+          <p
+            className={`font-clashGroteskMed text-[15px] leading-[15px] ${"text-[#44E865]"}`}
+          >
+            {`${formattedQuantity} ${ticker}`}
+          </p>
+        </div>
+        <p className="text-[#6a6a6a] font-clashGroteskMed text-[13px] leading-[13px]">
+          {`$${formattedCost}`}
         </p>
       </div>
     </div>

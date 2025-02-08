@@ -323,54 +323,6 @@ export default function MarketFeature() {
               <h3 key="quantity">Quantity</h3>
               <h3 key="action">Action</h3>
             </>
-            {bids.data?.map((bid) => (
-              <>
-                <div key={"trader-" + bid.lastValidSlot}>
-                  {minimizePubkey(bid.trader.toBase58())}
-                </div>
-                <div key={"price-" + bid.lastValidSlot}>
-                  {bid.tokenPrice.toFixed(6)}
-                </div>
-                <div key={"quantity-" + bid.lastValidSlot}>
-                  {bid.numBaseTokens.toString()}
-                </div>
-                {hasSeatBeenClaimed.data &&
-                  (bid.trader.toBase58() === myKey.toBase58() ? (
-                    <button
-                      onClick={() => {
-                        console.log("myOrders", myOrders.data);
-                        const clientOrderId =
-                          myOrders.data?.find(
-                            (order) =>
-                              order.sequenceNumber?.toString() ===
-                              bid.sequenceNumber.toString()
-                          )?.clientOrderId ?? 0;
-                        console.log("clientOrderId", clientOrderId);
-                        cancelOrder.mutate({
-                          clientOrderId: clientOrderId,
-                        });
-                      }}
-                      key={"cancel-" + bid.lastValidSlot}
-                    >
-                      Cancel
-                    </button>
-                  ) : (
-                    <button
-                      onClick={() => {
-                        maybeMintDepositAndSell.mutate({
-                          numBaseTokens: parseFloat(
-                            bid.numBaseTokens.toString()
-                          ),
-                          tokenPrice: bid.tokenPrice,
-                        });
-                      }}
-                      key={"fill-" + bid.lastValidSlot}
-                    >
-                      Fill
-                    </button>
-                  ))}
-              </>
-            ))}
           </div>
           <h2 className="text-lg font-bold">Asks</h2>
           <div className="grid grid-cols-4 gap-4 mb-4">
@@ -380,54 +332,6 @@ export default function MarketFeature() {
               <h3>Quantity</h3>
               <h3>Action</h3>
             </>
-            {asks.data?.map((ask) => (
-              <>
-                <div key={"trader-" + ask.lastValidSlot}>
-                  {minimizePubkey(ask.trader.toBase58())}
-                </div>
-                <div key={"price-" + ask.lastValidSlot}>
-                  {ask.tokenPrice.toFixed(6)}
-                </div>
-                <div key={"quantity-" + ask.lastValidSlot}>
-                  {ask.numBaseTokens.toString()}
-                </div>
-                {hasSeatBeenClaimed.data &&
-                  (ask.trader.toBase58() === myKey.toBase58() ? (
-                    <button
-                      onClick={() => {
-                        console.log("myOrders", myOrders.data);
-                        const clientOrderId =
-                          myOrders.data?.find(
-                            (order) =>
-                              order.sequenceNumber?.toString() ===
-                              ask.sequenceNumber.toString()
-                          )?.clientOrderId ?? 0;
-                        console.log("clientOrderId", clientOrderId);
-                        cancelOrder.mutate({
-                          clientOrderId: clientOrderId,
-                        });
-                      }}
-                      key={"cancel-" + ask.lastValidSlot}
-                    >
-                      Cancel
-                    </button>
-                  ) : (
-                    <button
-                      onClick={() => {
-                        depositAndPlaceBuyOrder.mutate({
-                          numBaseTokens: parseFloat(
-                            ask.numBaseTokens.toString()
-                          ),
-                          tokenPrice: ask.tokenPrice,
-                        });
-                      }}
-                      key={"fill-" + ask.lastValidSlot}
-                    >
-                      Fill
-                    </button>
-                  ))}
-              </>
-            ))}
           </div>
           <h1 className="text-2xl font-bold">Trades</h1>
           <div className="grid grid-cols-5 gap-4 mb-4">

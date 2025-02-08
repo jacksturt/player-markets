@@ -2,6 +2,8 @@
 
 import React, { useState } from "react";
 import MarketDetails, { GameUpdate, MarketStats } from "./market-details";
+import MarketTrades from "./market-trades";
+import MarketOrders from "./market-orders";
 
 export enum PlayerDataView {
   DETAILS = "Details",
@@ -24,7 +26,7 @@ const gameUpdates: GameUpdate[] = [
 ];
 
 export default function DataTablesPlayer() {
-  const [activeTab, setActiveTab] = useState(PlayerDataView.DETAILS);
+  const [activeTab, setActiveTab] = useState(PlayerDataView.ORDERS);
 
   return (
     <div className="w-full flex flex-col gap-4">
@@ -41,16 +43,9 @@ export default function DataTablesPlayer() {
           </button>
         ))}
       </div>
-      {activeTab === PlayerDataView.DETAILS && (
-        <MarketDetails
-          stats={marketStats}
-          currentPoints={10}
-          currentQuarter={"Q1"}
-          currentTime={"10:00 AM"}
-          team={"Kansas City Chiefs"}
-          updates={gameUpdates}
-        />
-      )}
+      {activeTab === PlayerDataView.DETAILS && <MarketDetails />}
+      {activeTab === PlayerDataView.TRADE_HISTORY && <MarketTrades />}
+      {activeTab === PlayerDataView.ORDERS && <MarketOrders />}
     </div>
   );
 }

@@ -22,6 +22,8 @@ export const readTradesForMarket = protectedProcedure
         buyerWallet: true,
         seller: true,
         sellerWallet: true,
+        player: true,
+        team: true,
       },
     });
     return trades;

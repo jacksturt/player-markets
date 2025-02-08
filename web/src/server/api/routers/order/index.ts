@@ -4,10 +4,12 @@ import {
   readOrder,
   getLastOrderIdForUser,
   readOrdersForUserByMarket,
+  readOrdersForMarket,
 } from "./read";
 export const orderRouter = createTRPCRouter({
   create: createOrder,
   read: readOrder,
   getLastOrderIdForUser: getLastOrderIdForUser,
   readOrdersForUserByMarket: readOrdersForUserByMarket,
+  readOrdersForMarket: readOrdersForMarket,
 });

@@ -57,7 +57,12 @@ const TokenPriceChart = ({ data }: { data: PriceDataPoint[] }) => {
               domain={["auto", "auto"]}
             />
             <Tooltip
-              formatter={(value: number) => [`$${value}`, "Price"]}
+              formatter={(value: number) => [`$${value.toFixed(2)}`, "Price"]}
+              contentStyle={{
+                backgroundColor: "#1E1E1E",
+                borderRadius: "10px",
+                border: "1px solid #353535",
+              }}
               labelFormatter={(label: number) =>
                 new Date(label).toLocaleString("en-US", {
                   month: "short",
@@ -70,7 +75,7 @@ const TokenPriceChart = ({ data }: { data: PriceDataPoint[] }) => {
             <Line
               type="monotone"
               dataKey="price"
-              stroke="black"
+              stroke="#FFFFFF"
               strokeWidth={2}
               dot={false}
             />
@@ -79,22 +84,6 @@ const TokenPriceChart = ({ data }: { data: PriceDataPoint[] }) => {
       </div>
 
       {/* Time Range Picker */}
-      <div className="flex gap-2 justify-between pr-[50px]">
-        {["1m", "15m", "1H", "4H", "1D", "ALL"].map((range) => (
-          <button
-            key={range}
-            className={`px-[32px] py-[12px] rounded-full text-[13px] text-white 
-              ${
-                range === timeRange
-                  ? "bg-[#353535] text-black"
-                  : "hover:bg-[#353535] text-black"
-              }`}
-            onClick={() => setTimeRange(range)}
-          >
-            {range}
-          </button>
-        ))}
-      </div>
     </div>
   );
 };

@@ -39,10 +39,10 @@ export async function checkOrdersAndFills(marketAddress: string) {
     const params = lastSignature
       ? {
           until: lastSignature,
-          limit: 10,
+          limit: 25,
         }
       : {
-          limit: 10,
+          limit: 25,
         };
     const signatures: ConfirmedSignatureInfo[] =
       await connection.getSignaturesForAddress(
@@ -72,13 +72,6 @@ export async function checkOrdersAndFills(marketAddress: string) {
     throw error;
   }
 }
-
-const orderTypeMap = {
-  0: OrderType.LIMIT,
-  1: OrderType.IOC,
-  2: OrderType.POST_ONLY,
-  3: OrderType.GLOBAL,
-} as const;
 
 function genAccDiscriminator(accName: string) {
   return keccak256(

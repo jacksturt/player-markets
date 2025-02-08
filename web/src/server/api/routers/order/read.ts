@@ -23,6 +23,28 @@ export const readOrder = protectedProcedure
     return order;
   });
 
+export const readOrdersForMarket = protectedProcedure
+  .input(
+    z.object({
+      marketAddress: z.string(),
+    })
+  )
+  .query(async ({ input, ctx }) => {
+    const userId = ctx.session.user.id;
+    const orders = await db.order.findMany({
+      where: {
+        market: {
+          address: input.marketAddress,
+        },
+      },
+      include: {
+        user: true,
+        market: true,
+      },
+    });
+    return orders;
+  });
+
 export const readOrdersForUserByMarket = protectedProcedure
   .input(
     z.object({

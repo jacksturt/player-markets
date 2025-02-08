@@ -11,7 +11,7 @@ import {
   Transaction,
 } from "@solana/web3.js";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import { useAnchorProvider } from "../solana/solana-provider";
 import { useTransactionToast } from "../ui/ui-layout";
@@ -32,18 +32,32 @@ import { api } from "@/trpc/react";
 import { useParams } from "next/navigation";
 import { bignum } from "@metaplex-foundation/beet";
 export function useCurrentMarket() {
-  const [marketAddress, setMarketAddress] = useState<string>("");
+  const queryClient = useQueryClient();
 
-  const marketPublicKey = useMemo(() => {
-    if (marketAddress && marketAddress !== "")
-      return new PublicKey(marketAddress);
-    return null;
-  }, [marketAddress]);
+  const marketAddress = useQuery<string | null>({
+    // Add explicit type here
+    queryKey: ["current-market-address"],
+    queryFn: () => null,
+    enabled: false,
+  });
+
+  const setMarketAddress = useCallback(
+    (address: string) => {
+      queryClient.setQueryData(["current-market-address"], address);
+    },
+    [queryClient]
+  ); // Add queryClient to deps array
+
+  // Convert to PublicKey if we have an address
+  const marketPublicKey = useMemo(
+    () => (marketAddress.data ? new PublicKey(marketAddress.data) : null),
+    [marketAddress.data]
+  );
 
   return {
+    marketAddress: marketAddress.data,
     marketPublicKey,
     setMarketAddress,
-    marketAddress,
   };
 }
 
@@ -836,9 +850,18 @@ export function usePlayerMarket() {
   const { program, accounts, quoteToken } = useQuoteToken();
   const provider = useAnchorProvider();
 
+  const orders = api.order.readOrdersForMarket.useQuery(
+    {
+      marketAddress: marketAddress ?? "",
+    },
+    {
+      enabled: !!marketAddress,
+    }
+  );
+
   const market = api.market.read.useQuery(
     {
-      marketAddress: marketAddress,
+      marketAddress: marketAddress ?? "",
     },
     {
       enabled: !!marketAddress,
@@ -847,7 +870,7 @@ export function usePlayerMarket() {
 
   const lastTradePrice = api.market.lastTradePrice.useQuery(
     {
-      marketAddress: marketAddress,
+      marketAddress: marketAddress ?? "",
     },
     {
       enabled: !!marketAddress,
@@ -942,7 +965,19 @@ export function usePlayerMarket() {
         address: marketPublicKey!,
       });
       const bids = await market.bids();
-      return bids;
+      if (orders.data) {
+        const compoundBids = bids.map((bid) => {
+          const order = orders.data.find(
+            (order) => order.sequenceNumber === bid.sequenceNumber
+          );
+          return {
+            ...bid,
+            ...order,
+            sequenceNumber: bid.sequenceNumber,
+          };
+        });
+      }
+      return [];
     },
     enabled: !!marketPublicKey,
     refetchInterval: 10000,
@@ -956,7 +991,19 @@ export function usePlayerMarket() {
         address: marketPublicKey!,
       });
       const asks = await market.asks();
-      return asks;
+      if (orders.data) {
+        const compoundAsks = asks.map((ask) => {
+          const order = orders.data.find(
+            (order) => order.sequenceNumber === ask.sequenceNumber
+          );
+          return {
+            ...ask,
+            ...order,
+            sequenceNumber: ask.sequenceNumber,
+          };
+        });
+      }
+      return [];
     },
     enabled: !!marketPublicKey,
     refetchInterval: 10000,
@@ -964,7 +1011,7 @@ export function usePlayerMarket() {
 
   const trades = api.trade.readForMarket.useQuery(
     {
-      marketAddress: marketAddress,
+      marketAddress: marketAddress ?? "",
     },
     {
       enabled: !!marketAddress,
@@ -1046,7 +1093,7 @@ export const usePlayerToken = () => {
     enabled: !!playerTokenAccount.data,
   });
 
-  const playerTokenMintAccount = useQuery({
+  const playerTokenMintAccountSupply = useQuery({
     queryKey: ["player-token-mint-account", { marketAddress }],
     queryFn: async () => {
       if (!playerTokenMint.data) return;
@@ -1063,7 +1110,7 @@ export const usePlayerToken = () => {
     playerTokenMint,
     playerTokenAccount,
     playerTokenBalance,
-    playerTokenMintAccount,
+    playerTokenMintAccountSupply,
   };
 };
 
@@ -1165,13 +1212,13 @@ export function useMyMarket() {
     playerTokenMint,
     playerTokenAccount,
     playerTokenBalance,
-    playerTokenMintAccount,
+    playerTokenMintAccountSupply: playerTokenMintAccount,
   } = usePlayerToken();
   const { quoteTokenAccount } = useQuoteToken();
   const transactionToast = useTransactionToast();
   const lastOrderId = api.order.getLastOrderIdForUser.useQuery(
     {
-      marketAddress: marketAddress,
+      marketAddress: marketAddress ?? "",
     },
     {
       enabled: !!marketAddress,
@@ -1257,7 +1304,7 @@ export function useMyMarket() {
 
   const myOrders = api.order.readOrdersForUserByMarket.useQuery(
     {
-      marketAddress: marketAddress,
+      marketAddress: marketAddress ?? "",
     },
     {
       enabled: !!marketAddress,
