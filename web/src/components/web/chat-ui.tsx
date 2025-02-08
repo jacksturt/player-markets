@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState, useRef } from "react";
 import { useWallet } from "@solana/wallet-adapter-react";
-import { useCapsuleWallet } from "./market-data-access";
+import { useCapsuleWallet, useMyPubkey } from "./market-data-access";
 import Image from "next/image";
 import SendbirdChat from "@sendbird/chat";
 import {
@@ -34,10 +34,8 @@ interface FormattedMessage {
 }
 
 export default function ChatUI() {
-  const { publicKey } = useWallet();
-  const { capsulePubkey } = useCapsuleWallet();
   const [messages, setMessages] = useState<FormattedMessage[]>([]);
-  const myKey = publicKey ?? capsulePubkey.data!;
+  const myKey = useMyPubkey();
   const [open, setOpen] = useState(false);
   const [message, setMessage] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);

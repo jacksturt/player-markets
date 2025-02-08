@@ -2002,6 +2002,132 @@ export function useMyMarket() {
     onError: () => toast.error("Failed to fully cash out"),
   });
 
+  const cancelAndWithdrawAllToPayoutOld = useMutation({
+    mutationKey: [
+      "market",
+      "cancel-and-withdraw-all-to-payout-old",
+      { playerMintPK: marketPK },
+    ],
+    mutationFn: async () => {
+      const cancelAllOrdersIx = client.cancelAllIx();
+      const withdrawAllIx = await client.withdrawAllIx();
+      const blockhash = await provider.connection.getLatestBlockhash();
+      const feePayer = publicKey ?? capsulePubkey.data!;
+      const playerTokenAccount = getAssociatedTokenAddressSync(
+        playerTokenMint.data!,
+        feePayer,
+        true
+      );
+      console.log("playerTokenAccount", playerTokenAccount.toBase58());
+
+      const quoteTokenAccount = getAssociatedTokenAddressSync(
+        quoteToken,
+        feePayer
+      );
+      const mintConfig = PublicKey.findProgramAddressSync(
+        [
+          Buffer.from("config"),
+          Buffer.from(playerId.data ?? ""),
+          Buffer.from(timestamp.data ?? ""),
+        ],
+        program.programId
+      )[0];
+      console.log("mintConfig", mintConfig.toBase58());
+      const playerStats = PublicKey.findProgramAddressSync(
+        [
+          Buffer.from("player_stats"),
+          Buffer.from(playerId.data ?? ""),
+          Buffer.from(timestamp.data ?? ""),
+        ],
+        program.programId
+      )[0];
+
+      const vault = getAssociatedTokenAddressSync(quoteToken, mintConfig, true);
+      const mintRecord = PublicKey.findProgramAddressSync(
+        [
+          Buffer.from("mint_record"),
+          mintConfig.toBuffer(),
+          feePayer.toBuffer(),
+        ],
+        program.programId
+      )[0];
+      let doesMintRecordExist = false;
+      try {
+        const mintRecordInfo = await program.account.mintRecord.fetch(
+          mintRecord
+        );
+        console.log("mintRecordInfo", mintRecordInfo);
+        doesMintRecordExist = true;
+      } catch (e) {
+        console.log("error", e);
+      }
+
+      const context = {
+        payer: feePayer,
+        quoteTokenMint: quoteToken,
+        playerTokenMint: playerTokenMint.data!,
+        vault,
+        mintRecord: doesMintRecordExist ? mintRecord : null,
+        payerQuoteTokenAccount: quoteTokenAccount,
+        payerPlayerTokenAccount: playerTokenAccount,
+        mintConfig,
+        playerStats,
+        tokenProgram: TOKEN_PROGRAM_ID,
+        associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
+        systemProgram: SystemProgram.programId,
+      };
+
+      const ix = await program.methods
+        .payoutOld()
+        .accountsStrict(context)
+        .instruction();
+      const transaction = new Transaction({
+        feePayer: publicKey ?? capsulePubkey.data!,
+        blockhash: blockhash.blockhash,
+        lastValidBlockHeight: blockhash.lastValidBlockHeight,
+      });
+
+      try {
+        const playerTokenAccountInfo = await getAccount(
+          provider.connection,
+          playerTokenAccount
+        );
+        console.log("playerTokenAccount", playerTokenAccountInfo);
+      } catch (e) {
+        console.log("error", e);
+        const createAccountIx = createAssociatedTokenAccountInstruction(
+          feePayer,
+          playerTokenAccount,
+          feePayer,
+          playerTokenMint.data!
+        );
+        transaction.add(createAccountIx);
+      }
+
+      transaction.add(cancelAllOrdersIx, ...withdrawAllIx, ix);
+      if (!publicKey) {
+        const signed = await solanaSigner.data!.signTransaction(transaction);
+        const signature = await provider.connection.sendRawTransaction(
+          signed.serialize()
+        );
+        return signature;
+      } else {
+        return wallet?.adapter.sendTransaction(
+          transaction,
+          provider.connection
+        );
+      }
+    },
+    onSuccess: (signature) => {
+      transactionToast(`${signature}`);
+      cancelAllOrdersDB.mutate({
+        marketAddress: marketPK!.toBase58(),
+      });
+      return accounts.refetch();
+    },
+    onError: () => toast.error("Failed to fully cash out"),
+  });
+
   return {
     withdrawAll,
     payout,
@@ -2014,10 +2140,11 @@ export function useMyMarket() {
     myOrders,
     mintRecord,
     currentMinterRewards,
+    cancelAndWithdrawAllToPayoutOld,
   };
 }
 
-const useMyPubkey = () => {
+export const useMyPubkey = () => {
   const { publicKey } = useWallet();
   const { capsulePubkey } = useCapsuleWallet();
   return publicKey ?? capsulePubkey.data!;

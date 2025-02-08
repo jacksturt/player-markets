@@ -423,15 +423,15 @@ describe("tradetalk", () => {
         );
 
         const mintRecordProviderAccount =
-          await program.account.mintRecord.fetch(mintRecordProvider);
+          await program.account.mintRecordV2.fetch(mintRecordProvider);
         assert(
           mintRecordProviderAccount.depositedAmount.toString() ===
             (300000000 * 2.5 * projection1).toString()
         );
-        // assert(
-        //   mintRecordProviderAccount.amountMinted.toString() ===
-        //     (300000000).toString()
-        // );
+        assert(
+          mintRecordProviderAccount.mintedAmount.toString() ===
+            (300000000).toString()
+        );
         const mintConfigAccount = await program.account.playerMintConfig.fetch(
           mintConfig
         );
@@ -525,7 +525,7 @@ describe("tradetalk", () => {
         const makerPlayer = await getAccount(connection, makerAtaPlayer);
         console.log("maker player amount after", makerPlayer.amount);
 
-        const mintRecordMakerAccount = await program.account.mintRecord.fetch(
+        const mintRecordMakerAccount = await program.account.mintRecordV2.fetch(
           mintRecordMaker
         );
         assert(
@@ -535,10 +535,10 @@ describe("tradetalk", () => {
               300000000 * 2.5 * projection1
             ).toString()
         );
-        // assert(
-        //   mintRecordMakerAccount.amountMinted.toString() ===
-        //     (300000000 + 300000000).toString()
-        // );
+        assert(
+          mintRecordMakerAccount.mintedAmount.toString() ===
+            (300000000 + 300000000).toString()
+        );
         console.log(
           "mintRecordMakerAccount",
           mintRecordMakerAccount.depositedAmount.toString()
@@ -972,7 +972,7 @@ describe("tradetalk", () => {
       mintConfig
     );
     console.log("mintConfigAccount", mintConfigAccount.totalDepositedAmount);
-    const mintRecordMakerAccount = await program.account.mintRecord.fetch(
+    const mintRecordMakerAccount = await program.account.mintRecordV2.fetch(
       mintRecordMaker
     );
     console.log(
@@ -1004,7 +1004,7 @@ describe("tradetalk", () => {
 
     try {
       const tx = await program.methods
-        .payout()
+        .payoutV2()
         .accountsStrict(context)
         .signers([maker])
         .rpc()
@@ -1068,7 +1068,7 @@ describe("tradetalk", () => {
       mintConfig
     );
     console.log("mintConfigAccount", mintConfigAccount.totalDepositedAmount);
-    const mintRecordMakerAccount = await program.account.mintRecord.fetch(
+    const mintRecordMakerAccount = await program.account.mintRecordV2.fetch(
       mintRecordMaker
     );
     const makerPlayerBefore = await getAccount(connection, makerAtaPlayer);
@@ -1103,7 +1103,7 @@ describe("tradetalk", () => {
     });
 
     const tx = await program.methods
-      .payout()
+      .payoutV2()
       .accountsStrict(context)
       .signers([maker])
       .rpc()
@@ -1121,9 +1121,8 @@ describe("tradetalk", () => {
           assert(e.toString().includes("TokenAccountNotFoundError"));
         }
         try {
-          const mintRecordMakerAccount = await program.account.mintRecord.fetch(
-            mintRecordMaker
-          );
+          const mintRecordMakerAccount =
+            await program.account.mintRecordV2.fetch(mintRecordMaker);
           assert(false, "mint record account should not exist");
         } catch (e) {
           console.log(e);
@@ -1142,7 +1141,7 @@ describe("tradetalk", () => {
     );
     console.log("mintConfigAccount", mintConfigAccount.totalDepositedAmount);
 
-    const mintRecordTakerAccount = await program.account.mintRecord.fetch(
+    const mintRecordTakerAccount = await program.account.mintRecordV2.fetch(
       mintRecordTaker
     );
     console.log(
@@ -1176,7 +1175,7 @@ describe("tradetalk", () => {
     });
 
     const tx = await program.methods
-      .payout()
+      .payoutV2()
       .accountsStrict(context)
       .signers([taker])
       .rpc()
@@ -1194,9 +1193,8 @@ describe("tradetalk", () => {
           assert(e.toString().includes("TokenAccountNotFoundError"));
         }
         try {
-          const mintRecordTakerAccount = await program.account.mintRecord.fetch(
-            mintRecordTaker
-          );
+          const mintRecordTakerAccount =
+            await program.account.mintRecordV2.fetch(mintRecordTaker);
           assert(false, "mint record account should not exist");
         } catch (e) {
           console.log(e);
@@ -1215,9 +1213,8 @@ describe("tradetalk", () => {
     );
     console.log("mintConfigAccount", mintConfigAccount.totalDepositedAmount);
 
-    const mintRecordThirdPartyAccount = await program.account.mintRecord.fetch(
-      mintRecordThirdParty
-    );
+    const mintRecordThirdPartyAccount =
+      await program.account.mintRecordV2.fetch(mintRecordThirdParty);
     console.log(
       "mintRecordThirdPartyAccount",
       mintRecordThirdPartyAccount.depositedAmount
@@ -1254,7 +1251,7 @@ describe("tradetalk", () => {
     });
 
     const tx = await program.methods
-      .payout()
+      .payoutV2()
       .accountsStrict(context)
       .signers([thirdParty])
       .rpc()
@@ -1281,7 +1278,7 @@ describe("tradetalk", () => {
         }
         try {
           const mintRecordThirdPartyAccount =
-            await program.account.mintRecord.fetch(mintRecordThirdParty);
+            await program.account.mintRecordV2.fetch(mintRecordThirdParty);
           assert(false, "mint record account should not exist");
         } catch (e) {
           assert(

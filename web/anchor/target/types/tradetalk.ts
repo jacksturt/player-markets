@@ -1379,6 +1379,385 @@ export type Tradetalk = {
       args: [];
     },
     {
+      name: "payoutOld";
+      discriminator: [47, 41, 64, 165, 218, 74, 29, 50];
+      accounts: [
+        {
+          name: "payer";
+          writable: true;
+          signer: true;
+        },
+        {
+          name: "quoteTokenMint";
+        },
+        {
+          name: "payerQuoteTokenAccount";
+          writable: true;
+          pda: {
+            seeds: [
+              {
+                kind: "account";
+                path: "payer";
+              },
+              {
+                kind: "const";
+                value: [
+                  6,
+                  221,
+                  246,
+                  225,
+                  215,
+                  101,
+                  161,
+                  147,
+                  217,
+                  203,
+                  225,
+                  70,
+                  206,
+                  235,
+                  121,
+                  172,
+                  28,
+                  180,
+                  133,
+                  237,
+                  95,
+                  91,
+                  55,
+                  145,
+                  58,
+                  140,
+                  245,
+                  133,
+                  126,
+                  255,
+                  0,
+                  169
+                ];
+              },
+              {
+                kind: "account";
+                path: "quoteTokenMint";
+              }
+            ];
+            program: {
+              kind: "const";
+              value: [
+                140,
+                151,
+                37,
+                143,
+                78,
+                36,
+                137,
+                241,
+                187,
+                61,
+                16,
+                41,
+                20,
+                142,
+                13,
+                131,
+                11,
+                90,
+                19,
+                153,
+                218,
+                255,
+                16,
+                132,
+                4,
+                142,
+                123,
+                216,
+                219,
+                233,
+                248,
+                89
+              ];
+            };
+          };
+        },
+        {
+          name: "playerTokenMint";
+          writable: true;
+        },
+        {
+          name: "payerPlayerTokenAccount";
+          writable: true;
+          pda: {
+            seeds: [
+              {
+                kind: "account";
+                path: "payer";
+              },
+              {
+                kind: "const";
+                value: [
+                  6,
+                  221,
+                  246,
+                  225,
+                  215,
+                  101,
+                  161,
+                  147,
+                  217,
+                  203,
+                  225,
+                  70,
+                  206,
+                  235,
+                  121,
+                  172,
+                  28,
+                  180,
+                  133,
+                  237,
+                  95,
+                  91,
+                  55,
+                  145,
+                  58,
+                  140,
+                  245,
+                  133,
+                  126,
+                  255,
+                  0,
+                  169
+                ];
+              },
+              {
+                kind: "account";
+                path: "playerTokenMint";
+              }
+            ];
+            program: {
+              kind: "const";
+              value: [
+                140,
+                151,
+                37,
+                143,
+                78,
+                36,
+                137,
+                241,
+                187,
+                61,
+                16,
+                41,
+                20,
+                142,
+                13,
+                131,
+                11,
+                90,
+                19,
+                153,
+                218,
+                255,
+                16,
+                132,
+                4,
+                142,
+                123,
+                216,
+                219,
+                233,
+                248,
+                89
+              ];
+            };
+          };
+        },
+        {
+          name: "mintConfig";
+          writable: true;
+          pda: {
+            seeds: [
+              {
+                kind: "const";
+                value: [99, 111, 110, 102, 105, 103];
+              },
+              {
+                kind: "account";
+                path: "mint_config.player_id";
+                account: "playerMintConfig";
+              },
+              {
+                kind: "account";
+                path: "mint_config.timestamp";
+                account: "playerMintConfig";
+              }
+            ];
+          };
+        },
+        {
+          name: "vault";
+          writable: true;
+          pda: {
+            seeds: [
+              {
+                kind: "account";
+                path: "mintConfig";
+              },
+              {
+                kind: "const";
+                value: [
+                  6,
+                  221,
+                  246,
+                  225,
+                  215,
+                  101,
+                  161,
+                  147,
+                  217,
+                  203,
+                  225,
+                  70,
+                  206,
+                  235,
+                  121,
+                  172,
+                  28,
+                  180,
+                  133,
+                  237,
+                  95,
+                  91,
+                  55,
+                  145,
+                  58,
+                  140,
+                  245,
+                  133,
+                  126,
+                  255,
+                  0,
+                  169
+                ];
+              },
+              {
+                kind: "account";
+                path: "quoteTokenMint";
+              }
+            ];
+            program: {
+              kind: "const";
+              value: [
+                140,
+                151,
+                37,
+                143,
+                78,
+                36,
+                137,
+                241,
+                187,
+                61,
+                16,
+                41,
+                20,
+                142,
+                13,
+                131,
+                11,
+                90,
+                19,
+                153,
+                218,
+                255,
+                16,
+                132,
+                4,
+                142,
+                123,
+                216,
+                219,
+                233,
+                248,
+                89
+              ];
+            };
+          };
+        },
+        {
+          name: "playerStats";
+          writable: true;
+          pda: {
+            seeds: [
+              {
+                kind: "const";
+                value: [
+                  112,
+                  108,
+                  97,
+                  121,
+                  101,
+                  114,
+                  95,
+                  115,
+                  116,
+                  97,
+                  116,
+                  115
+                ];
+              },
+              {
+                kind: "account";
+                path: "mint_config.player_id";
+                account: "playerMintConfig";
+              },
+              {
+                kind: "account";
+                path: "mint_config.timestamp";
+                account: "playerMintConfig";
+              }
+            ];
+          };
+        },
+        {
+          name: "mintRecord";
+          writable: true;
+          optional: true;
+          pda: {
+            seeds: [
+              {
+                kind: "const";
+                value: [109, 105, 110, 116, 95, 114, 101, 99, 111, 114, 100];
+              },
+              {
+                kind: "account";
+                path: "mintConfig";
+              },
+              {
+                kind: "account";
+                path: "payer";
+              }
+            ];
+          };
+        },
+        {
+          name: "systemProgram";
+          address: "11111111111111111111111111111111";
+        },
+        {
+          name: "tokenProgram";
+          address: "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA";
+        },
+        {
+          name: "associatedTokenProgram";
+          address: "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL";
+        }
+      ];
+      args: [];
+    },
+    {
       name: "setIsMintEnabled";
       discriminator: [32, 216, 128, 169, 132, 227, 175, 85];
       accounts: [
@@ -2296,6 +2675,10 @@ export type Tradetalk = {
       discriminator: [47, 252, 142, 126, 241, 162, 116, 188];
     },
     {
+      name: "mintRecordOld";
+      discriminator: [214, 201, 56, 154, 126, 75, 133, 190];
+    },
+    {
       name: "playerMintConfig";
       discriminator: [202, 254, 4, 217, 136, 187, 8, 176];
     },
@@ -2343,6 +2726,22 @@ export type Tradetalk = {
   types: [
     {
       name: "mintRecord";
+      type: {
+        kind: "struct";
+        fields: [
+          {
+            name: "depositedAmount";
+            type: "u64";
+          },
+          {
+            name: "mintedAmount";
+            type: "u64";
+          }
+        ];
+      };
+    },
+    {
+      name: "mintRecordOld";
       type: {
         kind: "struct";
         fields: [

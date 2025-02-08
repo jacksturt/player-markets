@@ -853,7 +853,7 @@ export function SetMintingEnabled() {
   const { setMintingEnabled } = useMarketAdmin();
   const { market } = usePlayerMarket();
   const marketId = market?.data?.baseMint.symbol;
-  const isMintingEnabled = false;
+  const isMintingEnabled = true;
 
   return (
     <button
@@ -961,6 +961,20 @@ export function CashoutAll() {
       disabled={cancelAndWithdrawAllToPayout.isPending}
     >
       Cashout Balance {cancelAndWithdrawAllToPayout.isPending && "..."}
+    </button>
+  );
+}
+
+export function CashoutAllOld() {
+  const { cancelAndWithdrawAllToPayoutOld } = useMyMarket();
+
+  return (
+    <button
+      className="w-full h-[58.36px] bg-[#2B2B2B] hover:bg-[#3B3B3B] text-white"
+      onClick={() => cancelAndWithdrawAllToPayoutOld.mutateAsync()}
+      disabled={cancelAndWithdrawAllToPayoutOld.isPending}
+    >
+      Cashout Balance OLD{cancelAndWithdrawAllToPayoutOld.isPending && "..."}
     </button>
   );
 }

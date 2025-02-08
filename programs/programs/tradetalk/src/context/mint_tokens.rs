@@ -1,6 +1,6 @@
 use crate::errors::OracleError;
 use crate::{
-    state::{mint::PlayerMintConfig, MintRecord, PlayerStats},
+    state::{mint::PlayerMintConfig, MintRecordV2, PlayerStats},
     MINTER_COLLATERAL_RATE,
 };
 use anchor_lang::prelude::*;
@@ -57,11 +57,11 @@ pub struct MintTokens<'info> {
     #[account(
         init_if_needed,
         payer = payer,
-        space = MintRecord::INIT_SPACE,
+        space = MintRecordV2::INIT_SPACE,
         seeds = [b"mint_record", config.key().as_ref(), payer.key().as_ref()],
         bump,
     )]
-    pub mint_record: Box<Account<'info, MintRecord>>,
+    pub mint_record: Box<Account<'info, MintRecordV2>>,
     pub system_program: Program<'info, System>,
     pub token_program: Program<'info, Token>,
     pub associated_token_program: Program<'info, AssociatedToken>,
@@ -113,7 +113,7 @@ impl<'info> MintTokens<'info> {
         )?;
 
         self.mint_record.deposited_amount += total_collateral;
-        // self.mint_record.amount_minted += quantity;
+        self.mint_record.minted_amount += quantity;
         self.config.total_deposited_amount += total_collateral;
 
         Ok(())

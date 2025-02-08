@@ -49,6 +49,11 @@ pub mod tradetalk {
         Ok(())
     }
 
+    pub fn payout_v2(ctx: Context<PayoutV2>) -> Result<()> {
+        ctx.accounts.payout_v2().unwrap();
+        Ok(())
+    }
+
     pub fn payout(ctx: Context<Payout>) -> Result<()> {
         ctx.accounts.payout().unwrap();
         Ok(())
