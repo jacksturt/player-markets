@@ -12,6 +12,7 @@ export const readMarket = protectedProcedure
     const market = await db.market.findUnique({
       where: {
         address: input.marketAddress,
+        network: "DEVNET",
       },
       include: {
         baseMint: true,
