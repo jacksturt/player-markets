@@ -17,17 +17,19 @@ export async function GET(request: Request) {
   }
 
   const { searchParams } = new URL(request.url);
-  const playerId = searchParams.get("playerId");
-  if (!playerId) {
+  const teamId = searchParams.get("teamId");
+  if (!teamId) {
     return NextResponse.json(
-      { success: false, error: "Player ID is required" },
+      { success: false, error: "Team ID is required" },
       { status: 400 }
     );
   }
   try {
-    const player = await db.player.findUniqueOrThrow({
+    const players = await db.player.findMany({
       where: {
-        sportsDataId: parseInt(playerId),
+        team: {
+          sportsDataId: teamId,
+        },
       },
       include: {
         team: true,
@@ -37,33 +39,34 @@ export async function GET(request: Request) {
       },
     });
 
-    try {
-      if (player.market?.hasGameStarted) {
-        const url = `https://replay.sportsdata.io/api/v3/nfl/stats/json/playergamestatsbyteam/${player.market?.season.toLowerCase()}/${
-          player.market?.week
-        }/${player?.team?.sportsDataId.toLowerCase()}?key=d6f0c46073bf4bf2a70d2d6b01f74046`;
-        // const url = `https://api.sportsdata.io/v3/nfl/stats/json/PlayerGameStatsByTeam/${player.market?.season}/${player.market?.week}/${player?.team?.sportsDataId}?key=${process.env.SPORTSDATA_API_KEY}`;
-        const response = await fetch(url, {
-          headers: {
-            Authorization: `Bearer ${process.env.ORACLE_API_KEY}`,
-          },
-        });
-        const playerActualDataList: PlayerGameStats[] = await response.json();
-        if (!playerActualDataList) {
-          return NextResponse.json(
-            { success: false, error: "Player projection not found" },
-            { status: 404 }
-          );
-        }
+    const hasGameStarted = players[0].market?.hasGameStarted;
+
+    if (hasGameStarted) {
+      const url = `https://replay.sportsdata.io/api/v3/nfl/stats/json/playergamestatsbyteam/${players[0].market?.season.toLowerCase()}/${
+        players[0].market?.week
+      }/${players[0].team?.sportsDataId.toLowerCase()}?key=d6f0c46073bf4bf2a70d2d6b01f74046`;
+      // const url = `https://api.sportsdata.io/v3/nfl/stats/json/PlayerGameStatsByTeam/${player.market?.season}/${player.market?.week}/${player?.team?.sportsDataId}?key=${process.env.SPORTSDATA_API_KEY}`;
+      const response = await fetch(url, {
+        headers: {
+          Authorization: `Bearer ${process.env.ORACLE_API_KEY}`,
+        },
+      });
+      const playerActualDataList: PlayerGameStats[] = await response.json();
+      if (!playerActualDataList) {
+        return NextResponse.json(
+          { success: false, error: "Player projection not found" },
+          { status: 404 }
+        );
+      }
+
+      for (const player of players) {
         const playerActualData = playerActualDataList.find(
-          (data) => data.PlayerID === parseInt(playerId)
+          (data) => data.PlayerID === player.sportsDataId
         );
 
         if (!playerActualData) {
-          return NextResponse.json(
-            { success: false, error: "Player actual data not found" },
-            { status: 404 }
-          );
+          console.error(`Player actual data not found for ${player.name}`);
+          continue;
         }
 
         const camelCaseData = convertPlayerGameStatsToActual(playerActualData);
@@ -87,31 +90,32 @@ export async function GET(request: Request) {
             false
           );
         }
-      } else {
-        if (player.market?.season === "2023POST") {
-          return NextResponse.json({ success: true });
-        }
-        const url = `https://api.sportsdata.io/v3/nfl/projections/json/PlayerGameProjectionStatsByTeam/${player.market?.season}/${player.market?.week}/${player?.team?.sportsDataId}?key=${process.env.SPORTSDATA_API_KEY}`;
+      }
+    } else {
+      const url = `https://api.sportsdata.io/v3/nfl/projections/json/PlayerGameProjectionStatsByTeam/${players[0].market?.season}/${players[0].market?.week}/${players[0].team?.sportsDataId}?key=${process.env.SPORTSDATA_API_KEY}`;
 
-        const response = await fetch(url, {
-          headers: {
-            Authorization: `Bearer ${process.env.ORACLE_API_KEY}`,
-          },
-        });
-        const playerProjectionDataList: PlayerGameStats[] =
-          await response.json();
+      const response = await fetch(url, {
+        headers: {
+          Authorization: `Bearer ${process.env.ORACLE_API_KEY}`,
+        },
+      });
+      const playerProjectionDataList: PlayerGameStats[] = await response.json();
 
+      if (!playerProjectionDataList) {
+        return NextResponse.json(
+          { success: false, error: "Player projections not found" },
+          { status: 404 }
+        );
+      }
+      for (const player of players) {
         const playerProjectionData = playerProjectionDataList.find(
-          (data) => data.PlayerID === parseInt(playerId)
+          (data) => data.PlayerID === player.sportsDataId
         );
 
         if (!playerProjectionData) {
-          return NextResponse.json(
-            { success: false, error: "Player projection not found" },
-            { status: 404 }
-          );
+          console.error(`Player projection data not found for ${player.name}`);
+          continue;
         }
-
         const camelCaseData =
           convertPlayerGameStatsToProjected(playerProjectionData);
         if (
@@ -142,16 +146,11 @@ export async function GET(request: Request) {
           );
         }
       }
-
-      return NextResponse.json({ success: true });
-    } catch (error: any) {
-      console.error(error);
-      return NextResponse.json(
-        { success: false, error: error.message },
-        { status: 500 }
-      );
     }
+
+    return NextResponse.json({ success: true });
   } catch (error: any) {
+    console.error(error);
     return NextResponse.json(
       { success: false, error: error.message },
       { status: 500 }
