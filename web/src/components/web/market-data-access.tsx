@@ -37,6 +37,7 @@ import { Market, Wrapper, WrapperMarketInfo, WrapperData } from "manifest/src";
 import { api, RouterOutputs } from "@/trpc/react";
 import { useSession } from "next-auth/react";
 import { AskOrBidType } from "./web-ui";
+import { getPercentGameRemaining } from "@/lib/utils";
 
 export function useCurrentMarket() {
   const queryClient = useQueryClient();
@@ -2035,7 +2036,7 @@ export const useLeaderboards = () => {
 };
 
 export const useLivePlays = () => {
-  const { market } = usePlayerMarket();
+  const { market, playerStatsAccount } = usePlayerMarket();
   const latestPlay = api.plays.latestPlay.useQuery();
   const playsByTeam = api.plays.playsByTeam.useQuery(
     market?.data?.team?.id ?? market?.data?.player?.teamId ?? ""
@@ -2044,9 +2045,28 @@ export const useLivePlays = () => {
     market?.data?.player?.id ?? ""
   );
 
+  const liveProjectedScore = useQuery({
+    queryKey: ["live-projected-score"],
+    queryFn: async () => {
+      const actualPoints = playerStatsAccount?.data?.actualPoints ?? 0;
+      const projectedPoints = playerStatsAccount?.data?.projectedPoints ?? 0;
+      console.log("latestPlay", latestPlay.data);
+      const percentRemaining = getPercentGameRemaining(
+        latestPlay.data?.quarterName ?? "0",
+        latestPlay.data?.timeRemainingMinutes ?? 0,
+        latestPlay.data?.timeRemainingSeconds ?? 0
+      );
+      console.log("percentRemaining", percentRemaining);
+      console.log("actualPoints", actualPoints);
+      return actualPoints + projectedPoints * percentRemaining;
+    },
+    enabled: !!latestPlay.data && !!playerStatsAccount?.data,
+  });
+
   return {
     latestPlay,
     playsByTeam,
     playsByPlayer,
+    liveProjectedScore,
   };
 };

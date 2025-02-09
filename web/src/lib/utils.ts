@@ -56,6 +56,25 @@ export function quarterNameToBetterString(quarterName: string) {
   return quarterName;
 }
 
+export function quarterNameToNumber(quarterName: string) {
+  if (quarterName === "1") {
+    return 1;
+  }
+  if (quarterName === "2") {
+    return 2;
+  }
+  if (quarterName === "3") {
+    return 3;
+  }
+  if (quarterName === "4") {
+    return 4;
+  }
+  if (quarterName === "OT") {
+    return 5;
+  }
+  return 0;
+}
+
 export function convertDownAndDistanceToBetterString(
   down: number,
   distance: number
@@ -70,4 +89,20 @@ export function convertDownAndDistanceToBetterString(
     return `3rd & ${distance} yard${distance === 1 ? "" : "s"}`;
   }
   return `4th & ${distance} yard${distance === 1 ? "" : "s"}`;
+}
+
+export function getPercentGameRemaining(
+  quarter: string,
+  minutesRemainingInQuarter: number,
+  secondsRemainingInQuarter: number
+) {
+  const quarterNumber = quarterNameToNumber(quarter);
+  console.log("quarterNumber", quarterNumber);
+  const totalSecondsRemaining =
+    3600 -
+    quarterNumber * 900 +
+    minutesRemainingInQuarter * 60 +
+    secondsRemainingInQuarter;
+  const totalSecondsInGame = 3600;
+  return totalSecondsRemaining / totalSecondsInGame;
 }

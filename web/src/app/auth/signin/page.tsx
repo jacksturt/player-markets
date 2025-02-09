@@ -23,6 +23,7 @@ function SignInContent() {
   const handleparaSetup = async () => {
     try {
       const userId = await para.getUserId();
+      console.log("userId", userId);
 
       const serializedSession = await para.exportSession();
       const email = para.getEmail();
