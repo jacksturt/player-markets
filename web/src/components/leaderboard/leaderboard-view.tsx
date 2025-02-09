@@ -80,10 +80,9 @@ export default function LeaderboardView() {
         </div>
       </div> */}
       <div className="w-full lg:w-auto flex flex-row gap-[25px]">
-        <div className="flex flex-col gap-[25px]">
+        <div className="flex flex-col gap-[25px] lg:w-[800px]">
           <p className="text-2xl text-white font-clashMed">Popular Markets</p>
-          <div className="w-full lg:w-[388px] flex flex-col items-center gap-3 max-h-[900px] overflow-y-scroll">
-            {/* TODO: popular markets.map */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 max-h-[900px] overflow-y-scroll">
             {largestPools.data?.map((market) => (
               <PopularMarketCard
                 key={market.config.publicKey.toBase58()}

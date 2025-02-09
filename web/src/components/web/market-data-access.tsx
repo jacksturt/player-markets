@@ -860,7 +860,11 @@ export function usePlayerMarket() {
           console.log("bid2");
 
           if (!bid) {
-            return order;
+            return {
+              ...order,
+              isBid: false,
+              isMyOrder: order?.userId === session?.user.id,
+            };
           }
           return {
             ...bid,
@@ -909,7 +913,11 @@ export function usePlayerMarket() {
           );
           console.log("ask2");
           if (!ask) {
-            return order;
+            return {
+              ...order,
+              isBid: true,
+              isMyOrder: order?.userId === session?.user.id,
+            };
           }
           return {
             ...order,
