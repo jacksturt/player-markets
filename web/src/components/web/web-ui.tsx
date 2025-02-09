@@ -771,7 +771,7 @@ export function VaultsList() {
 
 export function UpdateProjectionOracle() {
   const { updateProjectionOracle } = useMarketAdmin();
-  const projection = 17.89;
+  const projection = 12.19;
   const isProjected = false;
 
   return (

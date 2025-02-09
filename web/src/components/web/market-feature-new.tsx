@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Image from "next/image";
 import {
   useCurrentMarket,
+  useLivePlays,
   useManifestClient,
   usePlayerMarket,
   useQuoteToken,
@@ -20,6 +21,7 @@ import DataTablesPlayer from "../player-data/data-tables-player";
 import { CashoutAll } from "./web-ui";
 const PlayerCard = () => {
   const { market, playerStatsAccount } = usePlayerMarket();
+  const { liveProjectedScore } = useLivePlays();
   return (
     <div className="w-full flex items-end justify-between px-[50px]">
       <div className="flex items-center gap-4">
@@ -42,12 +44,28 @@ const PlayerCard = () => {
           </p>
         </div>
       </div>
-      <div className="flex flex-col">
-        <p className="text-sm font-clashGroteskMed">Projected Total</p>
-        <p className="text-[21px] leading-[21px] font-clashSemiBold">
-          {playerStatsAccount?.data?.projectedPoints.toFixed(2)}
-          pts
-        </p>
+      <div className="flex flex-row gap-8">
+        <div className="flex flex-col">
+          <p className="text-sm font-clashGroteskMed">Pregame Projection</p>
+          <p className="text-[21px] leading-[21px] font-clashSemiBold">
+            {playerStatsAccount?.data?.projectedPoints.toFixed(2)}
+            pts
+          </p>
+        </div>
+        <div className="flex flex-col">
+          <p className="text-sm font-clashGroteskMed">Live Projection</p>
+          <p className="text-[21px] leading-[21px] font-clashSemiBold">
+            {liveProjectedScore.data?.toFixed(2)}
+            pts
+          </p>
+        </div>
+        <div className="flex flex-col">
+          <p className="text-sm font-clashGroteskMed">Actual Points</p>
+          <p className="text-[21px] leading-[21px] font-clashSemiBold">
+            {playerStatsAccount?.data?.actualPoints.toFixed(2)}
+            pts
+          </p>
+        </div>
       </div>
     </div>
   );

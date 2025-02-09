@@ -2050,13 +2050,17 @@ export const useLivePlays = () => {
     queryFn: async () => {
       const actualPoints = playerStatsAccount?.data?.actualPoints ?? 0;
       const projectedPoints = playerStatsAccount?.data?.projectedPoints ?? 0;
+      console.log("latestPlay", latestPlay.data);
       const percentRemaining = getPercentGameRemaining(
-        latestPlay.data?.quarterId ?? 0,
+        latestPlay.data?.quarterName ?? "0",
         latestPlay.data?.timeRemainingMinutes ?? 0,
         latestPlay.data?.timeRemainingSeconds ?? 0
       );
+      console.log("percentRemaining", percentRemaining);
+      console.log("actualPoints", actualPoints);
       return actualPoints + projectedPoints * percentRemaining;
     },
+    enabled: !!latestPlay.data && !!playerStatsAccount?.data,
   });
 
   return {
