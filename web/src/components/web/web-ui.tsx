@@ -457,45 +457,6 @@ export const Trade = () => {
                       USDC
                     </div>
                   </div>
-
-                  {orderType === "buy" && safePrice && quantity && (
-                    <div className="p-4 bg-gray-100 rounded-lg">
-                      <p className="text-lg font-medium">
-                        Total: ${(safePrice * quantity).toFixed(4)}
-                      </p>
-                    </div>
-                  )}
-
-                  {orderType === "sell" && safePrice && quantity && (
-                    <>
-                      <div className="p-4 bg-gray-100 rounded-lg">
-                        <p className="text-lg font-medium">
-                          Mint Cost: $
-                          {(
-                            playerStatsAccount.data?.projectedPoints! * quantity
-                          ).toFixed(4)}
-                        </p>
-                        <p className="text-lg font-medium">
-                          Collateral: $
-                          {(
-                            1.5 *
-                            playerStatsAccount.data?.projectedPoints! *
-                            quantity
-                          ).toFixed(4)}
-                        </p>
-                      </div>
-                      <div className="p-4 bg-gray-100 rounded-lg">
-                        <p className="text-lg font-medium">
-                          Total: $
-                          {(
-                            2.5 *
-                            playerStatsAccount.data?.projectedPoints! *
-                            quantity
-                          ).toFixed(4)}
-                        </p>
-                      </div>
-                    </>
-                  )}
                 </>
               )}
             </div>

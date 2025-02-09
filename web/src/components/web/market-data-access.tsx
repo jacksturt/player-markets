@@ -1113,7 +1113,9 @@ export const useManifestClient = () => {
       );
     },
     onSuccess: () => {
-      hasSeatBeenClaimed.refetch();
+      setTimeout(() => {
+        hasSeatBeenClaimed.refetch();
+      }, 3000);
     },
   });
 
@@ -2062,6 +2064,8 @@ export const useLivePlays = () => {
   const liveProjectedScore = useQuery({
     queryKey: ["live-projected-score"],
     queryFn: async () => {
+      console.log("latestPlay", latestPlay.data);
+      console.log("playerStatsAccount", playerStatsAccount.data);
       const actualPoints = playerStatsAccount?.data?.actualPoints ?? 0;
       const projectedPoints = playerStatsAccount?.data?.projectedPoints ?? 0;
       console.log("latestPlay", latestPlay.data);
@@ -2074,7 +2078,7 @@ export const useLivePlays = () => {
       console.log("actualPoints", actualPoints);
       return actualPoints + projectedPoints * percentRemaining;
     },
-    enabled: !!latestPlay.data && !!playerStatsAccount?.data,
+    enabled: !!playerStatsAccount?.data,
   });
 
   return {
