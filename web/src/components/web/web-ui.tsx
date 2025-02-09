@@ -1224,7 +1224,7 @@ export const OrderHistoryItem = ({
     ? (order as AskOrBidType).tokenPrice
     : parseFloat(order.price.toString());
   const priceFloat = parseFloat(tokenPrice.toFixed(4));
-  const formattedPrice = priceFloat.toFixed(2);
+  const formattedPrice = priceFloat.toFixed(4);
   const quantityFloat = parseFloat(numBaseTokens.toString());
   const formattedQuantity = quantityFloat.toFixed(4);
   const formattedCost = (priceFloat * quantityFloat).toFixed(4);
@@ -1252,7 +1252,7 @@ export const OrderHistoryItem = ({
             </p>
           </div>
           <p className="text-[#6a6a6a] font-clashGroteskMed text-[13px] leading-[13px]">
-            {createdAt.toLocaleString()}
+            {createdAt.toLocaleString()} {formattedPrice}
           </p>
         </div>
       </div>
@@ -1315,10 +1315,10 @@ export const TradeHistoryItem = ({ trade }: { trade: TradeRouterObject }) => {
   const sellerImage = seller.image ?? "/player-temp/diggs.webp";
   const buyerImage = buyer.image ?? "/playerImages/Patrick-Mahomes.png";
   const priceFloat = parseFloat(price.toString());
-  const formattedPrice = priceFloat.toFixed(2);
+  const formattedPrice = priceFloat.toFixed(4);
   const quantityFloat = parseFloat(quantity.toString()) / 10 ** 6;
-  const formattedQuantity = quantityFloat.toFixed(2);
-  const formattedCost = (priceFloat * quantityFloat).toFixed(2);
+  const formattedQuantity = quantityFloat.toFixed(4);
+  const formattedCost = (priceFloat * quantityFloat).toFixed(4);
 
   return (
     <div className="w-full h-[44px] flex items-center justify-between">
