@@ -1113,6 +1113,8 @@ export const Position = ({
   marketInfo: MarketRouterObject;
 }) => {
   const ticker = marketInfo.baseMint.symbol;
+  console.log(shortPositionMinted, longPositionHeld);
+  if (isNaN(shortPositionMinted) || isNaN(longPositionHeld)) return null;
   return (
     <div className="w-full h-[41px] flex items-center justify-between">
       <div className="flex items-center gap-3">
@@ -1128,17 +1130,17 @@ export const Position = ({
           </AvatarFallback>
         </Avatar>
         <p className="text-white font-clashGroteskMed text-[15px] leading-[15px]">
-          {ticker}
+          {longPositionHeld ?? "0"} {ticker}
         </p>
       </div>
       {shortPositionMinted > 0 && (
-        <p className="text-white font-clashMed text-[20px] leading-[20px]">
-          Shorted {shortPositionMinted} pays out ${shortPositionPayout}
+        <p className="font-clashMed text-[20px] leading-[20px] text-red-500">
+          ${shortPositionPayout / 10 ** 6}
         </p>
       )}
       {longPositionHeld > 0 && (
-        <p className="text-white font-clashMed text-[20px] leading-[20px]">
-          Longed {longPositionHeld} pays out ${longPositionPayout}
+        <p className="text-green-500 font-clashMed text-[20px] leading-[20px]">
+          ${longPositionPayout}
         </p>
       )}
     </div>
