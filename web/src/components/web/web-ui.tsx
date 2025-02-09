@@ -41,7 +41,9 @@ export const Trade = () => {
 
   const [orderType, setOrderType] = useState("buy");
   const [price, setPrice] = useState(
-    `$${liveProjectedScore.data ?? lastTradePrice.data ?? "0.00"}`
+    `$${parseFloat(
+      (liveProjectedScore.data ?? lastTradePrice.data ?? 0.0).toFixed(4)
+    )}`
   );
   const [safePrice, setSafePrice] = useState(
     liveProjectedScore.data ?? lastTradePrice.data ?? 0
@@ -429,7 +431,6 @@ export const Trade = () => {
                       <Input
                         id="quantity"
                         min="0"
-                        pattern="^\d*\.?\d{0,2}$"
                         value={price}
                         onChange={(e) => {
                           const value = e.target.value;
@@ -1311,8 +1312,8 @@ export const OrderHistoryItem = ({
         <button
           onClick={() => {
             cancelOrder.mutate({
+              orderId: order.id,
               clientOrderId: order.clientOrderId,
-              sequenceNumber: order.sequenceNumber ?? 0,
             });
           }}
         >

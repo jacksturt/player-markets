@@ -713,7 +713,7 @@ export function usePlayerMarket() {
   const provider = useAnchorProvider();
   const { data: session } = useSession();
 
-  const orders = api.order.readOrdersForMarket.useQuery(
+  const orders = api.order.readOpenOrdersForMarket.useQuery(
     {
       marketAddress: marketAddress ?? "",
     },
@@ -859,13 +859,15 @@ export function usePlayerMarket() {
       const bids = await market.bids();
       console.log("bids", bids);
       if (orders.data) {
-        const compoundBids = bids.map((bid) => {
-          const order = orders.data.find(
-            (order) =>
-              order.sequenceNumber?.toString() ===
-              bid.sequenceNumber?.toString()
+        const compoundBids = orders.data.map((order) => {
+          if (!order.isBid) return undefined;
+          const bid = bids.find(
+            (bid) =>
+              bid.sequenceNumber?.toString() === bid.sequenceNumber?.toString()
           );
-          if (!order) return;
+          if (!bid) {
+            return order;
+          }
           return {
             ...bid,
             ...order,
@@ -904,12 +906,16 @@ export function usePlayerMarket() {
       const asks = await market.asks();
       console.log("asks", asks);
       if (orders.data) {
-        const compoundAsks = asks.map((ask) => {
-          const order = orders.data.find(
-            (order) =>
-              order.sequenceNumber?.toString() === ask.sequenceNumber.toString()
+        const compoundAsks = orders.data.map((order) => {
+          if (order.isBid) return undefined;
+          const ask = asks.find(
+            (ask) =>
+              ask.sequenceNumber?.toString() ===
+              order.sequenceNumber?.toString()
           );
-          if (!order) return;
+          if (!ask) {
+            return order;
+          }
           return {
             ...order,
             ...ask,
@@ -1144,6 +1150,8 @@ export function useMyMarket() {
     mintConfigAccount,
     playerStatsAccount,
     mintConfig,
+    bids,
+    asks,
   } = usePlayerMarket();
 
   const { manifestClient, hasSeatBeenClaimed } = useManifestClient();
@@ -1171,7 +1179,7 @@ export function useMyMarket() {
   const { publicKey, wallet } = useWallet();
   const queryClient = useQueryClient();
   const { paraPubkey, solanaSigner } = useParaWallet();
-  const cancelOrderDB = api.order.cancelOrderForMarketByUser.useMutation();
+  const cancelOrderDB = api.order.cancelOrderById.useMutation();
   const cancelAllOrdersDB =
     api.order.cancelAllOrdersForMarketByUser.useMutation();
   const myPK = useMyPubkey();
@@ -1344,6 +1352,7 @@ export function useMyMarket() {
         isBid: true,
         clientOrderId,
       });
+      bids.refetch();
       transactionToast(`${signature}`);
       return accounts.refetch();
     },
@@ -1551,6 +1560,7 @@ export function useMyMarket() {
         isBid: false,
         clientOrderId,
       });
+      asks.refetch();
       transactionToast(`${signature}`);
       return accounts.refetch();
     },
@@ -1594,10 +1604,10 @@ export function useMyMarket() {
     mutationKey: ["market", "cancel-order", { playerMintPK: marketPK }],
     mutationFn: async ({
       clientOrderId,
-      sequenceNumber,
+      orderId,
     }: {
       clientOrderId: number;
-      sequenceNumber: number;
+      orderId: string;
     }) => {
       const cancelOrderIx = client.cancelOrderIx({
         clientOrderId,
@@ -1613,21 +1623,22 @@ export function useMyMarket() {
         const signature = await provider.connection.sendRawTransaction(
           signed.serialize()
         );
-        return { signature, sequenceNumber };
+        return { signature, orderId };
       } else {
         const signature = await wallet?.adapter.sendTransaction(
           transaction,
           provider.connection
         );
-        return { signature, sequenceNumber };
+        return { signature, orderId };
       }
     },
-    onSuccess: ({ signature, sequenceNumber }) => {
+    onSuccess: ({ signature, orderId }) => {
       transactionToast(`${signature}`);
       cancelOrderDB.mutate({
-        marketAddress: marketPK!.toBase58(),
-        orderSequenceNumber: parseInt(sequenceNumber.toString()),
+        orderId: orderId,
       });
+      asks.refetch();
+      bids.refetch();
       return accounts.refetch();
     },
     onError: () => toast.error("Failed to cancel order"),

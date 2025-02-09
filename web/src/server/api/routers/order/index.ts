@@ -6,10 +6,12 @@ import {
   readOrdersForUserByMarket,
   readOrdersForMarket,
   getAllMyOpenOrders,
+  readOpenOrdersForMarket,
 } from "./read";
 import {
   cancelAllOrdersForMarketByUser,
   cancelOrderForMarketByUser,
+  cancelOrderById,
 } from "./update";
 export const orderRouter = createTRPCRouter({
   create: createOrder,
@@ -17,7 +19,9 @@ export const orderRouter = createTRPCRouter({
   getLastOrderIdForUser: getLastOrderIdForUser,
   readOrdersForUserByMarket: readOrdersForUserByMarket,
   readOrdersForMarket: readOrdersForMarket,
+  readOpenOrdersForMarket: readOpenOrdersForMarket,
   cancelOrderForMarketByUser: cancelOrderForMarketByUser,
   cancelAllOrdersForMarketByUser: cancelAllOrdersForMarketByUser,
   getAllMyOpenOrders: getAllMyOpenOrders,
+  cancelOrderById: cancelOrderById,
 });

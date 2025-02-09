@@ -3,6 +3,24 @@ import { createTRPCRouter, protectedProcedure } from "@/server/api/trpc";
 import { z } from "zod";
 import { OrderStatus } from "@prisma/client";
 
+export const cancelOrderById = protectedProcedure
+  .input(
+    z.object({
+      orderId: z.string(),
+    })
+  )
+  .mutation(async ({ input, ctx }) => {
+    const userId = ctx.session.user.id;
+    const order = await db.order.update({
+      where: {
+        id: input.orderId,
+      },
+      data: {
+        status: OrderStatus.CANCELLED,
+      },
+    });
+  });
+
 export const cancelOrderForMarketByUser = protectedProcedure
   .input(
     z.object({

@@ -17,10 +17,38 @@ export const readOrder = protectedProcedure
       include: {
         baseMint: true,
         user: true,
-        market: true,
+        market: {
+          include: {
+            player: true,
+            team: true,
+          },
+        },
       },
     });
     return order;
+  });
+
+export const readOpenOrdersForMarket = protectedProcedure
+  .input(
+    z.object({
+      marketAddress: z.string(),
+    })
+  )
+  .query(async ({ input, ctx }) => {
+    const orders = await db.order.findMany({
+      where: {
+        market: {
+          address: input.marketAddress,
+        },
+        status: OrderStatus.PENDING,
+      },
+      include: {
+        user: true,
+        market: true,
+        baseMint: true,
+      },
+    });
+    return orders;
   });
 
 export const readOrdersForMarket = protectedProcedure
