@@ -5,17 +5,10 @@ import Image from "next/image";
 import {
   useCurrentMarket,
   useManifestClient,
-  useMarkets,
   usePlayerMarket,
   useQuoteToken,
 } from "./market-data-access";
-import {
-  Payout,
-  Trade,
-  WithdrawAll,
-  QuoteTokenFaucet,
-  ClaimSeat,
-} from "./web-ui";
+import { Trade, ClaimSeat } from "./web-ui";
 import { FillLogResult } from "manifest/src";
 import toast from "react-hot-toast";
 import { capsule } from "@/lib/capsule";

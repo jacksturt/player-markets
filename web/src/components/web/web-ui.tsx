@@ -660,21 +660,6 @@ export function QuoteTokenCreate() {
   );
 }
 
-export function QuoteTokenFaucet() {
-  const { faucetQuote, quoteTokenBalance } = useQuoteToken();
-
-  return (
-    <button
-      className="btn btn-xs lg:btn-md btn-primary"
-      onClick={() => faucetQuote.mutateAsync()}
-      disabled={faucetQuote.isPending}
-    >
-      Faucet Quote Token (balance: {quoteTokenBalance.data ?? 0}){" "}
-      {faucetQuote.isPending && "..."}
-    </button>
-  );
-}
-
 export function CreateTeam() {
   const { createTeam } = useMarketAdmin();
   return (

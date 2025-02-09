@@ -2,17 +2,11 @@
 
 import { useSession } from "next-auth/react";
 import {
-  QuoteTokenCreate,
-  QuoteTokenFaucet,
   InitPlayerMint,
-  UpdateProjectionOracle,
   CreateTeam,
   CloseMintAccounts,
   VaultsList,
-  SetMintingEnabled,
-  SetPayoutEnabled,
 } from "./web-ui";
-import { PublicKey } from "@solana/web3.js";
 
 export default function MarketAdminAll() {
   const { data: session } = useSession();

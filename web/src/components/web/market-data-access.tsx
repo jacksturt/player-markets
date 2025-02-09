@@ -4,7 +4,6 @@ import { getTradetalkProgram, getTradetalkProgramId } from "@project/anchor";
 import { BN } from "@coral-xyz/anchor";
 import { useConnection, useWallet } from "@solana/wallet-adapter-react";
 import {
-  Cluster,
   PublicKey,
   SendTransactionError,
   SystemProgram,
@@ -18,11 +17,9 @@ import { useTransactionToast } from "../ui/ui-layout";
 import {
   ASSOCIATED_TOKEN_PROGRAM_ID,
   getAccount,
-  getMultipleAccounts,
   getAssociatedTokenAddressSync,
   getMint,
   TOKEN_PROGRAM_ID,
-  createAccount,
   createAssociatedTokenAccountInstruction,
 } from "@solana/spl-token";
 import { createMarketTX } from "manifest/instructions/createMarket";
@@ -32,8 +29,6 @@ import { capsule } from "@/lib/capsule";
 import { OrderType } from "manifest/src/manifest";
 import { Market, Wrapper, WrapperMarketInfo, WrapperData } from "manifest/src";
 import { api } from "@/trpc/react";
-import { useParams } from "next/navigation";
-import { bignum } from "@metaplex-foundation/beet";
 import { useSession } from "next-auth/react";
 import { AskOrBidType, MarketRouterObject } from "./web-ui";
 export function useCurrentMarket() {
@@ -70,8 +65,8 @@ export function useQuoteToken() {
   const { connection } = useConnection();
   const transactionToast = useTransactionToast();
   const provider = useAnchorProvider();
-  const { publicKey } = useWallet();
   const programId = useMemo(() => getTradetalkProgramId("mainnet-beta"), []);
+  const myPK = useMyPubkey();
   const program = useMemo(
     () => getTradetalkProgram(provider, programId),
     [provider, programId]
@@ -85,6 +80,7 @@ export function useQuoteToken() {
   const getProgramAccount = useQuery({
     queryKey: ["get-program-account"],
     queryFn: () => connection.getParsedAccountInfo(programId),
+    staleTime: 1000 * 10,
   });
 
   let quoteTokenMint = new PublicKey(
@@ -96,26 +92,13 @@ export function useQuoteToken() {
     program.programId
   )[0];
 
-  const capsulePubkey = useQuery({
-    queryKey: ["capsule-pubkey"],
-    queryFn: () => new PublicKey(capsule.getAddress()!),
-  });
-
   const quoteTokenAccount = useQuery({
     queryKey: ["quote-token-account"],
     queryFn: async () => {
-      if (!publicKey) {
-        console.log("capsulePubkey.data!", capsulePubkey.data?.toBase58());
-        return getAssociatedTokenAddressSync(
-          quoteTokenMint,
-          capsulePubkey.data!,
-          true
-        );
-      } else {
-        return getAssociatedTokenAddressSync(quoteTokenMint, publicKey);
-      }
+      return getAssociatedTokenAddressSync(quoteTokenMint, myPK, true);
     },
-    enabled: !!capsulePubkey.data || !!publicKey,
+    enabled: !!myPK,
+    staleTime: 1000 * 10,
   });
 
   const initialize = useMutation({
@@ -152,67 +135,8 @@ export function useQuoteToken() {
         return 0;
       }
     },
-  });
-
-  const faucetQuote = useMutation({
-    mutationKey: ["quote-token", "faucet"],
-    mutationFn: async () => {
-      if (!publicKey) {
-        const solanaSigner = new CapsuleSolanaWeb3Signer(
-          capsule,
-          provider.connection
-        );
-
-        const ix = await program.methods
-          .faucetQuote(new BN(10000000000000))
-          .accountsStrict({
-            payer: capsulePubkey.data!,
-            quoteTokenMint,
-            config: quoteConfig,
-            destination: quoteTokenAccount.data!,
-            tokenProgram: TOKEN_PROGRAM_ID,
-            associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
-            systemProgram: SystemProgram.programId,
-          })
-          .instruction();
-
-        const blockhash = await provider.connection.getLatestBlockhash();
-        await provider.connection.getLatestBlockhash();
-
-        const transaction = new Transaction({
-          feePayer: capsulePubkey.data!,
-          blockhash: blockhash.blockhash,
-          lastValidBlockHeight: blockhash.lastValidBlockHeight,
-        }).add(ix);
-
-        const signed = await solanaSigner.signTransaction(transaction);
-
-        const signature = await connection.sendRawTransaction(
-          signed.serialize()
-        );
-        return signature;
-      } else {
-        const signature = await program.methods
-          .faucetQuote(new BN(10000000000000))
-          .accountsStrict({
-            payer: publicKey,
-            quoteTokenMint,
-            config: quoteConfig,
-            destination: quoteTokenAccount.data!,
-            tokenProgram: TOKEN_PROGRAM_ID,
-            associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
-            systemProgram: SystemProgram.programId,
-          })
-          .rpc();
-        return signature;
-      }
-    },
-    onSuccess: (signature) => {
-      transactionToast(signature);
-      quoteTokenBalance.refetch();
-      return accounts.refetch();
-    },
-    onError: (error) => toast.error(error.message),
+    staleTime: 1000 * 10,
+    enabled: !!quoteTokenAccount.data,
   });
 
   return {
@@ -223,19 +147,16 @@ export function useQuoteToken() {
     initialize,
     quoteToken: quoteTokenMint,
     quoteTokenAccount,
-    faucetQuote,
     quoteTokenBalance,
   };
 }
 
 export function useMarketAdmin() {
   const transactionToast = useTransactionToast();
-  const { marketAddress } = useCurrentMarket();
-  const { market, playerId, timestamp } = usePlayerMarket();
+  const { playerId, timestamp } = usePlayerMarket();
   const { program, accounts, quoteToken } = useQuoteToken();
   const provider = useAnchorProvider();
   const createMint = api.mint.create.useMutation();
-  const createMarketAPI = api.market.create.useMutation();
   const createTeamAPI = api.team.create.useMutation();
   const createTeam = useMutation({
     mutationKey: ["markets", "create-team"],
@@ -593,6 +514,7 @@ export function useMarkets() {
       const markets = await program.account.playerMintConfig.all();
       return markets;
     },
+    staleTime: 1000 * 10,
   });
 
   const allMarkets = api.market.readAllMarkets.useQuery();
@@ -620,6 +542,7 @@ export function useMarkets() {
       return vaults;
     },
     enabled: !!markets.data,
+    staleTime: 1000 * 10,
   });
 
   return {
@@ -631,9 +554,8 @@ export function useMarkets() {
 
 export function usePlayerMarket() {
   const { marketAddress, marketPublicKey } = useCurrentMarket();
-  const transactionToast = useTransactionToast();
   const { manifestClient } = useManifestClient();
-  const { program, accounts, quoteToken } = useQuoteToken();
+  const { program, quoteToken } = useQuoteToken();
   const provider = useAnchorProvider();
   const { data: session } = useSession();
 
@@ -643,6 +565,7 @@ export function usePlayerMarket() {
     },
     {
       enabled: !!marketAddress,
+      staleTime: 1000 * 10,
     }
   );
 
@@ -652,6 +575,7 @@ export function usePlayerMarket() {
     },
     {
       enabled: !!marketAddress,
+      staleTime: 1000 * 10,
     }
   );
 
@@ -662,6 +586,7 @@ export function usePlayerMarket() {
     {
       enabled: !!marketAddress,
       refetchInterval: 10000,
+      staleTime: 1000 * 10,
     }
   );
 
@@ -669,12 +594,14 @@ export function usePlayerMarket() {
     queryKey: ["timestamp", { marketAddress }],
     queryFn: () => market.data?.baseMint.timestamp,
     enabled: !!market.data,
+    staleTime: 1000 * 10,
   });
 
   const playerId = useQuery({
     queryKey: ["playerId", { marketAddress }],
     queryFn: () => market.data?.baseMint.mintSlug,
     enabled: !!market.data,
+    staleTime: 1000 * 10,
   });
 
   const mintConfig = useQuery({
@@ -695,6 +622,7 @@ export function usePlayerMarket() {
       return mintConfig;
     },
     enabled: !!playerId.data && !!timestamp.data,
+    staleTime: 1000 * 10,
   });
 
   const playerStatsAccount = useQuery({
@@ -714,6 +642,7 @@ export function usePlayerMarket() {
       return playerStatsAccount;
     },
     enabled: !!playerId.data && !!timestamp.data,
+    staleTime: 1000 * 10,
   });
 
   const vault = useQuery({
@@ -740,6 +669,7 @@ export function usePlayerMarket() {
       return vault;
     },
     enabled: !!playerId.data && !!timestamp.data,
+    staleTime: 1000 * 10,
   });
 
   const mintConfigAccount = useQuery({
@@ -762,6 +692,7 @@ export function usePlayerMarket() {
       return mintConfigAccount;
     },
     enabled: !!playerId.data && !!timestamp.data,
+    staleTime: 1000 * 60,
   });
 
   const bids = useQuery<AskOrBidType[]>({
@@ -800,8 +731,13 @@ export function usePlayerMarket() {
       }
       return [];
     },
-    enabled: !!marketPublicKey && !!manifestClient.data,
+    enabled:
+      !!marketPublicKey &&
+      !!manifestClient.data &&
+      !!orders.data &&
+      !!session?.user.id,
     refetchInterval: 10000,
+    staleTime: 1000 * 10,
   });
 
   const asks = useQuery({
@@ -839,8 +775,13 @@ export function usePlayerMarket() {
       }
       return [];
     },
-    enabled: !!marketPublicKey && !!manifestClient.data,
+    enabled:
+      !!marketPublicKey &&
+      !!manifestClient.data &&
+      !!orders.data &&
+      !!session?.user.id,
     refetchInterval: 10000,
+    staleTime: 1000 * 10,
   });
 
   const trades = api.trade.readForMarket.useQuery(
@@ -871,12 +812,10 @@ export function usePlayerMarket() {
 
 export const usePlayerToken = () => {
   const { marketAddress } = useCurrentMarket();
-  const { program, accounts, quoteToken } = useQuoteToken();
-  const createOrder = api.order.create.useMutation();
+  const { program } = useQuoteToken();
   const provider = useAnchorProvider();
-  const { publicKey, wallet } = useWallet();
-  const { capsulePubkey, solanaSigner } = useCapsuleWallet();
   const { playerId, timestamp } = usePlayerMarket();
+  const myPK = useMyPubkey();
   const playerTokenMint = useQuery({
     queryKey: ["player-token-mint"],
     queryFn: () => {
@@ -892,23 +831,22 @@ export const usePlayerToken = () => {
       return player_token_mint;
     },
     enabled: !!playerId.data && !!timestamp.data,
+    staleTime: 1000 * 10,
   });
 
   const playerTokenAccount = useQuery({
     queryKey: ["player-token-account"],
     queryFn: async () => {
-      if (!publicKey) {
-        const playerTokenAccount = getAssociatedTokenAddressSync(
-          playerTokenMint.data!,
-          capsulePubkey.data!,
-          true
-        );
-        return playerTokenAccount;
-      } else {
-        return getAssociatedTokenAddressSync(playerTokenMint.data!, publicKey);
-      }
+      const playerTokenAccount = getAssociatedTokenAddressSync(
+        playerTokenMint.data!,
+        myPK,
+        true
+      );
+      return playerTokenAccount;
     },
-    enabled: !!capsulePubkey.data || !!publicKey,
+
+    enabled: !!myPK,
+    staleTime: 1000 * 10,
   });
 
   const playerTokenBalance = useQuery({
@@ -926,6 +864,7 @@ export const usePlayerToken = () => {
       return account.amount.toString();
     },
     enabled: !!playerTokenAccount.data,
+    staleTime: 1000 * 10,
   });
 
   const playerTokenMintAccountSupply = useQuery({
@@ -939,6 +878,7 @@ export const usePlayerToken = () => {
       return playerTokenMintAccount.supply;
     },
     enabled: !!playerTokenMint.data,
+    staleTime: 1000 * 10,
   });
 
   return {
@@ -955,6 +895,7 @@ export const useCapsuleWallet = () => {
   const capsulePubkey = useQuery({
     queryKey: ["capsule-pubkey"],
     queryFn: () => new PublicKey(capsule.getAddress()!),
+    staleTime: 1000 * 10,
   });
 
   const solanaSigner = useQuery({
@@ -970,6 +911,7 @@ export const useCapsuleWallet = () => {
         return null;
       }
     },
+    staleTime: 1000 * 10,
   });
 
   return { capsulePubkey, solanaSigner };
@@ -1006,6 +948,7 @@ export const useManifestClient = () => {
       return false;
     },
     enabled: !!marketPK,
+    staleTime: 1000 * 10,
   });
 
   const claimSeat = useMutation({
@@ -1035,6 +978,7 @@ export const useManifestClient = () => {
       );
     },
     enabled: !!hasSeatBeenClaimed.data,
+    staleTime: 1000 * 10,
   });
 
   return { manifestClient, hasSeatBeenClaimed, claimSeat };
@@ -1052,7 +996,6 @@ export function useMyMarket() {
   } = usePlayerMarket();
 
   const { manifestClient, hasSeatBeenClaimed } = useManifestClient();
-  console.log("manifestClient", manifestClient.data);
   const client = manifestClient.data!;
   const {
     playerTokenMint,
@@ -1080,6 +1023,7 @@ export function useMyMarket() {
   const cancelOrderDB = api.order.cancelOrderForMarketByUser.useMutation();
   const cancelAllOrdersDB =
     api.order.cancelAllOrdersForMarketByUser.useMutation();
+  const myPK = useMyPubkey();
 
   const mintRecord = useQuery({
     queryKey: ["mint-record", { marketAddress }],
@@ -1093,9 +1037,8 @@ export function useMyMarket() {
         ],
         program.programId
       )[0];
-      const pubkey = publicKey ?? capsulePubkey.data!;
       const mintRecordAddress = PublicKey.findProgramAddressSync(
-        [Buffer.from("mint_record"), mintConfig.toBuffer(), pubkey.toBuffer()],
+        [Buffer.from("mint_record"), mintConfig.toBuffer(), myPK.toBuffer()],
         program.programId
       )[0];
 
@@ -1105,7 +1048,8 @@ export function useMyMarket() {
 
       return mintRecord;
     },
-    enabled: !!playerId.data && !!timestamp.data,
+    enabled: !!playerId.data && !!timestamp.data && !!myPK,
+    staleTime: 1000 * 10,
   });
 
   const PRECISION = new BN(1_000_000); // 6 decimals of precision
@@ -1113,33 +1057,21 @@ export function useMyMarket() {
     queryKey: ["current-minter-rewards", { marketAddress }],
     queryFn: () => {
       const vaultAmount = new BN(vault.data!.amount.toString());
-      console.log("vaultAmount", vaultAmount.toString());
       const playerTokenMintSupply = new BN(
         playerTokenMintAccount.data!.toString()
       );
-      console.log("playerTokenMintSupply", playerTokenMintSupply.toString());
-      console.log(playerStatsAccount.data!.actualPoints.valueOf());
       const playerStatsActualPoints = new BN(
         playerStatsAccount.data!.actualPoints.valueOf() * PRECISION.toNumber()
-      );
-      console.log(
-        "playerStatsActualPoints",
-        playerStatsActualPoints.toString()
       );
       const vaultRemaining = vaultAmount.sub(
         playerTokenMintSupply.mul(playerStatsActualPoints).div(PRECISION)
       );
-      console.log("vaultRemaining", vaultRemaining.toString());
       const totalDepositedAmount = mintConfigAccount.data!.totalDepositedAmount;
-      console.log("totalDepositedAmount", totalDepositedAmount.toString());
       const depositedByMe = mintRecord.data!.depositedAmount;
-      console.log("depositedByMe", depositedByMe.toString());
       const percentDue = depositedByMe.mul(PRECISION).div(totalDepositedAmount);
       const percentDueDecimal = percentDue.toNumber() / PRECISION.toNumber();
-      console.log("percentDue", percentDueDecimal);
       const minterRewards =
         (vaultRemaining.toNumber() * percentDueDecimal) / PRECISION.toNumber();
-      console.log("minterRewards", minterRewards.toString());
       const rewards = parseFloat(minterRewards.toString());
       return rewards.toFixed(4);
     },
@@ -1148,7 +1080,9 @@ export function useMyMarket() {
       !!playerStatsAccount.data &&
       !!vault.data &&
       !!mintConfigAccount.data &&
-      !!playerTokenMintAccount.data,
+      !!playerTokenMintAccount.data &&
+      !!myPK,
+    staleTime: 1000 * 10,
   });
 
   const myOrders = api.order.readOrdersForUserByMarket.useQuery(
@@ -1157,6 +1091,7 @@ export function useMyMarket() {
     },
     {
       enabled: !!marketAddress,
+      staleTime: 1000 * 10,
     }
   );
 
@@ -1166,10 +1101,11 @@ export function useMyMarket() {
       if (!hasSeatBeenClaimed.data) {
         return null;
       }
-      const payer = publicKey ?? capsulePubkey.data!;
-      const balances = await client.market.getBalances(payer);
+      const balances = await client.market.getBalances(myPK);
       return balances;
     },
+    staleTime: 1000 * 10,
+    enabled: !!hasSeatBeenClaimed.data && !!myPK,
   });
 
   const depositAndPlaceBuyOrder = useMutation({
@@ -1820,7 +1756,6 @@ export function useMyBags() {
   const myPositions = useQuery({
     queryKey: ["my-mint-records"],
     queryFn: async () => {
-      console.log("myPositions");
       const mintRecordAddresses = markets.data!.map((market) => {
         const mintRecordAddress = PublicKey.findProgramAddressSync(
           [
@@ -1835,7 +1770,6 @@ export function useMyBags() {
       const mintRecords = await program.account.mintRecord.fetchMultiple(
         mintRecordAddresses
       );
-      console.log("mintRecords", mintRecords);
       const playerStatsAddresses = markets.data!.map((market) => {
         const playerStatsAddress = PublicKey.findProgramAddressSync(
           [
@@ -1850,7 +1784,6 @@ export function useMyBags() {
       const playerStats = await program.account.playerStats.fetchMultiple(
         playerStatsAddresses
       );
-      console.log("playerStats", playerStats);
 
       const positions: {
         shortPositionPayout: number;
@@ -1861,11 +1794,6 @@ export function useMyBags() {
       }[] = [];
 
       const promiseMap = markets.data!.map(async (market, index) => {
-        console.log("market", market.publicKey.toBase58());
-        console.log(
-          "allMarkets",
-          allMarkets.data?.map((m) => m.address)
-        );
         const playerTokenAccountAddress = getAssociatedTokenAddressSync(
           market.account.playerTokenMint,
           pubkey,
@@ -1873,8 +1801,7 @@ export function useMyBags() {
         );
         const actualPoints = playerStats[index]?.actualPoints ?? 0;
         const totalDeposited = Number(mintRecords[index]?.depositedAmount) ?? 0;
-        const amountMinted = 0;
-        // const amountMinted = Number(mintRecords[index]?.amountMinted) ?? 0;
+        const amountMinted = Number(mintRecords[index]?.mintedAmount) ?? 0;
 
         const shortPositionPayout =
           totalDeposited - amountMinted * actualPoints;
@@ -1910,10 +1837,10 @@ export function useMyBags() {
         }
       });
       await Promise.all(promiseMap);
-      console.log("positions", positions);
       return positions;
     },
     enabled: markets.data !== undefined && allMarkets.data !== undefined,
+    staleTime: 1000 * 10,
   });
 
   return {
