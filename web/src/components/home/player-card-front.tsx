@@ -73,29 +73,11 @@ export default function PlayerCardFront({
       </Link>
       <div className="absolute bottom-6 left-4 right-4 z-20">
         <div className="flex items-center gap-[7px]">
-          <Button
-            onClick={(e) => {
-              e.stopPropagation();
-              setActivePlayerMarket(marketAddress);
-              setMarketAddress(marketAddress);
-              setSelectedOrderType("buy");
-              setCardView(CardView.BACK);
-            }}
-            className="w-full h-[29px] bg-[#D0FFD9] hover:bg-[#D0FFD9]/80 text-[#181818] flex items-center justify-center gap-2 font-clashGroteskMed uppercase text-[11px] leading-[11px]"
-          >
+          <Button className="w-full h-[29px] bg-[#D0FFD9] hover:bg-[#D0FFD9]/80 text-[#181818] flex items-center justify-center gap-2 font-clashGroteskMed uppercase text-[11px] leading-[11px]">
             <TrendingUp size={12} color="#39DE5A" />
             Long
           </Button>
-          <Button
-            onClick={(e) => {
-              e.stopPropagation();
-              setActivePlayerMarket(marketAddress);
-              setMarketAddress(marketAddress);
-              setSelectedOrderType("sell");
-              setCardView(CardView.BACK);
-            }}
-            className="w-full h-[29px] bg-[#FFCCCC] hover:bg-[#FFCCCC]/80 text-[#181818] flex items-center justify-center gap-2 font-clashGroteskMed uppercase text-[11px] leading-[11px]"
-          >
+          <Button className="w-full h-[29px] bg-[#FFCCCC] hover:bg-[#FFCCCC]/80 text-[#181818] flex items-center justify-center gap-2 font-clashGroteskMed uppercase text-[11px] leading-[11px]">
             <TrendingDown size={12} color="#F57272" />
             Short
           </Button>
