@@ -6,7 +6,7 @@ import { useRouter, usePathname } from "next/navigation";
 import { PublicKey } from "@solana/web3.js";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { Button } from "@/components/ui/button";
-import { capsule } from "@/lib/capsule";
+import { para } from "@/lib/para";
 import { shortenAddress } from "@/lib/utils";
 import { IconCopy } from "@tabler/icons-react";
 import { WalletButton } from "@/components/solana/solana-provider";
@@ -19,7 +19,7 @@ export default function AccountButtons() {
   const { data: session } = useSession();
 
   useEffect(() => {
-    capsule.isSessionActive().then(setIsActive);
+    para.isSessionActive().then(setIsActive);
   }, [setIsActive, session, publicKey]);
 
   useEffect(() => {
@@ -66,12 +66,12 @@ export default function AccountButtons() {
     );
   }
   try {
-    const pk = new PublicKey(capsule.getAddress()!);
+    const pk = new PublicKey(para.getAddress()!);
   } catch (e) {
     return null;
   }
 
-  const pk = new PublicKey(capsule.getAddress()!);
+  const pk = new PublicKey(para.getAddress()!);
   return (
     <div
       className="btn btn-primary flex flex-row gap-2 h-full"

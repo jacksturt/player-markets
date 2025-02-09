@@ -30,8 +30,8 @@ import {
 } from "@solana/spl-token";
 import { createMarketTX } from "manifest/instructions/createMarket";
 import { ManifestClient } from "manifest/src/client";
-import { CapsuleSolanaWeb3Signer } from "@usecapsule/solana-web3.js-v1-integration";
-import { capsule } from "@/lib/capsule";
+import { ParaSolanaWeb3Signer } from "@getpara/solana-web3.js-v1-integration";
+import { para } from "@/lib/para";
 import { OrderType } from "manifest/src/manifest";
 import { Market, Wrapper, WrapperMarketInfo, WrapperData } from "manifest/src";
 import { api, RouterOutputs } from "@/trpc/react";
@@ -1042,12 +1042,12 @@ export const usePlayerToken = () => {
   };
 };
 
-export const useCapsuleWallet = () => {
+export const useParaWallet = () => {
   const provider = useAnchorProvider();
   const { publicKey } = useWallet();
-  const capsulePubkey = useQuery({
-    queryKey: ["capsule-pubkey"],
-    queryFn: () => new PublicKey(capsule.getAddress()!),
+  const paraPubkey = useQuery({
+    queryKey: ["para-pubkey"],
+    queryFn: () => new PublicKey(para.getAddress()!),
     staleTime: 1000 * 10,
   });
 
@@ -1055,10 +1055,7 @@ export const useCapsuleWallet = () => {
     queryKey: ["solana-signer"],
     queryFn: () => {
       if (!publicKey) {
-        const signer = new CapsuleSolanaWeb3Signer(
-          capsule,
-          provider.connection
-        );
+        const signer = new ParaSolanaWeb3Signer(para, provider.connection);
         return signer;
       } else {
         return null;
@@ -1067,14 +1064,14 @@ export const useCapsuleWallet = () => {
     staleTime: 1000 * 10,
   });
 
-  return { capsulePubkey, solanaSigner };
+  return { paraPubkey, solanaSigner };
 };
 
 export const useManifestClient = () => {
   const { marketAddress } = useCurrentMarket();
   const provider = useAnchorProvider();
   const { publicKey, wallet } = useWallet();
-  const { capsulePubkey } = useCapsuleWallet();
+  const { paraPubkey } = useParaWallet();
   const marketPK = marketAddress ? new PublicKey(marketAddress) : null;
 
   const hasSeatBeenClaimed = useQuery({
@@ -1083,7 +1080,7 @@ export const useManifestClient = () => {
       console.log("has-seat-been-claimed", marketPK?.toBase58());
       const userWrapper = await ManifestClient.fetchFirstUserWrapper(
         provider.connection,
-        publicKey ?? capsulePubkey.data!
+        publicKey ?? paraPubkey.data!
       );
       if (!userWrapper) {
         return false;
@@ -1172,7 +1169,7 @@ export function useMyMarket() {
   const provider = useAnchorProvider();
   const { publicKey, wallet } = useWallet();
   const queryClient = useQueryClient();
-  const { capsulePubkey, solanaSigner } = useCapsuleWallet();
+  const { paraPubkey, solanaSigner } = useParaWallet();
   const cancelOrderDB = api.order.cancelOrderForMarketByUser.useMutation();
   const cancelAllOrdersDB =
     api.order.cancelAllOrdersForMarketByUser.useMutation();
@@ -1284,7 +1281,7 @@ export function useMyMarket() {
         (neededQuote * 10 ** 6 - withdrawableQuote * 10 ** 6) / 10 ** 6;
       console.log("amountToDeposit", amountToDeposit);
 
-      const feePayer = publicKey ?? capsulePubkey.data!;
+      const feePayer = publicKey ?? paraPubkey.data!;
       const blockhash = await provider.connection.getLatestBlockhash();
       const transaction = new Transaction({
         feePayer,
@@ -1384,7 +1381,7 @@ export function useMyMarket() {
       const quantityToMint = new BN(baseToMintSafe);
       console.log("quantityToMint", quantityToMint.toString());
 
-      if (!publicKey && !capsulePubkey.data) {
+      if (!publicKey && !paraPubkey.data) {
         throw new Error("No public key found");
       }
       const mintConfig = PublicKey.findProgramAddressSync(
@@ -1409,13 +1406,13 @@ export function useMyMarket() {
           [
             Buffer.from("mint_record"),
             mintConfig.toBuffer(),
-            capsulePubkey.data!.toBuffer(),
+            paraPubkey.data!.toBuffer(),
           ],
           program.programId
         )[0];
         const blockhash = await provider.connection.getLatestBlockhash();
         const transaction = new Transaction({
-          feePayer: capsulePubkey.data!,
+          feePayer: paraPubkey.data!,
           blockhash: blockhash.blockhash,
           lastValidBlockHeight: blockhash.lastValidBlockHeight,
         });
@@ -1424,7 +1421,7 @@ export function useMyMarket() {
           const ix = await program.methods
             .mintTokens(quantityToMint)
             .accountsStrict({
-              payer: capsulePubkey.data!,
+              payer: paraPubkey.data!,
               quoteTokenMint: quoteToken,
               vault,
               playerTokenMint: playerTokenMint.data!,
@@ -1442,7 +1439,7 @@ export function useMyMarket() {
         }
         if (quantityToDeposit > 0) {
           const depositIx = client.depositIx(
-            capsulePubkey.data!,
+            paraPubkey.data!,
             playerTokenMint.data!,
             quantityToDeposit
           );
@@ -1561,7 +1558,7 @@ export function useMyMarket() {
       const cancelAllOrdersIx = client.cancelAllIx();
       const blockhash = await provider.connection.getLatestBlockhash();
       const transaction = new Transaction({
-        feePayer: publicKey ?? capsulePubkey.data!,
+        feePayer: publicKey ?? paraPubkey.data!,
         blockhash: blockhash.blockhash,
         lastValidBlockHeight: blockhash.lastValidBlockHeight,
       }).add(cancelAllOrdersIx);
@@ -1602,7 +1599,7 @@ export function useMyMarket() {
       });
       const blockhash = await provider.connection.getLatestBlockhash();
       const transaction = new Transaction({
-        feePayer: publicKey ?? capsulePubkey.data!,
+        feePayer: publicKey ?? paraPubkey.data!,
         blockhash: blockhash.blockhash,
         lastValidBlockHeight: blockhash.lastValidBlockHeight,
       }).add(cancelOrderIx);
@@ -1634,7 +1631,7 @@ export function useMyMarket() {
   const payout = useMutation({
     mutationKey: ["market", "init-payout", { playerMintPK: marketAddress }],
     mutationFn: async () => {
-      const feePayer = publicKey ?? capsulePubkey.data!;
+      const feePayer = publicKey ?? paraPubkey.data!;
       const playerTokenAccount = getAssociatedTokenAddressSync(
         playerTokenMint.data!,
         feePayer
@@ -1719,7 +1716,7 @@ export function useMyMarket() {
     mutationKey: ["market", "withdraw-all", { playerMintPK: marketAddress }],
     mutationFn: async () => {
       const withdrawIx = await client.withdrawAllIx();
-      const feePayer = publicKey ?? capsulePubkey.data!;
+      const feePayer = publicKey ?? paraPubkey.data!;
       const blockhash = await provider.connection.getLatestBlockhash();
       const transaction = new Transaction({
         feePayer,
@@ -1762,7 +1759,7 @@ export function useMyMarket() {
       const cancelAllOrdersIx = client.cancelAllIx();
       const withdrawAllIx = await client.withdrawAllIx();
       const blockhash = await provider.connection.getLatestBlockhash();
-      const feePayer = publicKey ?? capsulePubkey.data!;
+      const feePayer = publicKey ?? paraPubkey.data!;
       const playerTokenAccount = getAssociatedTokenAddressSync(
         playerTokenMint.data!,
         feePayer,
@@ -1832,7 +1829,7 @@ export function useMyMarket() {
         .accountsStrict(context)
         .instruction();
       const transaction = new Transaction({
-        feePayer: publicKey ?? capsulePubkey.data!,
+        feePayer: publicKey ?? paraPubkey.data!,
         blockhash: blockhash.blockhash,
         lastValidBlockHeight: blockhash.lastValidBlockHeight,
       });
@@ -1895,8 +1892,8 @@ export function useMyMarket() {
 
 export const useMyPubkey = () => {
   const { publicKey } = useWallet();
-  const { capsulePubkey } = useCapsuleWallet();
-  return publicKey ?? capsulePubkey.data!;
+  const { paraPubkey } = useParaWallet();
+  return publicKey ?? paraPubkey.data!;
 };
 
 export function useMyBags() {
