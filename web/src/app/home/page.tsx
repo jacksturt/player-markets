@@ -37,7 +37,7 @@ export default function Home() {
       onClick={handleClickOutside}
     >
       <Navbar />
-      <div className="flex-1 overflow-y-auto">
+      <div className="flex-1 overflow-y-scroll max-h-[85vh]">
         <PlayersList />
       </div>
     </div>

@@ -34,7 +34,7 @@ export default function PlayerCardFront({
         <div
           className="absolute inset-0"
           style={{
-            backgroundImage: `url(${playerData?.image})`,
+            backgroundImage: `url(${baseMint?.image})`,
             backgroundSize: "cover",
             backgroundPosition: "center",
           }}

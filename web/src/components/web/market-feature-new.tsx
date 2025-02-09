@@ -110,6 +110,9 @@ export default function MarketFeatureNew() {
             type: "placeOrder";
             data: PlaceOrderLogResult;
           } = JSON.parse(message.data);
+      if (event.data.market !== marketAddress) {
+        return;
+      }
       if (event.type === "fill") {
         console.log("fill", event.data, Date.now());
         setTradeData((prevData) => [

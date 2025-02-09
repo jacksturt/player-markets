@@ -212,8 +212,8 @@ export function useMarketAdmin() {
       network: string;
       projection: number;
     }) => {
-      // const timestamp = Date.now().toString();
-      const timestamp = "1739073331173";
+      const timestamp = Date.now().toString();
+      // const timestamp = "1739073331173";
       const player_token_mint = PublicKey.findProgramAddressSync(
         [
           Buffer.from("mint"),
@@ -281,17 +281,17 @@ export function useMarketAdmin() {
           player_token_mint
         );
       console.log("marketPK", marketKeypair.publicKey.toString());
-      // const recentBlockhash1 = await provider.connection.getLatestBlockhash();
-      // const tx1 = new Transaction({
-      //   feePayer: provider.publicKey,
-      //   blockhash: recentBlockhash1.blockhash,
-      //   lastValidBlockHeight: recentBlockhash1.lastValidBlockHeight,
-      // });
+      const recentBlockhash1 = await provider.connection.getLatestBlockhash();
+      const tx1 = new Transaction({
+        feePayer: provider.publicKey,
+        blockhash: recentBlockhash1.blockhash,
+        lastValidBlockHeight: recentBlockhash1.lastValidBlockHeight,
+      });
 
-      // tx1.add(createMintInstruction);
-      // tx1.add(initProjectionOracleInstruction);
-      // tx1.add(updateProjectionOracleInstruction);
-      // const signature1 = await provider.sendAndConfirm(tx1);
+      tx1.add(createMintInstruction);
+      tx1.add(initProjectionOracleInstruction);
+      tx1.add(updateProjectionOracleInstruction);
+      const signature1 = await provider.sendAndConfirm(tx1);
       const recentBlockhash = await provider.connection.getLatestBlockhash();
       const tx = new Transaction({
         feePayer: provider.publicKey,
