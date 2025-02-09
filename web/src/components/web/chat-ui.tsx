@@ -202,18 +202,6 @@ export default function ChatUI() {
           side="top"
           className="w-[350px] h-[600px] mr-[22px] mb-4 rounded-[22px] z-50 px-3 py-5 flex flex-col"
         >
-          {/* <div>
-            <input
-              type="text"
-              className="border border-gray-300 rounded-md p-2 bg-gray-100"
-              placeholder="Username"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-            />
-            <button onClick={connectToChat}>Connect</button>
-          </div> */}
-          {/* <div> */}
-
           {/* header */}
           <div className="h-[51px] flex items-center justify-between px-[5px]">
             <div className="flex items-center gap-[26px]">

@@ -1,7 +1,7 @@
 import { db } from "@/server/db";
-import { createTRPCRouter, protectedProcedure } from "@/server/api/trpc";
+import { protectedProcedure } from "@/server/api/trpc";
 import { z } from "zod";
-import { OrderStatus, Position } from "@prisma/client";
+import { OrderStatus } from "@prisma/client";
 
 export const readOrder = protectedProcedure
   .input(
