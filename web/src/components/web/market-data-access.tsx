@@ -580,6 +580,7 @@ export function useMarkets() {
         );
         try {
           const vault = await getAccount(provider.connection, vaultAddress);
+          console.log("mintConfig", market.publicKey.toString());
           console.log("vault", vault.address.toString());
           console.log("playerId", market.account.playerId);
           console.log("timestamp", market.account.timestamp);

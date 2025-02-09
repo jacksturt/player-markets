@@ -19,7 +19,7 @@ import { api } from "@/trpc/react";
 import DataTablesPlayer from "../player-data/data-tables-player";
 import { CashoutAll } from "./web-ui";
 const PlayerCard = () => {
-  const { market } = usePlayerMarket();
+  const { market, playerStatsAccount } = usePlayerMarket();
   return (
     <div className="w-full flex items-end justify-between px-[50px]">
       <div className="flex items-center gap-4">
@@ -45,9 +45,7 @@ const PlayerCard = () => {
       <div className="flex flex-col">
         <p className="text-sm font-clashGroteskMed">Projected Total</p>
         <p className="text-[21px] leading-[21px] font-clashSemiBold">
-          {market?.data?.player?.projections?.projectedFantasyPointsPpr.toFixed(
-            2
-          )}
+          {playerStatsAccount?.data?.projectedPoints.toFixed(2)}
           pts
         </p>
       </div>

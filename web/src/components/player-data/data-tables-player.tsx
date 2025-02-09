@@ -28,7 +28,7 @@ const gameUpdates: GameUpdate[] = [
 ];
 
 export default function DataTablesPlayer() {
-  const [activeTab, setActiveTab] = useState(PlayerDataView.DETAILS);
+  const [activeTab, setActiveTab] = useState(PlayerDataView.ORDERS);
 
   return (
     <div className="w-full flex flex-col gap-4 overflow-y-scroll">
