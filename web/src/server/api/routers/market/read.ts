@@ -21,7 +21,11 @@ export const readMarket = protectedProcedure
             projections: true,
           },
         },
-        team: true,
+        team: {
+          include: {
+            stats: true,
+          },
+        },
       },
     });
     return market;

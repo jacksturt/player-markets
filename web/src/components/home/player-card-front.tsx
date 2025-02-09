@@ -26,6 +26,7 @@ export default function PlayerCardFront({
 
   const baseMint = market.data?.baseMint;
   const playerData = market.data?.player;
+  const teamData = market.data?.team;
 
   // console.log("player data", playerData);
   return (
@@ -60,7 +61,10 @@ export default function PlayerCardFront({
               <div className="flex flex-col">
                 <p className="text-[9px] leading-[9px]">Projected Total</p>
                 <p className="text-[13px] leading-[13px] font-clashSemiBold">
-                  {playerData?.projections?.projectedFantasyPointsPpr} pts
+                  {playerData?.projections?.projectedFantasyPointsPpr ??
+                    teamData?.stats?.projectedPoints.toString() ??
+                    0}
+                  pts
                 </p>
               </div>
             </div>
