@@ -1275,6 +1275,8 @@ export function useMyMarket() {
       numBaseTokens: number;
       tokenPrice: number;
     }) => {
+      console.log("numBaseTokens", numBaseTokens);
+      console.log("tokenPrice", tokenPrice);
       const withdrawableQuote =
         balances.data?.quoteWithdrawableBalanceTokens ?? 0;
 
@@ -1370,6 +1372,8 @@ export function useMyMarket() {
       if (!playerId.data || !timestamp.data) {
         throw new Error("Player ID or timestamp not found");
       }
+      console.log("numBaseTokens", numBaseTokens);
+      console.log("tokenPrice", tokenPrice);
       const numPlayerDeposited =
         balances.data?.baseWithdrawableBalanceTokens ?? 0;
 

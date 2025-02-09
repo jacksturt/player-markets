@@ -394,7 +394,8 @@ export const Trade = () => {
                   <div className="!h-[62px] flex flex-row justify-between items-center text-white text-center w-full bg-[#232323]  rounded-lg border-[#313131] px-4">
                     <div className="flex flex-col items-start ">
                       <span className="text-[#676767] text-sm">
-                        Buy # of {market.data?.baseMint.symbol}
+                        {orderType === "buy" ? "Long # of" : "Short # of"}{" "}
+                        {market.data?.baseMint.symbol}
                       </span>
                       <Input
                         id="quantity"
@@ -1283,7 +1284,7 @@ export const OrderHistoryItem = ({
         <div className="flex flex-col gap-1">
           <div className="flex items-center gap-2">
             <p className="text-white font-clashGroteskMed text-[15px] leading-[15px] uppercase">
-              {isBid ? "Bought" : "Sold"}
+              {isBid ? "Buying" : "Selling"}
             </p>
             <p className="bg-chiefs-gradient-text text-transparent bg-clip-text font-clashGroteskMed text-[15px] leading-[15px]">
               {ticker}
