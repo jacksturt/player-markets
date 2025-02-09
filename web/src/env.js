@@ -23,7 +23,7 @@ export const env = createEnv({
       process.env.VERCEL ? z.string() : z.string().url()
     ),
     RPC_URL: z.string().url(),
-    NEXT_PUBLIC_CAPSULE_API_KEY: z.string(),
+    NEXT_PUBLIC_PARA_API_KEY: z.string(),
     SPORTSDATA_API_KEY: z.string(),
     PRIVATE_KEY: z.string(),
     CRON_SECRET: z.string(),
@@ -48,7 +48,7 @@ export const env = createEnv({
     NEXTAUTH_SECRET: process.env.NEXTAUTH_SECRET,
     NEXTAUTH_URL: process.env.NEXTAUTH_URL,
     RPC_URL: process.env.RPC_URL,
-    NEXT_PUBLIC_CAPSULE_API_KEY: process.env.NEXT_PUBLIC_CAPSULE_API_KEY,
+    NEXT_PUBLIC_PARA_API_KEY: process.env.NEXT_PUBLIC_PARA_API_KEY,
     SPORTSDATA_API_KEY: process.env.SPORTSDATA_API_KEY,
     PRIVATE_KEY: process.env.PRIVATE_KEY,
     CRON_SECRET: process.env.CRON_SECRET,

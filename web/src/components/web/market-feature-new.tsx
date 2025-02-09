@@ -11,7 +11,7 @@ import {
 import { Trade, ClaimSeat } from "./web-ui";
 import { FillLogResult } from "manifest/src";
 import toast from "react-hot-toast";
-import { capsule } from "@/lib/capsule";
+import { para } from "@/lib/para";
 import ChartComponent from "@/components/player-data/chart";
 import { PlaceOrderLogResult } from "@/lib/types";
 import { useQueryClient } from "@tanstack/react-query";
@@ -65,10 +65,10 @@ export default function MarketFeatureNew() {
   const queryClient = useQueryClient();
   const utils = api.useUtils();
   useEffect(() => {
-    async function checkCapsuleSession() {
-      const isActive = await capsule.isSessionActive();
+    async function checkparaSession() {
+      const isActive = await para.isSessionActive();
     }
-    checkCapsuleSession();
+    checkparaSession();
   }, []);
 
   useEffect(() => {
@@ -111,6 +111,9 @@ export default function MarketFeatureNew() {
             type: "placeOrder";
             data: PlaceOrderLogResult;
           } = JSON.parse(message.data);
+      if (event.data.market !== marketAddress) {
+        return;
+      }
       if (event.type === "fill") {
         console.log("fill", event.data, Date.now());
         setTradeData((prevData) => [

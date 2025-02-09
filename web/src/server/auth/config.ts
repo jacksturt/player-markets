@@ -3,7 +3,7 @@ import { type DefaultSession, type NextAuthOptions } from "next-auth";
 
 import CredentialsProvider from "next-auth/providers/credentials";
 import { db } from "@/server/db";
-import { capsuleServer } from "../capsule";
+import { paraServer } from "../para";
 import { PublicKey } from "@solana/web3.js";
 
 /**
@@ -64,11 +64,11 @@ export const authConfig = {
   adapter: PrismaAdapter(db),
   providers: [
     CredentialsProvider({
-      id: "capsule",
-      name: "Capsule",
+      id: "para",
+      name: "Para",
       credentials: {
         email: { label: "Email", type: "text" },
-        capsuleUserId: { label: "Capsule User ID", type: "text" },
+        paraUserId: { label: "Para User ID", type: "text" },
         publicKey: { label: "Public Key", type: "text" },
         serializedSession: { label: "Serialized Session", type: "text" },
       },
@@ -77,26 +77,24 @@ export const authConfig = {
           if (!credentials) {
             throw new Error("No credentials provided");
           }
-          if (credentials.capsuleUserId !== "undefined") {
-            capsuleServer.importSession(
-              credentials.serializedSession as string
-            );
+          if (credentials.paraUserId !== "undefined") {
+            paraServer.importSession(credentials.serializedSession as string);
             let user = await db.user.findUnique({
-              where: { capsuleUserId: credentials.capsuleUserId as string },
+              where: { paraUserId: credentials.paraUserId as string },
             });
 
             if (!user) {
               if (credentials.email) {
                 user = await db.user.create({
                   data: {
-                    capsuleUserId: credentials.capsuleUserId as string,
+                    paraUserId: credentials.paraUserId as string,
                     email: credentials.email as string,
                   },
                 });
               } else {
                 user = await db.user.create({
                   data: {
-                    capsuleUserId: credentials.capsuleUserId as string,
+                    paraUserId: credentials.paraUserId as string,
                   },
                 });
               }
@@ -197,7 +195,7 @@ export const authConfig = {
       },
     }),
   ],
-  // Add a custom page that will handle the Capsule modal
+  // Add a custom page that will handle the Para modal
   pages: {
     signIn: "/auth/signin",
   },

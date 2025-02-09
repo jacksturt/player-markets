@@ -5,7 +5,7 @@ import { useRouter, usePathname } from "next/navigation";
 import * as React from "react";
 import { ReactNode, Suspense, useEffect, useRef, useState } from "react";
 import toast, { Toaster } from "react-hot-toast";
-import { capsule } from "@/lib/capsule";
+import { para } from "@/lib/para";
 import { IconCopy } from "@tabler/icons-react";
 
 import { WalletButton } from "../solana/solana-provider";
@@ -33,45 +33,6 @@ export function ExplorerLink({
     </a>
   );
 }
-export function UiLayout({
-  children,
-  links,
-}: {
-  children: ReactNode;
-  links: { label: string; path: string }[];
-}) {
-  const pathname = usePathname();
-
-  return (
-    <div className="h-full bg-red-500 flex flex-col">
-      <div className="navbar  text-neutral-content">
-        <div className="flex-1">
-          <Link className="btn btn-ghost normal-case text-xl" href="/">
-            {/* <img className="h-4 md:h-6" alt="Logo" src="/logo.png" /> */}
-            TRADETALK
-          </Link>
-        </div>
-        <div className="flex-none space-x-2">
-          <CapsuleAccountInfo />
-          <WalletButton />
-        </div>
-      </div>
-      <div className="">
-        <Suspense
-          fallback={
-            <div className="text-center my-32">
-              <span className="loading loading-spinner loading-lg"></span>
-            </div>
-          }
-        >
-          {children}
-        </Suspense>
-        <Toaster position="bottom-right" />
-      </div>
-    </div>
-  );
-}
-
 export function AppModal({
   children,
   title,
@@ -169,41 +130,4 @@ export function useTransactionToast() {
       }
     );
   };
-}
-
-function CapsuleAccountInfo() {
-  const [isActive, setIsActive] = useState(false);
-  const router = useRouter();
-  const pathname = usePathname();
-
-  useEffect(() => {
-    capsule.isSessionActive().then(setIsActive);
-  }, [capsule]);
-
-  if (!isActive) {
-    return (
-      <Button
-        onClick={() => {
-          console.log("redirecting to signin");
-          router.push(
-            `/auth/signin?callbackUrl=${encodeURIComponent(pathname)}`
-          );
-        }}
-      >
-        Sign in
-      </Button>
-    );
-  }
-  const pk = new PublicKey(capsule.getAddress()!);
-  return (
-    <div
-      className="btn btn-primary flex flex-row gap-2 h-full"
-      onClick={() => {
-        navigator.clipboard.writeText(pk.toBase58());
-      }}
-    >
-      <IconCopy />
-      {pk.toBase58().slice(0, 4)}...{pk.toBase58().slice(-4)}
-    </div>
-  );
 }

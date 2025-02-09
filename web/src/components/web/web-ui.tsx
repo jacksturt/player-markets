@@ -670,19 +670,19 @@ export function CreateTeam() {
 
 export function InitPlayerMint() {
   const { initialize } = useMarketAdmin();
-  const playerName = "Kansas City Chiefs";
-  const playerImage = "/logos/kansas-chiefs.png";
+  const playerName = "Philadelphia Eagles";
+  const playerImage = "/logos/philadelphia-eagles.png";
   const playerPosition = "WR";
   // PHI
-  // const teamId = "cm6l90r8j0000rcxnu1blil7n";
+  const teamId = "cm6l90r8j0000rcxnu1blil7n";
   // KC
-  const teamId = "cm6qtbj7c0000rcmm8v7l5132";
-  const teamSportsdataId = "KC";
-  const mintSymbol = "CHIEFS";
+  // const teamId = "cm6qtbj7c0000rcmm8v7l5132";
+  const teamSportsdataId = "PHI";
+  const mintSymbol = "EAGLES";
   const season = "2024POST";
   const week = "4";
   const network = "MAINNET";
-  const projection = 25.0;
+  const projection = 23.5;
 
   return (
     <button

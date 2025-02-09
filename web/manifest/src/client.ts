@@ -48,8 +48,8 @@ import { genAccDiscriminator } from "./utils/discriminator";
 import { getGlobalAddress, getGlobalVaultAddress } from "./utils/global";
 import { Global } from "./global";
 import { AnchorProvider } from "@coral-xyz/anchor";
-import { CapsuleSolanaWeb3Signer } from "@usecapsule/solana-web3.js-v1-integration";
-import { capsule } from "@/lib/capsule";
+import { ParaSolanaWeb3Signer } from "@getpara/solana-web3.js-v1-integration";
+import { para } from "@/lib/para";
 import { Wallet } from "@solana/wallet-adapter-react";
 export interface SetupData {
   setupNeeded: boolean;
@@ -182,9 +182,9 @@ export class ManifestClient {
     wallet?: Wallet
   ): Promise<ManifestClient> {
     const connection = provider.connection;
-    let solanaSigner: CapsuleSolanaWeb3Signer | null = null;
+    let solanaSigner: ParaSolanaWeb3Signer | null = null;
     if (!wallet) {
-      solanaSigner = new CapsuleSolanaWeb3Signer(capsule, provider.connection);
+      solanaSigner = new ParaSolanaWeb3Signer(para, provider.connection);
     }
 
     const payer =
