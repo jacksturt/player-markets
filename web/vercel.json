@@ -2,10 +2,65 @@
     "crons": [
       {
         "path": "/api/cron/updatePlayerStats?teamId=PHI",
-        "schedule": "* */1 * * *"
+        "schedule": "* * * * *"
+      }, {
+        "path": "/api/cron/updatePlayerStats?teamId=KC",
+        "schedule": "* * * * *"
       },
       {
         "path": "/api/cron/checkOrdersAndFills?marketAddress=AAWZ1UyEeSkMyvgrhJEmgyvBj32HKYBeDQRs7cpCL2Pi",
+        "schedule": "* * * * *"
+      },
+      {
+        "path": "/api/cron/checkOrdersAndFills?marketAddress=ECcmGq1MERPwjV5hkxGvDXMzy5Biv7yCfBEEqFn6tqp1",
+        "schedule": "* * * * *"
+      },
+      {
+        "path": "/api/cron/checkOrdersAndFills?marketAddress=Fgd9T3wkyTf9rsapHwDHeWvW8sqNokiqnK24RiKGs7sL",
+        "schedule": "* * * * *"
+      },
+      {
+        "path": "/api/cron/checkOrdersAndFills?marketAddress=Bae1oT4M4Lwn1XWqygyhRQRfvLFWVWSsuFajqbtm1Df",
+        "schedule": "* * * * *"
+      },
+      {
+        "path": "/api/cron/checkOrdersAndFills?marketAddress=3cvmSRNEpDTZYZiHooKEcvypnWVp4mtnmYr2zfCrqnqS",
+        "schedule": "* * * * *"
+      },
+      {
+        "path": "/api/cron/checkOrdersAndFills?marketAddress=4LF3U28CFup2cDpjKgJX9icEgso8LGHC3EaqYLXfMHGq",
+        "schedule": "* * * * *"
+      },
+      {
+        "path": "/api/cron/checkOrdersAndFills?marketAddress=3nrTNp2XsPUt7YyqCyMCvKU1ytTcBdHdN75PV2az34Dz",
+        "schedule": "* * * * *"
+      },
+      {
+        "path": "/api/cron/checkOrdersAndFills?marketAddress=4WYV4nC5qNGU1xYir9v6tx1vd3f6Vqfnz1mnRcdtexBX",
+        "schedule": "* * * * *"
+      },
+      {
+        "path": "/api/cron/checkOrdersAndFills?marketAddress=DF6ecpGH8Z4XnNbPTYKaYe3Yp1JsTh2feymy3tdh7j15",
+        "schedule": "* * * * *"
+      },
+      {
+        "path": "/api/cron/checkOrdersAndFills?marketAddress=9X1NxAiwTtYFpYTH9PiYboP6Ga4rrJznWDsCL4cqJthF",
+        "schedule": "* * * * *"
+      },
+      {
+        "path": "/api/cron/checkOrdersAndFills?marketAddress=4H28PqKkHqeyq4cLbcV2gK7Hr75quTG626zFHHbD8DtZ",
+        "schedule": "* * * * *"
+      },
+      {
+        "path": "/api/cron/checkOrdersAndFills?marketAddress=5FXdMQ81QMaAWV5TSa9QNCch6vR8fMuAxDAxNjQZGS5G",
+        "schedule": "* * * * *"
+      },
+      {
+        "path": "/api/cron/checkOrdersAndFills?marketAddress=BqVWeovVa2ibokvpc1ezcX1B2pEnLyKijHRq3H1bd93D",
+        "schedule": "* * * * *"
+      },
+      {
+        "path": "/api/cron/checkOrdersAndFills?marketAddress=44dcMn5kcvATfumRdSmGc3wh7g2ZUX2rpsudfBkDvqSA",
         "schedule": "* * * * *"
       }
     ]
