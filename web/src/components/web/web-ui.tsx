@@ -382,7 +382,7 @@ export const Trade = () => {
               {orderType === "buy" && safePrice && quantity && (
                 <div className="p-4 bg-gray-100 rounded-lg">
                   <p className="text-lg font-medium">
-                    Total: ${(safePrice * quantity).toFixed(2)}
+                    Total: ${(safePrice * quantity).toFixed(4)}
                   </p>
                 </div>
               )}
@@ -394,7 +394,7 @@ export const Trade = () => {
                       Mint Cost: $
                       {(
                         playerStatsAccount.data?.projectedPoints! * quantity
-                      ).toFixed(2)}
+                      ).toFixed(4)}
                     </p>
                     <p className="text-lg font-medium">
                       Collateral: $
@@ -402,7 +402,7 @@ export const Trade = () => {
                         1.5 *
                         playerStatsAccount.data?.projectedPoints! *
                         quantity
-                      ).toFixed(2)}
+                      ).toFixed(4)}
                     </p>
                   </div>
                   <div className="p-4 bg-gray-100 rounded-lg">
@@ -412,7 +412,7 @@ export const Trade = () => {
                         2.5 *
                         playerStatsAccount.data?.projectedPoints! *
                         quantity
-                      ).toFixed(2)}
+                      ).toFixed(4)}
                     </p>
                   </div>
                 </>
@@ -771,8 +771,8 @@ export function VaultsList() {
 
 export function UpdateProjectionOracle() {
   const { updateProjectionOracle } = useMarketAdmin();
-  const projection = 30.5;
-  const isProjected = true;
+  const projection = 17.89;
+  const isProjected = false;
 
   return (
     <button

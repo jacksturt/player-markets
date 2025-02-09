@@ -1,7 +1,12 @@
 "use client";
 
-import { getTradetalkProgram, getTradetalkProgramId } from "@project/anchor";
-import { BN } from "@coral-xyz/anchor";
+import {
+  getTradetalkProgram,
+  getTradetalkProgramId,
+  PlayerMintConfig,
+  PlayerStats,
+} from "@project/anchor";
+import { BN, ProgramAccount } from "@coral-xyz/anchor";
 import { useConnection, useWallet } from "@solana/wallet-adapter-react";
 import {
   PublicKey,
@@ -21,6 +26,7 @@ import {
   getMint,
   TOKEN_PROGRAM_ID,
   createAssociatedTokenAccountInstruction,
+  Account,
 } from "@solana/spl-token";
 import { createMarketTX } from "manifest/instructions/createMarket";
 import { ManifestClient } from "manifest/src/client";
@@ -28,9 +34,10 @@ import { CapsuleSolanaWeb3Signer } from "@usecapsule/solana-web3.js-v1-integrati
 import { capsule } from "@/lib/capsule";
 import { OrderType } from "manifest/src/manifest";
 import { Market, Wrapper, WrapperMarketInfo, WrapperData } from "manifest/src";
-import { api } from "@/trpc/react";
+import { api, RouterOutputs } from "@/trpc/react";
 import { useSession } from "next-auth/react";
-import { AskOrBidType, MarketRouterObject } from "./web-ui";
+import { AskOrBidType } from "./web-ui";
+
 export function useCurrentMarket() {
   const queryClient = useQueryClient();
 
@@ -587,6 +594,38 @@ export function useMarkets() {
     staleTime: 1000 * 10,
   });
 
+  const playerMintAccounts = useQuery({
+    queryKey: ["player-mint-accounts"],
+    queryFn: async () => {
+      const playerMintAccounts = [];
+      for (const market of markets.data ?? []) {
+        const player_token_mint = PublicKey.findProgramAddressSync(
+          [
+            Buffer.from("mint"),
+            Buffer.from(market.account.playerId),
+            Buffer.from(market.account.timestamp),
+          ],
+          program.programId
+        )[0];
+        try {
+          const playerMint = await getMint(
+            provider.connection,
+            player_token_mint
+          );
+          console.log("playerMint", playerMint.address.toString());
+          console.log("playerId", market.account.playerId);
+          console.log("timestamp", market.account.timestamp);
+          playerMintAccounts.push(playerMint);
+        } catch (error) {
+          console.error(error);
+        }
+      }
+      return playerMintAccounts;
+    },
+    enabled: !!markets.data && !!vaults.data,
+    staleTime: 1000 * 10,
+  });
+
   const playerStats = useQuery({
     queryKey: ["player-stats"],
     queryFn: async () => {
@@ -594,7 +633,7 @@ export function useMarkets() {
       return playerStats;
     },
     staleTime: 1000 * 10,
-    enabled: !!markets.data,
+    enabled: !!markets.data && !!vaults.data && !!playerMintAccounts.data,
   });
 
   const marketsWithPlayerStatsAndVaults = useQuery({
@@ -619,17 +658,32 @@ export function useMarkets() {
         const marketDB = allMarkets.data?.find(
           (marketBE) => marketBE.baseMint.timestamp === market.account.timestamp
         );
+        const playerMintAccount = playerMintAccounts.data?.find(
+          (playerMint) =>
+            playerMint.address.toString() ===
+            market.account.playerTokenMint.toString()
+        );
+        const vault = vaults.data?.find(
+          (vault) => vault.address.toString() === vaultAddress.toString()
+        );
+        const playerStats = projectionAccounts.find(
+          (account) =>
+            account.publicKey.toString() ===
+            expectedPlayerStatsAddress.toString()
+        );
+        const playerMintAmount = Number(playerMintAccount?.supply!);
+        const actualPoints = playerStats?.account.actualPoints ?? 0;
+        const longPayout = (playerMintAmount * actualPoints) / 10 ** 6;
+        const vaultAmount = Number(vault?.amount!);
+        const shortPayout = vaultAmount / 10 ** 6 - longPayout;
+
         return {
           config: market,
           db: marketDB,
-          playerStats: projectionAccounts.find(
-            (account) =>
-              account.publicKey.toString() ===
-              expectedPlayerStatsAddress.toString()
-          ),
-          vault: vaults.data?.find(
-            (vault) => vault.address.toString() === vaultAddress.toString()
-          ),
+          playerStats: playerStats,
+          vault: vault,
+          longPayout: longPayout,
+          shortPayout: shortPayout,
         };
       });
       return projectionAccountsWithMarket;
@@ -1948,6 +2002,17 @@ export function useMyBags() {
   };
 }
 
+type MarketRouterObject = RouterOutputs["market"]["readAllMarkets"][number];
+
+export type LargestPool = {
+  config: ProgramAccount<PlayerMintConfig>;
+  db: MarketRouterObject | undefined;
+  playerStats: ProgramAccount<PlayerStats> | undefined;
+  vault: Account | undefined;
+  longPayout: number;
+  shortPayout: number;
+};
+
 export const useLeaderboards = () => {
   const biggestTrades = api.trade.readBiggestTrades.useQuery();
   const { marketsWithPlayerStatsAndVaults } = useMarkets();
@@ -1957,7 +2022,10 @@ export const useLeaderboards = () => {
       const sortedMarkets = marketsWithPlayerStatsAndVaults.data?.sort(
         (a, b) => Number(b.vault?.amount) - Number(a.vault?.amount)
       );
-      return sortedMarkets;
+      console.log("sortedMarkets", sortedMarkets);
+      return sortedMarkets?.filter(
+        (market) => market.vault?.amount !== BigInt(0)
+      );
     },
     enabled: !!marketsWithPlayerStatsAndVaults.data,
   });
