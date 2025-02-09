@@ -334,3 +334,82 @@ export type PlayerGameStats = {
   Updated: string;
   ScoringDetails: ScoringDetail[];
 };
+
+export type PlayByPlayResponse = {
+  Plays: RawPlayData[];
+};
+
+export type RawPlayData = {
+  PlayID: number;
+  QuarterID: number;
+  QuarterName: string;
+  Sequence: number;
+  TimeRemainingMinutes: number;
+  TimeRemainingSeconds: number;
+  PlayTime: string;
+  Updated: string;
+  Created: string;
+  Team: string;
+  Opponent: string;
+  Down: number;
+  Distance: number;
+  YardLine: number;
+  YardLineTerritory: string;
+  YardsToEndZone: number;
+  Type: string;
+  YardsGained: number;
+  Description: string;
+  IsScoringPlay: boolean;
+  ScoringPlay: ScoringPlay | null;
+  PlayStats: Array<PlayStat>;
+};
+
+export type PlayStat = {
+  PlayStatID: number;
+  PlayID: number;
+  Sequence: number;
+  PlayerID: number;
+  Team: string;
+  Direction?: string;
+  HomeOrAway: string;
+  PassingAttempts: number;
+  PassingCompletions: number;
+  PassingYards: number;
+  PassingTouchdowns: number;
+  PassingInterceptions: number;
+  PassingSacks: number;
+  PassingSackYards: number;
+  RushingAttempts: number;
+  RushingYards: number;
+  RushingTouchdowns: number;
+  ReceivingTargets: number;
+  Receptions: number;
+  ReceivingYards: number;
+  ReceivingTouchdowns: number;
+  Fumbles: number;
+  FumblesLost: number;
+  SoloTackles: number;
+  AssistedTackles: number;
+  TacklesForLoss: number;
+  Sacks: number;
+  SackYards: number;
+  PassesDefended: number;
+};
+export type ScoringPlay = {
+  GameKey: string;
+  SeasonType: number;
+  ScoringPlayID: number;
+  Season: number;
+  Week: number;
+  AwayTeam: string;
+  HomeTeam: string;
+  Date: string;
+  Sequence: number;
+  Team: string;
+  Quarter: string;
+  TimeRemaining: string;
+  PlayDescription: string;
+  AwayScore: number;
+  HomeScore: number;
+  ScoreID: number;
+};

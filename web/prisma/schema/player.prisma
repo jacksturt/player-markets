@@ -17,7 +17,8 @@ model Player {
     projections   PlayerStatsAndProjection?
     projectionsId String?
 
-    trades Trade[]
+    trades    Trade[]
+    playStats PlayStat[]
 }
 
 enum Position {

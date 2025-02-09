@@ -5,6 +5,7 @@ model Team {
     sportsDataId String   @unique
     createdAt    DateTime @default(now())
     updatedAt    DateTime @updatedAt
+    lastPlayID   Int      @default(0)
 
     market   Market? @relation()
     marketId String?
@@ -14,8 +15,12 @@ model Team {
     mint   Mint?   @relation()
     mintId String?
 
-    trades Trade[]
-    stats  TeamStats?
+    trades        Trade[]
+    stats         TeamStats?
+    plays         Play[]        @relation("TeamPlays")
+    opponentPlays Play[]        @relation("OpponentPlays")
+    playStats     PlayStat[]
+    ScoringPlay   ScoringPlay[]
 }
 
 model TeamStats {
@@ -25,4 +30,118 @@ model TeamStats {
 
     projectedPoints Decimal
     actualPoints    Decimal
+}
+
+model Play {
+    id                   String   @id @default(cuid())
+    playId               Int      @unique // Maps to PlayID from JSON
+    quarterId            Int // QuarterID
+    quarterName          String // QuarterName
+    sequence             Int // Sequence
+    timeRemainingMinutes Int // TimeRemainingMinutes
+    timeRemainingSeconds Int // TimeRemainingSeconds
+    playTime             DateTime // PlayTime
+    updated              DateTime // Updated
+    created              DateTime // Created
+
+    // Team relationships
+    team       Team   @relation("TeamPlays", fields: [teamId], references: [id])
+    teamId     String
+    opponent   Team   @relation("OpponentPlays", fields: [opponentId], references: [id])
+    opponentId String
+
+    // Play details
+    down              Int
+    distance          Int
+    yardLine          Int
+    yardLineTerritory String
+    yardsToEndZone    Int
+    type              String // Type
+    yardsGained       Int
+    description       String
+    isScoringPlay     Boolean
+    scoringPlay       String?
+
+    // Relation to player statistics
+    playStats    PlayStat[]
+    scoringPlays ScoringPlay[]
+}
+
+model PlayStat {
+    id         String  @id @default(cuid())
+    playStatId Int     @unique // Maps to PlayStatID
+    sequence   Int
+    direction  String?
+    homeOrAway String
+
+    // Relationships
+    play     Play    @relation(fields: [playId], references: [id])
+    playId   String
+    player   Player? @relation(fields: [playerId], references: [id])
+    playerId String?
+    team     Team    @relation(fields: [teamId], references: [id])
+    teamId   String
+
+    // Passing stats
+    passingAttempts      Int @default(0)
+    passingCompletions   Int @default(0)
+    passingYards         Int @default(0)
+    passingTouchdowns    Int @default(0)
+    passingInterceptions Int @default(0)
+    passingSacks         Int @default(0)
+    passingSackYards     Int @default(0)
+
+    // Rushing stats
+    rushingAttempts   Int @default(0)
+    rushingYards      Int @default(0)
+    rushingTouchdowns Int @default(0)
+
+    // Receiving stats
+    receivingTargets    Int @default(0)
+    receptions          Int @default(0)
+    receivingYards      Int @default(0)
+    receivingTouchdowns Int @default(0)
+
+    // Fumble stats
+    fumbles     Int @default(0)
+    fumblesLost Int @default(0)
+
+    // Defense stats
+    soloTackles     Int @default(0)
+    assistedTackles Int @default(0)
+    tacklesForLoss  Int @default(0)
+    sacks           Int @default(0)
+    sackYards       Int @default(0)
+    passesDefended  Int @default(0)
+
+    // Additional stats as needed can be added
+    created DateTime @default(now())
+    updated DateTime @updatedAt
+}
+
+model ScoringPlay {
+    id              String   @id @default(cuid())
+    scoringPlayId   Int      @unique // Maps to ScoringPlayID
+    gameKey         String
+    seasonType      Int
+    season          Int
+    week            Int
+    date            DateTime
+    sequence        Int
+    quarter         String
+    timeRemaining   String
+    playDescription String
+    awayScore       Int
+    homeScore       Int
+    scoreId         Int
+
+    // Team relationships
+    team   Team   @relation(fields: [teamId], references: [id])
+    teamId String
+
+    // Timestamps
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+    play      Play     @relation(fields: [playId], references: [id])
+    playId    String   @unique
 }

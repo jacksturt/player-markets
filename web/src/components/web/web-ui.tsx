@@ -654,10 +654,10 @@ export function CreateTeam() {
       className="btn btn-xs lg:btn-md btn-primary"
       onClick={() =>
         createTeam.mutateAsync({
-          teamName: "San Francisco 49ers",
+          teamName: "Baltimore Ravens",
           teamImage:
             "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a2/Washington_Commanders_logo.svg/1200px-Washington_Commanders_logo.svg.png",
-          teamSportsdataId: "SF",
+          teamSportsdataId: "BAL",
         })
       }
     >
