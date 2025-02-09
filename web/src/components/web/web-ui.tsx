@@ -53,7 +53,7 @@ export const Trade = () => {
       depositAndPlaceBuyOrder.mutateAsync({
         numBaseTokens:
           quantity +
-          (useDepositedTokens ? quoteTokenWithdrawable * safePrice : 0),
+          (useDepositedTokens ? quoteTokenWithdrawable / safePrice : 0),
         tokenPrice: safePrice,
       });
     } else {
@@ -1096,6 +1096,7 @@ export const OrderHistoryItem = ({
           onClick={() => {
             cancelOrder.mutate({
               clientOrderId: order.clientOrderId,
+              sequenceNumber: order.sequenceNumber ?? 0,
             });
           }}
         >

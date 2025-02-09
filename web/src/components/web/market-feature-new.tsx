@@ -4,11 +4,18 @@ import { useEffect, useState } from "react";
 import Image from "next/image";
 import {
   useCurrentMarket,
+  useManifestClient,
   useMarkets,
   usePlayerMarket,
   useQuoteToken,
 } from "./market-data-access";
-import { Payout, Trade, WithdrawAll, QuoteTokenFaucet } from "./web-ui";
+import {
+  Payout,
+  Trade,
+  WithdrawAll,
+  QuoteTokenFaucet,
+  ClaimSeat,
+} from "./web-ui";
 import { FillLogResult } from "manifest/src";
 import toast from "react-hot-toast";
 import { capsule } from "@/lib/capsule";
@@ -61,6 +68,7 @@ export default function MarketFeatureNew() {
   );
   const { trades, mintConfigAccount } = usePlayerMarket();
   const { marketAddress } = useCurrentMarket();
+  const { hasSeatBeenClaimed } = useManifestClient();
   const { quoteTokenBalance } = useQuoteToken();
   const queryClient = useQueryClient();
   const utils = api.useUtils();
@@ -156,10 +164,16 @@ export default function MarketFeatureNew() {
           <ChartComponent data={tradeData} />
           <DataTablesPlayer />
         </div>
-        <div className="w-[450px]">
-          {mintConfigAccount.data?.mintingEnabled && <Trade />}
-          {mintConfigAccount.data?.payoutEnabled && <CashoutAll />}
-        </div>
+        {hasSeatBeenClaimed.data ? (
+          <div className="w-[450px]">
+            {mintConfigAccount.data?.mintingEnabled && <Trade />}
+            {mintConfigAccount.data?.payoutEnabled && <CashoutAll />}
+          </div>
+        ) : (
+          <div className="w-[450px]">
+            <ClaimSeat />
+          </div>
+        )}
       </div>
     </div>
   );

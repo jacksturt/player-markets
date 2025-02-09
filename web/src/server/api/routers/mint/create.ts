@@ -27,6 +27,7 @@ export const createMint = protectedProcedure
       week: z.string(),
       marketName: z.string(),
       address: z.string(),
+      marketAddress: z.string(),
     })
   )
   .mutation(async ({ input }) => {
@@ -36,7 +37,7 @@ export const createMint = protectedProcedure
           address: input.baseMint,
           name: input.mintName!,
           symbol: input.mintSymbol!,
-          image: input.mintName!,
+          image: input.playerImage!,
           description: input.description,
           decimals: 6,
           timestamp: input.timestamp,
@@ -61,7 +62,7 @@ export const createMint = protectedProcedure
         data: {
           name: input.marketName,
           description: input.description,
-          address: input.address,
+          address: input.marketAddress,
           season: input.season,
           week: input.week,
           network: input.network,
@@ -132,7 +133,7 @@ export const createMint = protectedProcedure
         data: {
           name: input.marketName,
           description: input.description,
-          address: input.address,
+          address: input.marketAddress,
           season: input.season,
           week: input.week,
           network: input.network,

@@ -7,17 +7,17 @@ import {
   SystemProgram,
   RpcResponseAndContext,
   AccountInfo,
-} from '@solana/web3.js';
-import { bignum } from '@metaplex-foundation/beet';
-import { publicKeyBeet } from './utils/beet';
-import { publicKey as beetPublicKey } from '@metaplex-foundation/beet-solana';
-import { deserializeRedBlackTree } from './utils/redBlackTree';
-import { convertU128, toNum } from './utils/numbers';
+} from "@solana/web3.js";
+import { bignum } from "@metaplex-foundation/beet";
+import { publicKeyBeet } from "./utils/beet";
+import { publicKey as beetPublicKey } from "@metaplex-foundation/beet-solana";
+import { deserializeRedBlackTree } from "./utils/redBlackTree";
+import { convertU128, toNum } from "./utils/numbers";
 import {
   FIXED_MANIFEST_HEADER_SIZE,
   NIL,
   NO_EXPIRATION_LAST_VALID_SLOT,
-} from './constants';
+} from "./constants";
 import {
   claimedSeatBeet,
   ClaimedSeat as ClaimedSeatRaw,
@@ -26,9 +26,9 @@ import {
   PROGRAM_ID,
   restingOrderBeet,
   RestingOrder as RestingOrderRaw,
-} from './manifest';
-import { getVaultAddress } from './utils/market';
-import { TOKEN_2022_PROGRAM_ID } from '@solana/spl-token';
+} from "./manifest";
+import { getVaultAddress } from "./utils/market";
+import { TOKEN_2022_PROGRAM_ID } from "@solana/spl-token";
 
 /**
  * RestingOrder on the market.
@@ -136,7 +136,7 @@ export class Market {
   }): Market {
     const marketData = Market.deserializeMarketBuffer(
       buffer,
-      slot ?? NO_EXPIRATION_LAST_VALID_SLOT,
+      slot ?? NO_EXPIRATION_LAST_VALID_SLOT
     );
     // When we are not given a slot, pretend it is time zero to show everything.
     return new Market({
@@ -163,13 +163,13 @@ export class Market {
       .getAccountInfoAndContext(address)
       .then(
         (
-          getAccountInfoAndContext: RpcResponseAndContext<AccountInfo<Buffer> | null>,
+          getAccountInfoAndContext: RpcResponseAndContext<AccountInfo<Buffer> | null>
         ) => {
           return [
             getAccountInfoAndContext.value?.data,
             getAccountInfoAndContext.context.slot,
           ];
-        },
+        }
       );
 
     if (buffer === undefined) {
@@ -188,13 +188,13 @@ export class Market {
       .getAccountInfoAndContext(this.address)
       .then(
         (
-          getAccountInfoAndContext: RpcResponseAndContext<AccountInfo<Buffer> | null>,
+          getAccountInfoAndContext: RpcResponseAndContext<AccountInfo<Buffer> | null>
         ) => {
           return [
             getAccountInfoAndContext.value?.data,
             getAccountInfoAndContext.context.slot,
           ];
-        },
+        }
       );
     if (buffer === undefined) {
       throw new Error(`Failed to load ${this.address}`);
@@ -214,7 +214,7 @@ export class Market {
    */
   public getWithdrawableBalanceTokens(
     trader: PublicKey,
-    isBase: boolean,
+    isBase: boolean
   ): number {
     const filteredSeats = this.data.claimedSeats.filter((claimedSeat) => {
       return claimedSeat.publicKey.equals(trader);
@@ -272,7 +272,7 @@ export class Market {
       .filter((bid) => bid.trader.equals(trader))
       .reduce(
         (sum, bid) => sum + Number(bid.numBaseTokens) * Number(bid.tokenPrice),
-        0,
+        0
       );
 
     const quoteWithdrawableBalanceTokens: number =
@@ -413,7 +413,7 @@ export class Market {
    * Print all information loaded about the market in a human readable format.
    */
   public prettyPrint(): void {
-    console.log('');
+    console.log("");
     console.log(`Market: ${this.address}`);
     console.log(`========================`);
     console.log(`Version: ${this.data.version}`);
@@ -421,22 +421,24 @@ export class Market {
     console.log(`QuoteMint: ${this.data.quoteMint.toBase58()}`);
     console.log(`OrderSequenceNumber: ${this.data.orderSequenceNumber}`);
     console.log(`NumBytesAllocated: ${this.data.numBytesAllocated}`);
-    console.log('Bids:');
+    console.log("Bids:");
     this.data.bids.forEach((bid) => {
       console.log(
-        `trader: ${bid.trader} numBaseTokens: ${bid.numBaseTokens} token price: ${bid.tokenPrice} lastValidSlot: ${bid.lastValidSlot} sequenceNumber: ${bid.sequenceNumber}`,
+        `trader: ${bid.trader} numBaseTokens: ${bid.numBaseTokens} token price: ${bid.tokenPrice} lastValidSlot: ${bid.lastValidSlot} sequenceNumber: ${bid.sequenceNumber}`
       );
     });
-    console.log('Asks:');
+    console.log("Asks:");
     this.data.asks.forEach((ask) => {
       console.log(
-        `trader: ${ask.trader} numBaseTokens: ${ask.numBaseTokens} token price: ${ask.tokenPrice} lastValidSlot: ${ask.lastValidSlot} sequenceNumber: ${ask.sequenceNumber}`,
+        `trader: ${ask.trader} numBaseTokens: ${ask.numBaseTokens} token price: ${ask.tokenPrice} lastValidSlot: ${ask.lastValidSlot} sequenceNumber: ${ask.sequenceNumber}`
       );
     });
-    console.log('ClaimedSeats:');
+    console.log("ClaimedSeats:");
     this.data.claimedSeats.forEach((claimedSeat) => {
       console.log(
-        `publicKey: ${claimedSeat.publicKey.toBase58()} baseBalance: ${claimedSeat.baseBalance} quoteBalance: ${claimedSeat.quoteBalance}`,
+        `publicKey: ${claimedSeat.publicKey.toBase58()} baseBalance: ${
+          claimedSeat.baseBalance
+        } quoteBalance: ${claimedSeat.quoteBalance}`
       );
     });
     console.log(`========================`);
@@ -453,7 +455,7 @@ export class Market {
    */
   static deserializeMarketBuffer(
     data: Buffer,
-    currentSlot: number,
+    currentSlot: number
   ): MarketData {
     let offset = 0;
     // Deserialize the market header
@@ -517,7 +519,7 @@ export class Market {
         ? deserializeRedBlackTree(
             data.subarray(FIXED_MANIFEST_HEADER_SIZE),
             bidsRootIndex,
-            restingOrderBeet,
+            restingOrderBeet
           )
             .map((restingOrderInternal: RestingOrderRaw) => {
               return {
@@ -528,8 +530,8 @@ export class Market {
                       FIXED_MANIFEST_HEADER_SIZE,
                     Number(restingOrderInternal.traderIndex) +
                       48 +
-                      FIXED_MANIFEST_HEADER_SIZE,
-                  ),
+                      FIXED_MANIFEST_HEADER_SIZE
+                  )
                 )[0].publicKey,
                 numBaseTokens:
                   toNum(restingOrderInternal.numBaseAtoms) /
@@ -553,7 +555,7 @@ export class Market {
         ? deserializeRedBlackTree(
             data.subarray(FIXED_MANIFEST_HEADER_SIZE),
             asksRootIndex,
-            restingOrderBeet,
+            restingOrderBeet
           )
             .map((restingOrderInternal: RestingOrderRaw) => {
               return {
@@ -564,8 +566,8 @@ export class Market {
                       FIXED_MANIFEST_HEADER_SIZE,
                     Number(restingOrderInternal.traderIndex) +
                       48 +
-                      FIXED_MANIFEST_HEADER_SIZE,
-                  ),
+                      FIXED_MANIFEST_HEADER_SIZE
+                  )
                 )[0].publicKey,
                 numBaseTokens:
                   toNum(restingOrderInternal.numBaseAtoms) /
@@ -589,7 +591,7 @@ export class Market {
         ? deserializeRedBlackTree(
             data.subarray(FIXED_MANIFEST_HEADER_SIZE),
             claimedSeatsRootIndex,
-            claimedSeatBeet,
+            claimedSeatBeet
           ).map((claimedSeatInternal: ClaimedSeatRaw) => {
             return {
               publicKey: claimedSeatInternal.trader,
@@ -617,7 +619,7 @@ export class Market {
   static async findByMints(
     connection: Connection,
     baseMint: PublicKey,
-    quoteMint: PublicKey,
+    quoteMint: PublicKey
   ): Promise<Market[]> {
     // Based on the MarketFixed struct
     const baseMintOffset = 16;
@@ -643,7 +645,7 @@ export class Market {
     });
 
     return accounts.map(({ account, pubkey }) =>
-      Market.loadFromBuffer({ address: pubkey, buffer: account.data }),
+      Market.loadFromBuffer({ address: pubkey, buffer: account.data })
     );
   }
 
@@ -651,7 +653,7 @@ export class Market {
     connection: Connection,
     baseMint: PublicKey,
     quoteMint: PublicKey,
-    payer: PublicKey,
+    payer: PublicKey
   ): Promise<{ ixs: TransactionInstruction[]; signers: Signer[] }> {
     const marketKeypair: Keypair = Keypair.generate();
     const createAccountIx: TransactionInstruction = SystemProgram.createAccount(
@@ -660,10 +662,10 @@ export class Market {
         newAccountPubkey: marketKeypair.publicKey,
         space: FIXED_MANIFEST_HEADER_SIZE,
         lamports: await connection.getMinimumBalanceForRentExemption(
-          FIXED_MANIFEST_HEADER_SIZE,
+          FIXED_MANIFEST_HEADER_SIZE
         ),
         programId: PROGRAM_ID,
-      },
+      }
     );
 
     const market = marketKeypair.publicKey;

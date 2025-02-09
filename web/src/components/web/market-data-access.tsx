@@ -370,6 +370,7 @@ export function useMarketAdmin() {
         network,
         projection,
         mintConfig,
+        marketAddress: marketKeypair.publicKey.toString(),
       };
     },
     onSuccess: async (data: {
@@ -387,6 +388,7 @@ export function useMarketAdmin() {
       network: string;
       projection: number;
       mintConfig: PublicKey;
+      marketAddress: string;
     }) => {
       transactionToast(data.signature);
       await createMint.mutateAsync({
@@ -413,6 +415,7 @@ export function useMarketAdmin() {
         season: data.season,
         week: data.week,
         address: data.player_token_mint.toBase58(),
+        marketAddress: data.marketAddress,
         network: data.network as "MAINNET" | "DEVNET",
         marketName: data.playerName,
       });
@@ -629,6 +632,7 @@ export function useMarkets() {
 export function usePlayerMarket() {
   const { marketAddress, marketPublicKey } = useCurrentMarket();
   const transactionToast = useTransactionToast();
+  const { manifestClient } = useManifestClient();
   const { program, accounts, quoteToken } = useQuoteToken();
   const provider = useAnchorProvider();
   const { data: session } = useSession();
@@ -796,7 +800,7 @@ export function usePlayerMarket() {
       }
       return [];
     },
-    enabled: !!marketPublicKey,
+    enabled: !!marketPublicKey && !!manifestClient.data,
     refetchInterval: 10000,
   });
 
@@ -835,7 +839,7 @@ export function usePlayerMarket() {
       }
       return [];
     },
-    enabled: !!marketPublicKey,
+    enabled: !!marketPublicKey && !!manifestClient.data,
     refetchInterval: 10000,
   });
 
@@ -981,6 +985,7 @@ export const useManifestClient = () => {
   const hasSeatBeenClaimed = useQuery({
     queryKey: ["has-seat-been-claimed", { marketAddress }],
     queryFn: async () => {
+      console.log("has-seat-been-claimed", marketPK?.toBase58());
       const userWrapper = await ManifestClient.fetchFirstUserWrapper(
         provider.connection,
         publicKey ?? capsulePubkey.data!
@@ -1011,6 +1016,9 @@ export const useManifestClient = () => {
         marketPK!,
         wallet || undefined
       );
+    },
+    onSuccess: () => {
+      hasSeatBeenClaimed.refetch();
     },
   });
 
@@ -1044,6 +1052,7 @@ export function useMyMarket() {
   } = usePlayerMarket();
 
   const { manifestClient, hasSeatBeenClaimed } = useManifestClient();
+  console.log("manifestClient", manifestClient.data);
   const client = manifestClient.data!;
   const {
     playerTokenMint,
@@ -1492,7 +1501,13 @@ export function useMyMarket() {
 
   const cancelOrder = useMutation({
     mutationKey: ["market", "cancel-order", { playerMintPK: marketPK }],
-    mutationFn: async ({ clientOrderId }: { clientOrderId: number }) => {
+    mutationFn: async ({
+      clientOrderId,
+      sequenceNumber,
+    }: {
+      clientOrderId: number;
+      sequenceNumber: number;
+    }) => {
       const cancelOrderIx = client.cancelOrderIx({
         clientOrderId,
       });
@@ -1507,20 +1522,20 @@ export function useMyMarket() {
         const signature = await provider.connection.sendRawTransaction(
           signed.serialize()
         );
-        return { signature, clientOrderId };
+        return { signature, sequenceNumber };
       } else {
         const signature = await wallet?.adapter.sendTransaction(
           transaction,
           provider.connection
         );
-        return { signature, clientOrderId };
+        return { signature, sequenceNumber };
       }
     },
-    onSuccess: ({ signature, clientOrderId }) => {
+    onSuccess: ({ signature, sequenceNumber }) => {
       transactionToast(`${signature}`);
       cancelOrderDB.mutate({
         marketAddress: marketPK!.toBase58(),
-        orderSequenceNumber: clientOrderId,
+        orderSequenceNumber: parseInt(sequenceNumber.toString()),
       });
       return accounts.refetch();
     },

@@ -12,10 +12,15 @@ export const cancelOrderForMarketByUser = protectedProcedure
   )
   .mutation(async ({ input, ctx }) => {
     const userId = ctx.session.user.id;
+    const market = await db.market.findUniqueOrThrow({
+      where: {
+        address: input.marketAddress,
+      },
+    });
     const order = await db.order.update({
       where: {
         marketId_sequenceNumber_userId: {
-          marketId: input.marketAddress,
+          marketId: market.id,
           sequenceNumber: input.orderSequenceNumber,
           userId: userId,
         },
