@@ -668,26 +668,26 @@ export function CreateTeam() {
 
 export function InitPlayerMint() {
   const { initialize } = useMarketAdmin();
-  const playerId = "19863";
-  const playerName = "Dallas Goedert";
-  const playerImage = "/playerImages/Dallas-Goedert.png";
-  const playerPosition = "TE";
+  const playerName = "Kansas City Chiefs";
+  const playerImage = "/logos/kansas-chiefs.png";
+  const playerPosition = "WR";
   // PHI
-  const teamId = "cm6l90r8j0000rcxnu1blil7n";
+  // const teamId = "cm6l90r8j0000rcxnu1blil7n";
   // KC
-  // const teamId = "cm6qtbj7c0000rcmm8v7l5132";
-  const mintSymbol = "DALLAS";
+  const teamId = "cm6qtbj7c0000rcmm8v7l5132";
+  const teamSportsdataId = "KC";
+  const mintSymbol = "CHIEFS";
   const season = "2024POST";
   const week = "4";
   const network = "MAINNET";
-  const projection = 15.85;
+  const projection = 25.0;
 
   return (
     <button
       className="btn btn-xs lg:btn-md btn-primary"
       onClick={() =>
         initialize.mutateAsync({
-          playerId,
+          teamSportsdataId,
           playerName,
           playerImage,
           playerPosition,
@@ -701,10 +701,61 @@ export function InitPlayerMint() {
       }
       disabled={initialize.isPending}
     >
-      Initialize Player Mint ({playerId}) {initialize.isPending && "..."}
+      Initialize Player Mint ({teamSportsdataId}){" "}
+      {initialize.isPending && "..."}
     </button>
   );
 }
+
+export function InitPlayerMintBE() {
+  const { initializeMintBE } = useMarketAdmin();
+
+  const playerId = "21045";
+  const playerName = "Marquise Brown";
+  const playerImage = "/playerImages/Marquise-Brown.png";
+  const playerPosition = "WR";
+  // PHI
+  // const teamId = "cm6l90r8j0000rcxnu1blil7n";
+  // KC
+  const teamId = "cm6qtbj7c0000rcmm8v7l5132";
+  const mintSymbol = "HOLLYWOOD";
+  const season = "2024POST";
+  const week = "4";
+  const network = "MAINNET";
+  const projection = 6.95;
+
+  const timestamp = "1739072626733";
+  const baseMint = "DGCusGaGbg99cJbGEhB61L4ZGmh3qJRNfXcMadYMuPEx";
+  const marketAddress = "5FXdMQ81QMaAWV5TSa9QNCch6vR8fMuAxDAxNjQZGS5G";
+
+  return (
+    <button
+      className="btn btn-xs lg:btn-md btn-primary"
+      onClick={() =>
+        initializeMintBE.mutateAsync({
+          playerId,
+          playerName,
+          playerImage,
+          playerPosition,
+          teamId,
+          mintSymbol,
+          season,
+          week,
+          network,
+          projection,
+          timestamp,
+          baseMint,
+          marketAddress,
+        })
+      }
+      disabled={initializeMintBE.isPending}
+    >
+      Initialize Player Mint BE({playerId}){" "}
+      {initializeMintBE.isPending && "..."}
+    </button>
+  );
+}
+
 export function VaultsList() {
   const { vaults } = useMarkets();
   return (

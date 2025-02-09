@@ -6,6 +6,7 @@ import {
   CreateTeam,
   CloseMintAccounts,
   VaultsList,
+  InitPlayerMintBE,
 } from "./web-ui";
 
 export default function MarketAdminAll() {
@@ -31,7 +32,8 @@ export default function MarketAdminAll() {
           {/* <QuoteTokenFaucet /> */}
           <CreateTeam />
           <InitPlayerMint />
-          <VaultsList />
+          <InitPlayerMintBE />
+          {/* <VaultsList /> */}
           <CloseMintAccounts />
         </div>
       </div>

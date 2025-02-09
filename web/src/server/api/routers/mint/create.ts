@@ -26,7 +26,6 @@ export const createMint = protectedProcedure
       season: z.string(),
       week: z.string(),
       marketName: z.string(),
-      address: z.string(),
       marketAddress: z.string(),
     })
   )
