@@ -206,6 +206,7 @@ export function useMarketAdmin() {
       projection: number;
     }) => {
       const timestamp = Date.now().toString();
+
       const player_token_mint = PublicKey.findProgramAddressSync(
         [Buffer.from("mint"), Buffer.from(playerId), Buffer.from(timestamp)],
         program.programId
@@ -214,20 +215,8 @@ export function useMarketAdmin() {
         [Buffer.from("config"), Buffer.from(playerId), Buffer.from(timestamp)],
         program.programId
       )[0];
+
       const vault = getAssociatedTokenAddressSync(quoteToken, mintConfig, true);
-      const createMintInstruction = await program.methods
-        .initMint(playerId, timestamp)
-        .accountsStrict({
-          payer: provider.publicKey,
-          quoteTokenMint: quoteToken,
-          vault,
-          playerTokenMint: player_token_mint,
-          config: mintConfig,
-          tokenProgram: TOKEN_PROGRAM_ID,
-          systemProgram: SystemProgram.programId,
-          associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
-        })
-        .instruction();
       const playerStats = PublicKey.findProgramAddressSync(
         [
           Buffer.from("player_stats"),
@@ -236,10 +225,13 @@ export function useMarketAdmin() {
         ],
         program.programId
       )[0];
-      const initProjectionOracleInstruction = await program.methods
-        .initProjectionOracle()
+      const createMintInstruction = await program.methods
+        .initMint(playerId, timestamp, projection)
         .accountsStrict({
           payer: provider.publicKey,
+          quoteTokenMint: quoteToken,
+          vault,
+          playerTokenMint: player_token_mint,
           config: mintConfig,
           playerStats,
           tokenProgram: TOKEN_PROGRAM_ID,
@@ -248,14 +240,6 @@ export function useMarketAdmin() {
         })
         .instruction();
 
-      const updateProjectionOracleInstruction = await program.methods
-        .updateProjectionOracle(projection, true)
-        .accountsStrict({
-          authority: provider.publicKey,
-          config: mintConfig,
-          playerStats,
-        })
-        .instruction();
       const [createAccountIx, createMarketIx, marketKeypair] =
         await createMarketTX(
           provider.connection,
@@ -263,6 +247,29 @@ export function useMarketAdmin() {
           quoteToken,
           player_token_mint
         );
+
+      await createMint.mutateAsync({
+        mintName: playerName,
+        mintSymbol: mintSymbol,
+        mintImage: playerImage,
+        mintSlug: playerId,
+        timestamp: timestamp,
+        description: "Market for " + playerName,
+        baseMint: player_token_mint.toBase58(),
+        teamId: teamId,
+        teamSportsdataId: "",
+        position: playerPosition as "QB" | "RB" | "WR" | "TE" | "K" | "DEF",
+        playerName: playerName,
+        playerSportsdataId: parseInt(playerId),
+        playerImage: playerImage,
+        projectedPoints: projection,
+        season: season,
+        week: week,
+        address: player_token_mint.toBase58(),
+        marketAddress: marketKeypair.publicKey.toString(),
+        network: network as "MAINNET" | "DEVNET",
+        marketName: playerName,
+      });
       const recentBlockhash = await provider.connection.getLatestBlockhash();
       const tx = new Transaction({
         feePayer: provider.publicKey,
@@ -271,75 +278,15 @@ export function useMarketAdmin() {
       });
 
       tx.add(createMintInstruction);
-      tx.add(initProjectionOracleInstruction);
-      tx.add(updateProjectionOracleInstruction);
       tx.add(createAccountIx);
       tx.add(createMarketIx);
-      const signature = await provider.sendAndConfirm(tx, [marketKeypair]);
-      return {
-        signature,
-        playerId,
-        timestamp,
-        player_token_mint,
-        playerName,
-        playerImage,
-        playerPosition,
-        teamId,
-        mintSymbol,
-        season,
-        week,
-        network,
-        projection,
-        mintConfig,
-        marketAddress: marketKeypair.publicKey.toString(),
-      };
-    },
-    onSuccess: async (data: {
-      signature: string;
-      playerId: string;
-      timestamp: string;
-      player_token_mint: PublicKey;
-      playerName: string;
-      playerImage: string;
-      playerPosition: string;
-      teamId: string;
-      mintSymbol: string;
-      season: string;
-      week: string;
-      network: string;
-      projection: number;
-      mintConfig: PublicKey;
-      marketAddress: string;
-    }) => {
-      transactionToast(data.signature);
-      await createMint.mutateAsync({
-        mintName: data.playerName,
-        mintSymbol: data.mintSymbol,
-        mintImage: data.playerImage,
-        mintSlug: data.playerId,
-        timestamp: data.timestamp,
-        description: "Market for " + data.playerName,
-        baseMint: data.player_token_mint.toBase58(),
-        teamId: data.teamId,
-        teamSportsdataId: data.teamId,
-        position: data.playerPosition as
-          | "QB"
-          | "RB"
-          | "WR"
-          | "TE"
-          | "K"
-          | "DEF",
-        playerName: data.playerName,
-        playerSportsdataId: parseInt(data.playerId),
-        playerImage: data.playerImage,
-        projectedPoints: data.projection,
-        season: data.season,
-        week: data.week,
-        address: data.player_token_mint.toBase58(),
-        marketAddress: data.marketAddress,
-        network: data.network as "MAINNET" | "DEVNET",
-        marketName: data.playerName,
+      const signature = await provider.sendAndConfirm(tx, [marketKeypair], {
+        commitment: "confirmed",
       });
+      return signature;
+    },
+    onSuccess: async (signature: string) => {
+      transactionToast(signature);
     },
     onError: async (error: SendTransactionError) => {
       toast.error(error.message);
@@ -545,10 +492,66 @@ export function useMarkets() {
     staleTime: 1000 * 10,
   });
 
+  const playerStats = useQuery({
+    queryKey: ["player-stats"],
+    queryFn: async () => {
+      const playerStats = await program.account.playerStats.all();
+      return playerStats;
+    },
+    staleTime: 1000 * 10,
+    enabled: !!markets.data,
+  });
+
+  const marketsWithPlayerStatsAndVaults = useQuery({
+    queryKey: ["projection-accounts"],
+    queryFn: async () => {
+      const projectionAccounts = await program.account.playerStats.all();
+
+      const projectionAccountsWithMarket = markets.data?.map((market) => {
+        const expectedPlayerStatsAddress = PublicKey.findProgramAddressSync(
+          [
+            Buffer.from("player_stats"),
+            Buffer.from(market.account.playerId),
+            Buffer.from(market.account.timestamp),
+          ],
+          program.programId
+        )[0];
+        const vaultAddress = getAssociatedTokenAddressSync(
+          quoteToken,
+          market.publicKey,
+          true
+        );
+        const marketDB = allMarkets.data?.find(
+          (marketBE) => marketBE.baseMint.timestamp === market.account.timestamp
+        );
+        return {
+          config: market,
+          db: marketDB,
+          playerStats: projectionAccounts.find(
+            (account) =>
+              account.publicKey.toString() ===
+              expectedPlayerStatsAddress.toString()
+          ),
+          vault: vaults.data?.find(
+            (vault) => vault.address.toString() === vaultAddress.toString()
+          ),
+        };
+      });
+      return projectionAccountsWithMarket;
+    },
+    enabled:
+      !!markets.data &&
+      !!allMarkets.data &&
+      !!playerStats.data &&
+      !!vaults.data,
+    staleTime: 1000 * 10,
+  });
+
   return {
     markets,
     vaults,
     allMarkets,
+    marketsWithPlayerStatsAndVaults,
   };
 }
 
@@ -1740,7 +1743,7 @@ export function useMyMarket() {
   };
 }
 
-const useMyPubkey = () => {
+export const useMyPubkey = () => {
   const { publicKey } = useWallet();
   const { capsulePubkey } = useCapsuleWallet();
   return publicKey ?? capsulePubkey.data!;
@@ -1849,3 +1852,23 @@ export function useMyBags() {
     myPositions,
   };
 }
+
+export const useLeaderboards = () => {
+  const biggestTrades = api.trade.readBiggestTrades.useQuery();
+  const { marketsWithPlayerStatsAndVaults } = useMarkets();
+  const largestPools = useQuery({
+    queryKey: ["largest-pools"],
+    queryFn: async () => {
+      const sortedMarkets = marketsWithPlayerStatsAndVaults.data?.sort(
+        (a, b) => Number(b.vault?.amount) - Number(a.vault?.amount)
+      );
+      return sortedMarkets;
+    },
+    enabled: !!marketsWithPlayerStatsAndVaults.data,
+  });
+
+  return {
+    biggestTrades,
+    largestPools,
+  };
+};

@@ -492,76 +492,6 @@
           }
         },
         {
-          "name": "system_program",
-          "address": "11111111111111111111111111111111"
-        },
-        {
-          "name": "token_program",
-          "address": "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
-        },
-        {
-          "name": "associated_token_program",
-          "address": "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL"
-        }
-      ],
-      "args": [
-        {
-          "name": "player_id",
-          "type": "string"
-        },
-        {
-          "name": "timestamp",
-          "type": "string"
-        }
-      ]
-    },
-    {
-      "name": "init_projection_oracle",
-      "discriminator": [
-        30,
-        220,
-        173,
-        27,
-        221,
-        99,
-        102,
-        178
-      ],
-      "accounts": [
-        {
-          "name": "payer",
-          "writable": true,
-          "signer": true
-        },
-        {
-          "name": "config",
-          "pda": {
-            "seeds": [
-              {
-                "kind": "const",
-                "value": [
-                  99,
-                  111,
-                  110,
-                  102,
-                  105,
-                  103
-                ]
-              },
-              {
-                "kind": "account",
-                "path": "config.player_id",
-                "account": "PlayerMintConfig"
-              },
-              {
-                "kind": "account",
-                "path": "config.timestamp",
-                "account": "PlayerMintConfig"
-              }
-            ]
-          }
-        },
-        {
           "name": "player_stats",
           "writable": true,
           "pda": {
@@ -584,14 +514,12 @@
                 ]
               },
               {
-                "kind": "account",
-                "path": "config.player_id",
-                "account": "PlayerMintConfig"
+                "kind": "arg",
+                "path": "player_id"
               },
               {
-                "kind": "account",
-                "path": "config.timestamp",
-                "account": "PlayerMintConfig"
+                "kind": "arg",
+                "path": "timestamp"
               }
             ]
           }
@@ -609,7 +537,20 @@
           "address": "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL"
         }
       ],
-      "args": []
+      "args": [
+        {
+          "name": "player_id",
+          "type": "string"
+        },
+        {
+          "name": "timestamp",
+          "type": "string"
+        },
+        {
+          "name": "projected_points",
+          "type": "f64"
+        }
+      ]
     },
     {
       "name": "init_quote",

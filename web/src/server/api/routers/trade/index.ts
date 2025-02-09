@@ -1,6 +1,7 @@
 import { createTRPCRouter } from "@/server/api/trpc";
-import { readTradesForMarket, readMyTrades } from "./read";
+import { readTradesForMarket, readMyTrades, readBiggestTrades } from "./read";
 export const tradeRouter = createTRPCRouter({
   readForMarket: readTradesForMarket,
   readMyTrades: readMyTrades,
+  readBiggestTrades: readBiggestTrades,
 });

@@ -447,60 +447,6 @@ export type Tradetalk = {
           };
         },
         {
-          name: "systemProgram";
-          address: "11111111111111111111111111111111";
-        },
-        {
-          name: "tokenProgram";
-          address: "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA";
-        },
-        {
-          name: "associatedTokenProgram";
-          address: "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL";
-        }
-      ];
-      args: [
-        {
-          name: "playerId";
-          type: "string";
-        },
-        {
-          name: "timestamp";
-          type: "string";
-        }
-      ];
-    },
-    {
-      name: "initProjectionOracle";
-      discriminator: [30, 220, 173, 27, 221, 99, 102, 178];
-      accounts: [
-        {
-          name: "payer";
-          writable: true;
-          signer: true;
-        },
-        {
-          name: "config";
-          pda: {
-            seeds: [
-              {
-                kind: "const";
-                value: [99, 111, 110, 102, 105, 103];
-              },
-              {
-                kind: "account";
-                path: "config.player_id";
-                account: "playerMintConfig";
-              },
-              {
-                kind: "account";
-                path: "config.timestamp";
-                account: "playerMintConfig";
-              }
-            ];
-          };
-        },
-        {
           name: "playerStats";
           writable: true;
           pda: {
@@ -523,14 +469,12 @@ export type Tradetalk = {
                 ];
               },
               {
-                kind: "account";
-                path: "config.player_id";
-                account: "playerMintConfig";
+                kind: "arg";
+                path: "playerId";
               },
               {
-                kind: "account";
-                path: "config.timestamp";
-                account: "playerMintConfig";
+                kind: "arg";
+                path: "timestamp";
               }
             ];
           };
@@ -548,7 +492,20 @@ export type Tradetalk = {
           address: "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL";
         }
       ];
-      args: [];
+      args: [
+        {
+          name: "playerId";
+          type: "string";
+        },
+        {
+          name: "timestamp";
+          type: "string";
+        },
+        {
+          name: "projectedPoints";
+          type: "f64";
+        }
+      ];
     },
     {
       name: "initQuote";

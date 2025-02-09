@@ -238,6 +238,8 @@ async function handleSignature(
               sellerWalletId: takerWallet?.id,
               sellerSequenceNumber: parseInt(fillData.takerSequenceNumber),
             };
+        const baseInDecimal = Number(fillData.baseAtoms) / 10 ** 6;
+        const cost = fillData.priceAtoms * baseInDecimal;
         const trade = await db.trade.create({
           data: {
             marketId: market?.id,
@@ -246,6 +248,7 @@ async function handleSignature(
             signature: signature.signature,
             price: fillData.priceAtoms,
             quantity: fillData.baseAtoms,
+            cost: cost,
             slot: signature.slot,
             ...buyAndSellData,
           },
@@ -273,6 +276,9 @@ async function handleSignature(
               sellerWalletId: takerWallet?.id,
               sellerSequenceNumber: parseInt(fillData.takerSequenceNumber),
             };
+
+        const baseInDecimal = Number(fillData.baseAtoms) / 10 ** 6;
+        const cost = fillData.priceAtoms * baseInDecimal;
         const trade = await db.trade.create({
           data: {
             marketId: market?.id,
@@ -281,6 +287,7 @@ async function handleSignature(
             signature: signature.signature,
             price: fillData.priceAtoms,
             quantity: fillData.baseAtoms,
+            cost: cost,
             slot: signature.slot,
             ...buyAndSellData,
           },

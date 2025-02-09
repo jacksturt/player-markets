@@ -646,19 +646,6 @@ export const Trade2 = () => {
     </Card>
   );
 };
-export function QuoteTokenCreate() {
-  const { initialize } = useQuoteToken();
-
-  return (
-    <button
-      className="btn btn-xs lg:btn-md btn-primary"
-      onClick={() => initialize.mutateAsync()}
-      disabled={initialize.isPending}
-    >
-      Create Quote Token {initialize.isPending && "..."}
-    </button>
-  );
-}
 
 export function CreateTeam() {
   const { createTeam } = useMarketAdmin();
@@ -681,17 +668,19 @@ export function CreateTeam() {
 
 export function InitPlayerMint() {
   const { initialize } = useMarketAdmin();
-  const playerId = "19766";
-  const playerName = "Saquon Barkley";
-  const playerImage = "/playerImages/Saquon-Barkley.png";
-  const playerPosition = "RB";
-  // SF
+  const playerId = "19863";
+  const playerName = "Dallas Goedert";
+  const playerImage = "/playerImages/Dallas-Goedert.png";
+  const playerPosition = "TE";
+  // PHI
   const teamId = "cm6l90r8j0000rcxnu1blil7n";
-  const mintSymbol = "SAQUON";
+  // KC
+  // const teamId = "cm6qtbj7c0000rcmm8v7l5132";
+  const mintSymbol = "DALLAS";
   const season = "2024POST";
   const week = "4";
   const network = "MAINNET";
-  const projection = 24.13;
+  const projection = 15.85;
 
   return (
     <button

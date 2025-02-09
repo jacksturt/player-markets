@@ -14,6 +14,7 @@ export const readTradesForMarket = protectedProcedure
       where: {
         market: {
           address: input.marketAddress,
+          network: "MAINNET",
         },
       },
       include: {
@@ -44,6 +45,30 @@ export const readMyTrades = protectedProcedure.query(async ({ ctx }) => {
       player: true,
       team: true,
     },
+  });
+  return trades;
+});
+
+export const readBiggestTrades = protectedProcedure.query(async ({ ctx }) => {
+  const trades = await db.trade.findMany({
+    where: {
+      market: {
+        network: "MAINNET",
+      },
+    },
+    include: {
+      baseMint: true,
+      buyer: true,
+      buyerWallet: true,
+      seller: true,
+      sellerWallet: true,
+      player: true,
+      team: true,
+    },
+    orderBy: {
+      cost: "desc",
+    },
+    take: 10,
   });
   return trades;
 });
