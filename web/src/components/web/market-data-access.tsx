@@ -1273,12 +1273,18 @@ export function useMyMarket() {
     mutationFn: async ({
       numBaseTokens,
       tokenPrice,
+      isFill,
+      filledOrderId,
     }: {
       numBaseTokens: number;
       tokenPrice: number;
+      isFill?: boolean;
+      filledOrderId?: string;
     }) => {
       console.log("numBaseTokens", numBaseTokens);
       console.log("tokenPrice", tokenPrice);
+      console.log("isFill", isFill);
+      console.log("filledOrderId", filledOrderId);
       const withdrawableQuote =
         balances.data?.quoteWithdrawableBalanceTokens ?? 0;
 
@@ -1325,6 +1331,8 @@ export function useMyMarket() {
           tokenPrice,
           isBid: true,
           clientOrderId,
+          isFill,
+          filledOrderId,
         };
       } else {
         const signature = await wallet?.adapter.sendTransaction(
@@ -1337,11 +1345,22 @@ export function useMyMarket() {
           tokenPrice,
           isBid: true,
           clientOrderId,
+          isFill,
+          filledOrderId,
         };
       }
     },
-    onSuccess: ({ signature, numBaseTokens, tokenPrice, clientOrderId }) => {
+    onSuccess: ({
+      signature,
+      numBaseTokens,
+      tokenPrice,
+      clientOrderId,
+      isFill,
+      filledOrderId,
+    }) => {
       console.log("deposited quote", signature);
+      console.log("success isFill", isFill);
+      console.log("success filledOrderId", filledOrderId);
       createOrder.mutate({
         marketAddress: marketPK!.toBase58(),
         signature: signature!,
@@ -1350,6 +1369,8 @@ export function useMyMarket() {
         price: tokenPrice,
         isBid: true,
         clientOrderId,
+        isFill,
+        filledOrderId,
       });
       bids.refetch();
       transactionToast(`${signature}`);
@@ -1367,15 +1388,21 @@ export function useMyMarket() {
     mutationFn: async ({
       numBaseTokens,
       tokenPrice,
+      isFill,
+      filledOrderId,
     }: {
       numBaseTokens: number;
       tokenPrice: number;
+      isFill?: boolean;
+      filledOrderId?: string;
     }) => {
       if (!playerId.data || !timestamp.data) {
         throw new Error("Player ID or timestamp not found");
       }
       console.log("numBaseTokens", numBaseTokens);
       console.log("tokenPrice", tokenPrice);
+      console.log("isFill", isFill);
+      console.log("filledOrderId", filledOrderId);
       const numPlayerDeposited =
         balances.data?.baseWithdrawableBalanceTokens ?? 0;
 
@@ -1480,6 +1507,8 @@ export function useMyMarket() {
           numBaseTokens,
           tokenPrice,
           clientOrderId,
+          isFill,
+          filledOrderId,
         };
       } else {
         const mintRecord = PublicKey.findProgramAddressSync(
@@ -1546,12 +1575,22 @@ export function useMyMarket() {
           numBaseTokens,
           tokenPrice,
           clientOrderId,
+          isFill,
+          filledOrderId,
         };
       }
     },
 
-    onSuccess: ({ signature, numBaseTokens, tokenPrice, clientOrderId }) => {
-      console.log("deposited quote", signature);
+    onSuccess: ({
+      signature,
+      numBaseTokens,
+      tokenPrice,
+      clientOrderId,
+      isFill,
+      filledOrderId,
+    }) => {
+      console.log("success isFill", isFill);
+      console.log("success filledOrderId", filledOrderId);
       createOrder.mutate({
         marketAddress: marketPK!.toBase58(),
         signature: signature!,
@@ -1560,6 +1599,8 @@ export function useMyMarket() {
         price: tokenPrice,
         isBid: false,
         clientOrderId,
+        isFill,
+        filledOrderId,
       });
       asks.refetch();
       transactionToast(`${signature}`);

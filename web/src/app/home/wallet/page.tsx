@@ -44,7 +44,7 @@ function WalletPageContent() {
         {/* left column - balance, stats, positions etc */}
         <div className="w-full flex flex-col gap-[58px] pb-20">
           {/* current positions */}
-          <div className="w-full flex flex-col max-h-[250px]">
+          <div className="w-full flex flex-col max-h-[250px] overflow-y-scroll">
             <div className="flex items-end justify-between">
               <div className="flex flex-col gap-2">
                 <p className="text-2xl text-white font-clashMed">Positions</p>
@@ -53,7 +53,6 @@ function WalletPageContent() {
                   any time.
                 </p>
               </div>
-              <Button variant="secondary">Close all</Button>
             </div>
             {/* TODO: positions.map */}
             <div className="w-full h-full overflow-y-auto flex flex-col gap-2 mt-5">
@@ -70,7 +69,7 @@ function WalletPageContent() {
             </div>
           </div>
           {/* open orders */}
-          <div className="w-full flex flex-col max-h-[250px]">
+          <div className="w-full flex flex-col max-h-[250px] overflow-y-scroll">
             <div className="flex items-end justify-between">
               <div className="flex flex-col gap-2">
                 <p className="text-2xl text-white font-clashMed">Open Orders</p>
@@ -79,7 +78,6 @@ function WalletPageContent() {
                   outstanding.
                 </p>
               </div>
-              <Button variant="secondary">Cancel all</Button>
             </div>
             <div className="w-full h-full overflow-y-auto flex flex-col gap-2 mt-5">
               {myOpenOrders.data && myOpenOrders.data.length > 0 ? (

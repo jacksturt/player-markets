@@ -1288,10 +1288,14 @@ export const OrderHistoryItem = ({
               ? maybeMintDepositAndSell.mutate({
                   numBaseTokens: parseFloat(order.numBaseTokens.toString()),
                   tokenPrice,
+                  isFill: true,
+                  filledOrderId: order.id,
                 })
               : depositAndPlaceBuyOrder.mutate({
                   numBaseTokens: parseFloat(order.numBaseTokens.toString()),
                   tokenPrice,
+                  isFill: true,
+                  filledOrderId: order.id,
                 });
           }}
         >

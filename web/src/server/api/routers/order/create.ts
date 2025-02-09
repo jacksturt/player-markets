@@ -1,7 +1,7 @@
 import { db } from "@/server/db";
 import { createTRPCRouter, protectedProcedure } from "@/server/api/trpc";
 import { z } from "zod";
-import { OrderType, Position } from "@prisma/client";
+import { OrderStatus, OrderType, Position } from "@prisma/client";
 
 export const createOrder = protectedProcedure
   .input(
@@ -13,6 +13,8 @@ export const createOrder = protectedProcedure
       numQuoteTokens: z.number(),
       signature: z.string(),
       clientOrderId: z.number(),
+      isFill: z.boolean().optional(),
+      filledOrderId: z.string().optional(),
     })
   )
   .mutation(async ({ input, ctx }) => {
@@ -25,6 +27,8 @@ export const createOrder = protectedProcedure
     if (!market) {
       throw new Error("Market not found");
     }
+    const status = input.isFill ? OrderStatus.FILLED : OrderStatus.PENDING;
+
     const order = await db.order.create({
       data: {
         type: OrderType.LIMIT,
@@ -34,6 +38,7 @@ export const createOrder = protectedProcedure
         numQuoteTokens: input.numBaseTokens * input.price,
         clientOrderId: input.clientOrderId,
         signature: input.signature,
+        status,
         baseMint: {
           connect: {
             id: market?.baseMintId,
@@ -51,4 +56,10 @@ export const createOrder = protectedProcedure
         },
       },
     });
+    if (input.isFill) {
+      await db.order.update({
+        where: { id: input.filledOrderId },
+        data: { status: OrderStatus.FILLED },
+      });
+    }
   });
