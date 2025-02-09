@@ -12,6 +12,33 @@ import { ourFileRouter } from "./api/uploadthing/core";
 import { NextSSRPlugin } from "@uploadthing/react/next-ssr-plugin";
 import { extractRouterConfig } from "uploadthing/server";
 
+export const metadata = {
+  title: "TradeTalk",
+  description:
+    "Trade, trash talk, and get paid. A new fantasy sports primitive launching at @mtndao for Superbowl LIX 🏈",
+  metadataBase: new URL("https://tradetalk.fun"),
+  openGraph: {
+    title: "TradeTalk",
+    description:
+      "Trade, trash talk, and get paid. A new fantasy sports primitive launching at @mtndao for Superbowl LIX 🏈",
+    images: [
+      {
+        url: "/og-image.png", // Add your OG image to public folder
+        width: 1200,
+        height: 630,
+        alt: "TradeTalk Preview",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "TradeTalk",
+    description:
+      "Trade, trash talk, and get paid. A new fantasy sports primitive launching at @mtndao for Superbowl LIX 🏈",
+    images: ["/og-image.png"],
+  },
+};
+
 export default function RootLayout({
   children,
 }: {
