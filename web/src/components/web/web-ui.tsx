@@ -26,6 +26,7 @@ import { BN, ProgramAccount } from "@coral-xyz/anchor";
 import { PublicKey } from "@solana/web3.js";
 import { bignum } from "@metaplex-foundation/beet";
 import { Decimal } from "@prisma/client/runtime/library";
+import { UploadButton } from "@/utils/uploadthing";
 
 export const Trade = () => {
   const { playerStatsAccount, market } = usePlayerMarket();
@@ -931,6 +932,18 @@ export const ProfileCard = () => {
       <CardContent className="flex flex-col items-center gap-8">
         {/* user data */}
         <div className="flex flex-col items-center">
+          <UploadButton
+            endpoint="imageUploader"
+            onClientUploadComplete={(res) => {
+              // Do something with the response
+              console.log("Files: ", res);
+              alert("Upload Completed");
+            }}
+            onUploadError={(error: Error) => {
+              // Do something with the error.
+              alert(`ERROR! ${error.message}`);
+            }}
+          />
           <Image
             src="/player-temp/diggs.webp"
             alt="player"

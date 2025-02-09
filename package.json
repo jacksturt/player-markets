@@ -1,0 +1,6 @@
+{
+  "dependencies": {
+    "@uploadthing/react": "^7.1.5",
+    "uploadthing": "^7.4.4"
+  }
+}
