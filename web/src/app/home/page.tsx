@@ -3,6 +3,8 @@
 import PlayersList from "@/components/home/players-list";
 import Navbar from "@/components/shared/navbar";
 import { usePlayerMarketCardStore, CardView } from "@/lib/zustand";
+import { useSession } from "next-auth/react";
+import { useRouter } from "next/router";
 
 export type Player = {
   imageUrl: string;
@@ -17,7 +19,13 @@ export type Player = {
 
 export default function Home() {
   const { setCardView, setActivePlayerMarket } = usePlayerMarketCardStore();
+  const { data: session } = useSession();
+  const router = useRouter();
 
+  if (!session) {
+    router.push(`/auth/signin?callbackUrl=/home`);
+    return null;
+  }
   const handleClickOutside = () => {
     setCardView(CardView.FRONT);
     setActivePlayerMarket("");

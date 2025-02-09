@@ -13,6 +13,8 @@ import {
   OrderHistoryItem,
 } from "@/components/web/web-ui";
 import { useMyBags } from "@/components/web/market-data-access";
+import { useSession } from "next-auth/react";
+import { useRouter } from "next/router";
 
 const balanceData = {
   "24h_pct_change": 10,
@@ -20,6 +22,18 @@ const balanceData = {
 };
 
 export default function WalletPage() {
+  const { data: session } = useSession();
+  const router = useRouter();
+
+  if (!session) {
+    router.push(`/auth/signin?callbackUrl=/home/wallet`);
+    return null;
+  }
+
+  return <WalletPageContent />;
+}
+
+function WalletPageContent() {
   const { myTrades, myOpenOrders, myPositions } = useMyBags();
 
   return (
