@@ -40,7 +40,7 @@ function WalletPageContent() {
     <div className="w-full min-h-screen overflow-y-auto flex flex-col flex-1 gap-5 bg-gradient-to-b from-[#1E1E1E] via-[#050505] to-black text-white pt-5">
       <Navbar />
       {/* two columns */}
-      <div className="w-full h-full flex items-start gap-[70px] px-[120px] pt-8">
+      <div className="w-full h-full flex items-start gap-[70px] px-[120px] pt-8 max-h-[85vh] overflow-y-scroll">
         {/* left column - balance, stats, positions etc */}
         <div className="w-full flex flex-col gap-[58px] pb-20">
           {/* current positions */}
