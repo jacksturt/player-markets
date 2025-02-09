@@ -231,7 +231,6 @@ export function useMarketAdmin() {
         ],
         program.programId
       )[0];
-      console.log("mintConfig", mintConfig.toString());
       const vault = getAssociatedTokenAddressSync(quoteToken, mintConfig, true);
       const createMintInstruction = await program.methods
         .initMint(teamSportsdataId, timestamp)
@@ -281,7 +280,6 @@ export function useMarketAdmin() {
           quoteToken,
           player_token_mint
         );
-      console.log("marketPK", marketKeypair.publicKey.toString());
       const recentBlockhash1 = await provider.connection.getLatestBlockhash();
       const tx1 = new Transaction({
         feePayer: provider.publicKey,
@@ -581,10 +579,6 @@ export function useMarkets() {
         );
         try {
           const vault = await getAccount(provider.connection, vaultAddress);
-          console.log("mintConfig", market.publicKey.toString());
-          console.log("vault", vault.address.toString());
-          console.log("playerId", market.account.playerId);
-          console.log("timestamp", market.account.timestamp);
           vaults.push(vault);
         } catch (error) {
           console.error(error);
@@ -614,9 +608,6 @@ export function useMarkets() {
             provider.connection,
             player_token_mint
           );
-          console.log("playerMint", playerMint.address.toString());
-          console.log("playerId", market.account.playerId);
-          console.log("timestamp", market.account.timestamp);
           playerMintAccounts.push(playerMint);
         } catch (error) {
           console.error(error);
@@ -861,10 +852,13 @@ export function usePlayerMarket() {
       if (orders.data) {
         const compoundBids = orders.data.map((order) => {
           if (!order.isBid) return undefined;
+
           const bid = bids.find(
             (bid) =>
               bid.sequenceNumber?.toString() === bid.sequenceNumber?.toString()
           );
+          console.log("bid2");
+
           if (!bid) {
             return order;
           }
@@ -913,6 +907,7 @@ export function usePlayerMarket() {
               ask.sequenceNumber?.toString() ===
               order.sequenceNumber?.toString()
           );
+          console.log("ask2");
           if (!ask) {
             return order;
           }

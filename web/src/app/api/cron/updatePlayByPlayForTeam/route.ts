@@ -1,18 +1,11 @@
 import {
   PlayByPlayResponse,
-  PlayerGameStats,
-  PlayerProjection,
   PlayStat,
   RawPlayData,
   ScoringPlay,
 } from "@/lib/types/sportsdata";
 import { db } from "@/server/db";
-import { program } from "@coral-xyz/anchor/dist/cjs/native/system";
-import { Connection, PublicKey } from "@solana/web3.js";
 import { NextResponse } from "next/server";
-import { getTradetalkProgram, getTradetalkProgramId } from "@project/anchor";
-import { AnchorProvider } from "@coral-xyz/anchor";
-import { EnvWallet } from "@/lib/envWallet";
 export async function GET(request: Request) {
   if (
     request.headers.get("Authorization") !== `Bearer ${process.env.CRON_SECRET}`
@@ -60,8 +53,7 @@ export async function GET(request: Request) {
       sportsdataId: player.sportsDataId.toString(),
     }));
 
-    const url = `https://replay.sportsdata.io/api/v3/nfl/pbp/json/playbyplay/2023post/2/kc?key=5963914271454ddebe9f9a62ae8829ca`;
-
+    const url = `https://api.sportsdata.io/v3/nfl/pbp/json/PlayByPlay/2024POST/4/${teamId}?key=1c17a32c80204a28a51e768c72ae0f60`;
     const response = await fetch(url, {
       headers: {
         Authorization: `Bearer ${process.env.ORACLE_API_KEY}`,
