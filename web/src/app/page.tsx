@@ -10,6 +10,8 @@ export default function Page() {
   if (!session) {
     router.push(`/auth/signin?callbackUrl=/home`);
     return null;
+  } else {
+    router.push(`/home`);
+    return null;
   }
-  return <DashboardFeature />;
 }
