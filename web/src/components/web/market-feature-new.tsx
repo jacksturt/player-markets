@@ -18,6 +18,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { api } from "@/trpc/react";
 import DataTablesPlayer from "../player-data/data-tables-player";
 import { CashoutAll } from "./web-ui";
+
 const PlayerCard = () => {
   const { market, playerStatsAccount } = usePlayerMarket();
   return (

@@ -26,6 +26,7 @@ import { BN, ProgramAccount } from "@coral-xyz/anchor";
 import { PublicKey } from "@solana/web3.js";
 import { bignum } from "@metaplex-foundation/beet";
 import { Decimal } from "@prisma/client/runtime/library";
+
 export const Trade = () => {
   const { playerStatsAccount, market } = usePlayerMarket();
 
@@ -436,7 +437,7 @@ export const Trade = () => {
 
             {/* TODO: dynamic player and projection data */}
             <p className="text-[#6A6A6A] text-[11px] leading-[11px] max-w-[254px] mx-auto text-center">
-              Make money if Patrick Mahomes scores{" "}
+              Make money if {market?.data?.player?.name} scores{" "}
               {orderType === "buy" ? "more" : "less"} than{" "}
               <span className="text-white">
                 {playerStatsAccount.data?.projectedPoints.toFixed(2)} fantasy
