@@ -10,6 +10,7 @@ import {
   useMyMarket,
   usePlayerToken,
   useManifestClient,
+  useLivePlays,
 } from "./market-data-access";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -26,19 +27,26 @@ import { BN, ProgramAccount } from "@coral-xyz/anchor";
 import { PublicKey } from "@solana/web3.js";
 import { bignum } from "@metaplex-foundation/beet";
 import { Decimal } from "@prisma/client/runtime/library";
+import { ChevronDown, ChevronUp } from "lucide-react";
 export const Trade = () => {
-  const { playerStatsAccount, market } = usePlayerMarket();
+  const { playerStatsAccount, market, lastTradePrice } = usePlayerMarket();
+  const { liveProjectedScore } = useLivePlays();
 
   const [orderType, setOrderType] = useState("buy");
   const [price, setPrice] = useState(
-    `$${playerStatsAccount.data?.projectedPoints?.toString() ?? ""}`
+    `$${liveProjectedScore.data ?? lastTradePrice.data ?? "0.00"}`
   );
-  const [safePrice, setSafePrice] = useState(0.0);
-  const [quantity, setQuantity] = useState(0.0);
+  const [safePrice, setSafePrice] = useState(
+    liveProjectedScore.data ?? lastTradePrice.data ?? 0
+  );
+  const [quantity, setQuantity] = useState(1.0);
   const [useDepositedTokens, setUseDepositedTokens] = useState(true);
   const [actualCost, setActualCost] = useState(0);
   const [playerTokenUseable, setPlayerTokenUseable] = useState(0);
   const [quoteTokenWithdrawable, setQuoteTokenWithdrawable] = useState(0);
+  const [useLiveProjection, setUseLiveProjection] = useState(false);
+  const [showAdvancedOptions, setShowAdvancedOptions] = useState(false);
+  const [alreadyDepositedMessage, setAlreadyDepositedMessage] = useState("");
   const { quoteTokenBalance } = useQuoteToken();
   const quoteTokenBalanceSafe =
     ((quoteTokenBalance.data?.valueOf() as number) ?? 0) / 10 ** 6;
@@ -51,14 +59,12 @@ export const Trade = () => {
     console.log("placing order");
     if (orderType === "buy") {
       depositAndPlaceBuyOrder.mutateAsync({
-        numBaseTokens:
-          quantity +
-          (useDepositedTokens ? quoteTokenWithdrawable / safePrice : 0),
+        numBaseTokens: quantity,
         tokenPrice: safePrice,
       });
     } else {
       maybeMintDepositAndSell.mutateAsync({
-        numBaseTokens: quantity + (useDepositedTokens ? playerTokenUseable : 0),
+        numBaseTokens: quantity,
         tokenPrice: safePrice,
       });
     }
@@ -66,10 +72,14 @@ export const Trade = () => {
 
   useEffect(() => {
     console.log("balances", balances.data?.quoteWithdrawableBalanceTokens);
-    setQuoteTokenWithdrawable(
-      balances.data?.quoteWithdrawableBalanceTokens ?? 0
-    );
-  }, [balances.data]);
+    const withdrawableQuoteTokens =
+      balances.data?.quoteWithdrawableBalanceTokens ?? 0;
+    if (orderType === "buy" && quantity > 0 && safePrice > 0) {
+      if (withdrawableQuoteTokens > 0) {
+        setQuoteTokenWithdrawable(withdrawableQuoteTokens);
+      }
+    }
+  }, [balances.data, orderType]);
 
   useEffect(() => {
     console.log("playerTokenBalance", balances.data);
@@ -77,8 +87,13 @@ export const Trade = () => {
     const withdrawableTokens =
       balances.data?.baseWithdrawableBalanceTokens ?? 0;
     console.log("players", playerTokens, withdrawableTokens);
-    setPlayerTokenUseable(playerTokens + withdrawableTokens);
-  }, [playerTokenBalance.data, balances.data]);
+    const useableTokens = playerTokens + withdrawableTokens;
+    if (orderType === "sell" && quantity > 0 && safePrice > 0) {
+      if (useableTokens > 0) {
+        setPlayerTokenUseable(useableTokens);
+      }
+    }
+  }, [playerTokenBalance.data, balances.data, orderType]);
 
   useEffect(() => {
     setSafePrice(parseFloat(price.replace("$", "")));
@@ -247,24 +262,9 @@ export const Trade = () => {
                 {/* <span className="absolute left-0 top-1/2 -translate-y-1/2 text-white font-clashGroteskMed text-[50px] leading-[50px]">
                   $
                 </span> */}
-                <Input
-                  id="price"
-                  type="text"
-                  min="0"
-                  prefix="$"
-                  value={price}
-                  onChange={(e) => {
-                    const value = e.target.value;
-                    if (value.includes("$")) {
-                      setPrice(value);
-                    } else {
-                      setPrice(`$${value}`);
-                    }
-                  }}
-                  className="!h-[62px] text-white text-center w-full bg-transparent border-none !text-[50px] !leading-[50px] font-clashGroteskMed [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                  placeholder="$420.69"
-                  required
-                />
+                <div className="!h-[62px] text-white text-center w-full bg-transparent border-none !text-[50px] !leading-[50px] font-clashGroteskMed [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none">
+                  {`$${(safePrice * quantity).toFixed(4)}`}
+                </div>
                 <p className="text-white font-clashGroteskMed text-[13px] leading-[12px]">
                   ${quoteTokenBalanceSafe.toFixed(2)}{" "}
                   <span className="text-[#676767]">available</span>
@@ -333,88 +333,159 @@ export const Trade = () => {
                   MAX
                 </button>
               </div>
-              <Input
-                id="quantity"
-                type="number"
-                min="0"
-                step="0.01"
-                pattern="^\d*\.?\d{0,2}$"
-                value={quantity}
-                onChange={(e) => {
-                  const value = e.target.value;
-                  if (value.includes(".") && value.split(".")[1].length > 2) {
-                    return;
-                  }
-
-                  setQuantity(parseFloat(e.target.value));
-                }}
-                className="!h-[62px] text-white text-center w-full bg-transparent border-none !text-[50px] !leading-[50px] font-clashGroteskMed [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                placeholder="1.0"
-                required
-              />
-
-              {useDepositedTokens && (
-                <div className="!h-[62px] text-white text-center w-full bg-transparent border-none !text-[50px] !leading-[50px] font-clashGroteskMed [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none">
-                  <p>
-                    +
-                    {orderType === "buy"
-                      ? quoteTokenWithdrawable
-                      : playerTokenUseable}{" "}
-                    Tokens
+              {!showAdvancedOptions && (
+                <div className="flex items-center justify-between w-full  gap-2">
+                  <p className="text-white font-clashGroteskMed text-[12px] leading-[12px]">
+                    <span className="text-[#676767]">Place order at </span>
+                    {useLiveProjection
+                      ? "current live projection"
+                      : "last trade price"}
                   </p>
+                  <Switch
+                    id="useDepositedTokens"
+                    checked={useLiveProjection}
+                    onCheckedChange={(checked) => {
+                      setUseLiveProjection(checked);
+                      if (checked) {
+                        setPrice(
+                          "$" + (liveProjectedScore.data?.toFixed(2) ?? "0.00")
+                        );
+                      } else {
+                        setPrice(
+                          "$" + (lastTradePrice.data?.toFixed(2) ?? "0.00")
+                        );
+                      }
+                    }}
+                  />
                 </div>
               )}
-
-              <div className="flex items-center justify-between p-4 bg-gray-100 rounded-lg gap-2">
-                <Label
-                  htmlFor="useDepositedTokens"
-                  className="text-lg font-medium"
+              <div className="w-full">
+                <button
+                  onClick={(e) => {
+                    e.preventDefault();
+                    setShowAdvancedOptions(!showAdvancedOptions);
+                  }}
+                  className="w-full flex items-center gap-2 cursor-pointer hover:opacity-80"
                 >
-                  Use {orderType === "buy" ? "Deposited" : "Owned"} Tokens
-                </Label>
-                <Switch
-                  id="useDepositedTokens"
-                  checked={useDepositedTokens}
-                  onCheckedChange={(checked) => setUseDepositedTokens(checked)}
-                />
+                  <div className="h-[1px] flex-1 bg-[#676767]" />
+                  <div className="flex items-center gap-1">
+                    <span className="text-[#676767] text-sm">Advanced </span>
+                    {showAdvancedOptions ? (
+                      <ChevronUp size={16} color="#676767" />
+                    ) : (
+                      <ChevronDown size={16} color="#676767" />
+                    )}
+                  </div>
+                  <div className="h-[1px] flex-1 bg-[#676767]" />
+                </button>
               </div>
-
-              {orderType === "buy" && safePrice && quantity && (
-                <div className="p-4 bg-gray-100 rounded-lg">
-                  <p className="text-lg font-medium">
-                    Total: ${(safePrice * quantity).toFixed(4)}
-                  </p>
-                </div>
-              )}
-
-              {orderType === "sell" && safePrice && quantity && (
+              {showAdvancedOptions && (
                 <>
-                  <div className="p-4 bg-gray-100 rounded-lg">
-                    <p className="text-lg font-medium">
-                      Mint Cost: $
-                      {(
-                        playerStatsAccount.data?.projectedPoints! * quantity
-                      ).toFixed(4)}
-                    </p>
-                    <p className="text-lg font-medium">
-                      Collateral: $
-                      {(
-                        1.5 *
-                        playerStatsAccount.data?.projectedPoints! *
-                        quantity
-                      ).toFixed(4)}
-                    </p>
+                  <div className="!h-[62px] flex flex-row justify-between items-center text-white text-center w-full bg-[#232323]  rounded-lg border-[#313131] px-4">
+                    <div className="flex flex-col items-start ">
+                      <span className="text-[#676767] text-sm">
+                        Buy # of {market.data?.baseMint.symbol}
+                      </span>
+                      <Input
+                        id="quantity"
+                        type="number"
+                        min="0"
+                        step="0.0001"
+                        pattern="^\d*\.?\d{0,2}$"
+                        value={quantity}
+                        onChange={(e) => {
+                          const value = e.target.value;
+                          if (
+                            value.includes(".") &&
+                            value.split(".")[1].length > 4
+                          ) {
+                            return;
+                          }
+
+                          setQuantity(parseFloat(e.target.value));
+                        }}
+                        className=" text-white !text-md border-none p-0 m-0 h-6 focus:border-transparent focus:ring-0 focus:ring-offset-0 focus:outline-none focus-visible:ring-0 focus-visible:ring-offset-0"
+                        placeholder="1.0"
+                        required
+                      />
+                    </div>
+                    <div className="rounded-full text-lg bg-[#313131] px-4 py-2">
+                      {market.data?.baseMint.symbol}
+                    </div>
                   </div>
-                  <div className="p-4 bg-gray-100 rounded-lg">
-                    <p className="text-lg font-medium">
-                      Total: $
-                      {(
-                        2.5 *
-                        playerStatsAccount.data?.projectedPoints! *
-                        quantity
-                      ).toFixed(4)}
-                    </p>
+                  <div className="!h-[62px] flex flex-row justify-between items-center text-white text-center w-full bg-[#232323]  rounded-lg border-[#313131] px-4">
+                    <div className="flex flex-col items-start ">
+                      <span className="text-[#676767] text-sm">
+                        Set Price Of Token
+                      </span>
+                      <Input
+                        id="quantity"
+                        min="0"
+                        pattern="^\d*\.?\d{0,2}$"
+                        value={price}
+                        onChange={(e) => {
+                          const value = e.target.value;
+                          if (
+                            value.includes(".") &&
+                            value.split(".")[1].length > 4
+                          ) {
+                            return;
+                          }
+
+                          setPrice(
+                            `${e.target.value.startsWith("$") ? "" : "$"}${
+                              e.target.value
+                            }`
+                          );
+                        }}
+                        className=" text-white !text-md border-none p-0 m-0 h-6 focus:border-transparent focus:ring-0 focus:ring-offset-0 focus:outline-none focus-visible:ring-0 focus-visible:ring-offset-0"
+                        placeholder="1.0"
+                        required
+                      />
+                    </div>
+                    <div className="rounded-full text-lg bg-[#313131] px-4 py-2">
+                      USDC
+                    </div>
                   </div>
+
+                  {orderType === "buy" && safePrice && quantity && (
+                    <div className="p-4 bg-gray-100 rounded-lg">
+                      <p className="text-lg font-medium">
+                        Total: ${(safePrice * quantity).toFixed(4)}
+                      </p>
+                    </div>
+                  )}
+
+                  {orderType === "sell" && safePrice && quantity && (
+                    <>
+                      <div className="p-4 bg-gray-100 rounded-lg">
+                        <p className="text-lg font-medium">
+                          Mint Cost: $
+                          {(
+                            playerStatsAccount.data?.projectedPoints! * quantity
+                          ).toFixed(4)}
+                        </p>
+                        <p className="text-lg font-medium">
+                          Collateral: $
+                          {(
+                            1.5 *
+                            playerStatsAccount.data?.projectedPoints! *
+                            quantity
+                          ).toFixed(4)}
+                        </p>
+                      </div>
+                      <div className="p-4 bg-gray-100 rounded-lg">
+                        <p className="text-lg font-medium">
+                          Total: $
+                          {(
+                            2.5 *
+                            playerStatsAccount.data?.projectedPoints! *
+                            quantity
+                          ).toFixed(4)}
+                        </p>
+                      </div>
+                    </>
+                  )}
                 </>
               )}
             </div>
@@ -433,6 +504,39 @@ export const Trade = () => {
             >
               {orderType === "buy" ? "Long" : "Short"}
             </Button>
+            {orderType === "buy" && quoteTokenWithdrawable > 0 && (
+              <p className="text-[#6A6A6A] text-[11px] leading-[11px]  mx-auto text-center">
+                You will use{" "}
+                <span className="text-white">
+                  {quoteTokenWithdrawable.toFixed(4)} USDC deposited to place
+                  this order.
+                </span>
+              </p>
+            )}
+            {orderType === "sell" && playerTokenUseable > 0 && (
+              <p className="text-[#6A6A6A] text-[11px] leading-[11px]  mx-auto text-center">
+                You will also use{" "}
+                <span className="text-white">
+                  {playerTokenUseable.toFixed(4)} {market.data?.baseMint.symbol}
+                </span>{" "}
+                deposited to place this order.
+              </p>
+            )}
+            {actualCost > 0 && (
+              <p className="text-[#6A6A6A] text-[11px] leading-[11px] max-w-[254px] mx-auto text-center">
+                Actual Cost to place order:
+                <span className="text-white"> ${actualCost.toFixed(4)}</span>
+              </p>
+            )}
+            {quantity * safePrice > 0 && (
+              <p className="text-[#6A6A6A] text-[11px] leading-[11px] max-w-[254px] mx-auto text-center">
+                Total Order value:
+                <span className="text-white">
+                  {" "}
+                  ${(quantity * safePrice).toFixed(4)}
+                </span>
+              </p>
+            )}
 
             {/* TODO: dynamic player and projection data */}
             <p className="text-[#6A6A6A] text-[11px] leading-[11px] max-w-[254px] mx-auto text-center">
@@ -1069,11 +1173,11 @@ export const OrderHistoryItem = ({
   const tokenPrice = order.hasOwnProperty("tokenPrice")
     ? (order as AskOrBidType).tokenPrice
     : parseFloat(order.price.toString());
-  const priceFloat = parseFloat(tokenPrice.toFixed(2));
+  const priceFloat = parseFloat(tokenPrice.toFixed(4));
   const formattedPrice = priceFloat.toFixed(2);
   const quantityFloat = parseFloat(numBaseTokens.toString());
-  const formattedQuantity = quantityFloat.toFixed(2);
-  const formattedCost = (priceFloat * quantityFloat).toFixed(2);
+  const formattedQuantity = quantityFloat.toFixed(4);
+  const formattedCost = (priceFloat * quantityFloat).toFixed(4);
   return (
     <div className="w-full h-[44px] flex items-center justify-between">
       <div className="flex items-center gap-2">

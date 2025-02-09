@@ -1381,6 +1381,7 @@ export function useMyMarket() {
         quantityToDeposit * 10 ** 6 - playerTokensHeld * 10 ** 6;
       const quantityToMint = new BN(baseToMintSafe);
       console.log("quantityToMint", quantityToMint.toString());
+      console.log("quantityToDeposit", quantityToDeposit.toString());
 
       if (!publicKey && !paraPubkey.data) {
         throw new Error("No public key found");
@@ -1458,7 +1459,10 @@ export function useMyMarket() {
         transaction.add(orderIx);
         const signed = await solanaSigner.data!.signTransaction(transaction);
         const signature = await provider.connection.sendRawTransaction(
-          signed.serialize()
+          signed.serialize(),
+          {
+            skipPreflight: true,
+          }
         );
 
         return {

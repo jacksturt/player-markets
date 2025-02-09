@@ -23,6 +23,10 @@ export default function AccountButtons() {
   }, [setIsActive, session, publicKey]);
 
   useEffect(() => {
+    if (!!session?.user.email) {
+      return;
+    }
+
     if (
       session?.user.wallets &&
       session?.user.wallets[0] !== publicKey?.toBase58() &&
