@@ -1,3 +1,5 @@
+"use client";
+
 import MarketAdminAll from "@/components/web/market-admin-all";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/router";

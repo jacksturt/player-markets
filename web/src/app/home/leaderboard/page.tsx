@@ -1,9 +1,10 @@
+"use client";
 import Navbar from "@/components/shared/navbar";
 import LeaderboardView from "@/components/leaderboard/leaderboard-view";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/router";
 
-export default async function LeaderboardPage() {
+export default function LeaderboardPage() {
   const { data: session } = useSession();
   const router = useRouter();
 
