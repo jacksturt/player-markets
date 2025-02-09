@@ -15,6 +15,9 @@ export async function GET(request: Request) {
     );
   }
   const markets = await db.market.findMany({
+    where: {
+      network: "MAINNET",
+    },
     select: {
       address: true,
     },
