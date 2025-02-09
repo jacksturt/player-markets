@@ -6,6 +6,7 @@ import { Prisma } from "@prisma/client";
 export const updateUsername = protectedProcedure
   .input(
     z.object({
+      walletAddress: z.string(),
       username: z
         .string()
         .min(3, "Username must be at least 3 characters")
@@ -18,12 +19,27 @@ export const updateUsername = protectedProcedure
   )
   .mutation(async ({ ctx, input }) => {
     const { username } = input;
-    const { session } = ctx;
-    const userId = session.user.id;
 
     try {
+      const existingUser = await ctx.db.user.findFirst({
+        where: {
+          wallets: {
+            some: {
+              address: input.walletAddress,
+            },
+          },
+        },
+      });
+
+      if (!existingUser) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "User not found",
+        });
+      }
+
       const updatedUser = await ctx.db.user.update({
-        where: { id: userId },
+        where: { id: existingUser.id },
         data: { username },
       });
       return updatedUser;
@@ -37,6 +53,44 @@ export const updateUsername = protectedProcedure
           message: "This username is already taken",
         });
       }
+      throw error;
+    }
+  });
+
+export const updateImage = protectedProcedure
+  .input(
+    z.object({
+      walletAddress: z.string(),
+      image: z.string(),
+    })
+  )
+  .mutation(async ({ ctx, input }) => {
+    const { image } = input;
+
+    try {
+      const existingUser = await ctx.db.user.findFirst({
+        where: {
+          wallets: {
+            some: {
+              address: input.walletAddress,
+            },
+          },
+        },
+      });
+
+      if (!existingUser) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "User not found",
+        });
+      }
+
+      const updatedUser = await ctx.db.user.update({
+        where: { id: existingUser.id },
+        data: { image },
+      });
+      return updatedUser;
+    } catch (error: unknown) {
       throw error;
     }
   });

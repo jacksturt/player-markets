@@ -31,6 +31,7 @@ import { UploadButton } from "@/utils/uploadthing";
 import { Edit2Icon } from "lucide-react";
 import toast from "react-hot-toast";
 import { useWallet } from "@solana/wallet-adapter-react";
+import { updateUsername } from "@/server/api/routers/user/update";
 
 export const Trade = () => {
   const { playerStatsAccount, market } = usePlayerMarket();
@@ -928,18 +929,48 @@ export function CashoutAll() {
 
 export const ProfileCard = () => {
   const [isEditing, setIsEditing] = useState(false);
+  const [username, setUsername] = useState("");
   const { publicKey } = useWallet();
   const { paraPubkey } = useParaWallet();
-
   const myKey = paraPubkey.data?.toString() ?? publicKey?.toString() ?? "";
-  const { data: user } = api.user.readUser.useQuery({
+
+  const { data: user, refetch: refetchUser } = api.user.readUser.useQuery({
     walletAddress: myKey,
   });
 
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  const updateUsernameMutation = api.user.updateUsername.useMutation();
+  const updateImageMutation = api.user.updateImage.useMutation();
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    setIsEditing(false);
+    try {
+      await updateUsernameMutation.mutateAsync({
+        walletAddress: myKey,
+        username: username,
+      });
+      await refetchUser();
+      toast.success("Username updated");
+    } catch (error) {
+      toast.error("Error updating username");
+    } finally {
+      setIsEditing(false);
+    }
   };
+
+  const handleImageUpload = async (res: any) => {
+    await updateImageMutation.mutateAsync({
+      walletAddress: myKey,
+      image: res[0].url,
+    });
+    await refetchUser();
+    setIsEditing(false);
+    toast.success("Profile image updated sucessfully");
+  };
+
+  // useEffect(() => {
+  //   console.log("user", user);
+  // }, [user]);
+
   return (
     <Card className="relative w-[450px] bg-black/50 border-[#2B2B2B] rounded-[30px] !p-6">
       <button
@@ -961,9 +992,7 @@ export const ProfileCard = () => {
               <UploadButton
                 endpoint="imageUploader"
                 onClientUploadComplete={(res) => {
-                  console.log("Files: ", res);
-                  setIsEditing(false);
-                  toast.success("Upload Completed");
+                  handleImageUpload(res);
                 }}
                 onUploadError={(error: Error) => {
                   toast.error(`ERROR! ${error.message}`);
@@ -971,7 +1000,7 @@ export const ProfileCard = () => {
               />
             ) : (
               <Image
-                src="/player-temp/diggs.webp"
+                src={user?.image ?? "/player-temp/diggs.webp"}
                 alt="player"
                 width={100}
                 height={100}
@@ -982,6 +1011,8 @@ export const ProfileCard = () => {
               <Input
                 type="text"
                 className="text-white font-clashGroteskMed text-[19px] leading-[19px] mt-[15px]"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
               />
             ) : (
               <p className="text-white font-clashGroteskMed text-[19px] leading-[19px] mt-[15px]">
