@@ -1,6 +1,13 @@
 {
     "crons": [
       {
+        "path": "/api/cron/updateTeamStats?teamId=KC",
+        "schedule": "* * * * *"
+      }, {
+        "path": "/api/cron/updateTeamStats?teamId=PHI",
+        "schedule": "* * * * *"
+      },
+      {
         "path": "/api/cron/updatePlayerStats?teamId=PHI",
         "schedule": "* * * * *"
       }, {
