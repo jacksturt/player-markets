@@ -108,43 +108,99 @@ export default function LeaderboardView() {
 
 function PopularMarketCard({ market }: { market: LargestPool }) {
   if (!market.db) return <div>bad {market.config.account.playerId}</div>;
+  const sellPercent =
+    (market.shortPayout / (market.shortPayout + market.longPayout)) * 100;
+  const buyPercent =
+    (market.longPayout / (market.shortPayout + market.longPayout)) * 100;
 
   return (
-    <div className="w-full h-[83px] bg-black/50 rounded-[20px] px-6 py-4 flex items-center justify-between">
-      <div className="flex items-center gap-4">
-        <Image
-          src={market.db?.baseMint.image ?? ""}
-          alt="Player"
-          className="w-[35px] h-[35px] rounded-full object-cover"
-          width={35}
-          height={35}
-        />
-        <div className="flex flex-col">
-          <span className="text-white font-clash text-base">
-            {market.db?.baseMint.symbol}
-          </span>
-          <div className="flex items-center gap-2 mt-1">
-            <div className="flex items-center gap-0.5 text-[8px] leading-[8px] border border-[#2f2f2f] rounded-full px-[11px] py-[2.5px]">
-              <p className="text-[#888888]">Buy Vol:</p>
-              <p className="text-[#44E865] font-sfProSemibold">
-                ${market.longPayout}
-              </p>
-            </div>
-            <div className="flex items-center gap-0.5 text-[8px] leading-[8px] border border-[#2f2f2f] rounded-full px-[11px] py-[2.5px]">
-              <p className="text-[#888888]">Sell Vol:</p>
-              <p className="text-[#EC4545] font-sfProSemibold">
-                ${market.shortPayout}
-              </p>
+    <div className="w-full bg-black/50 rounded-[20px] px-6 py-4 flex items-center justify-between">
+      <div className="flex items-center gap-4 w-[250px] mr-4">
+        <div className="flex flex-col w-full gap-2">
+          <div className="flex flex-row items-center gap-2">
+            <Image
+              src={market.db?.baseMint.image ?? ""}
+              alt="Player"
+              className="w-[35px] h-[35px] rounded-full object-cover"
+              width={35}
+              height={35}
+            />
+            <div className="flex flex-col ">
+              <span className="text-white text-xs">
+                {market.db?.baseMint.symbol}
+              </span>
+              <span className="text-white text-md">
+                ${market.db.lastTradePrice.toString()}
+              </span>
             </div>
           </div>
+          <VolumeBar
+            buyPercent={buyPercent}
+            sellPercent={sellPercent}
+            longPayout={market.longPayout}
+            shortPayout={market.shortPayout}
+          />
         </div>
       </div>
       <div className="flex flex-col text-white">
-        <p className="text-[9px] leading-[9px]">Projected Total</p>
-        <p className="font-clashSemiBold text-[20px] leading-[20px]">
-          20.4 pts
-        </p>
+        <div className="flex flex-col mb-2">
+          <p className="text-[9px] leading-[9px] ">Total Payout</p>
+          <p className="font-clashSemiBold text-sm leading-[20px] bg-chiefs-gradient-text text-transparent bg-clip-text">
+            ${market.longPayout + market.shortPayout}
+          </p>
+        </div>
+        <div className="flex flex-col">
+          <p className="text-[9px] leading-[9px] ">Projected Total</p>
+          <p className="font-clashSemiBold text-xs leading-[20px]">
+            {market.playerStats?.account.projectedPoints.toFixed(2)} pts
+          </p>
+        </div>
+        <div className="flex flex-col">
+          <p className="text-[9px] leading-[9px]">Current Total</p>
+          <p className="font-clashSemiBold text-xs leading-[20px]">
+            {market.playerStats?.account.actualPoints.toFixed(2)} pts
+          </p>
+        </div>
       </div>
     </div>
   );
 }
+interface VolumeBarProps {
+  buyPercent: number;
+  sellPercent: number;
+  longPayout: number;
+  shortPayout: number;
+}
+
+const VolumeBar = ({
+  buyPercent,
+  sellPercent,
+  longPayout,
+  shortPayout,
+}: VolumeBarProps) => {
+  return (
+    <div className="flex flex-col gap-2 w-full">
+      {/* Progress bar */}
+      <div className="h-3 w-full bg-[#EC4545] rounded-full overflow-hidden">
+        <div
+          className="h-full bg-[#44E865] rounded-full"
+          style={{ width: `${buyPercent}%` }}
+        />
+      </div>
+
+      {/* Volume badges */}
+      <div className="flex items-center justify-between gap-2">
+        <div className="flex items-center gap-0.5 text-[12px] leading-[8px] border border-[#2f2f2f] rounded-full px-[11px] py-[2.5px]">
+          <p className="text-[#44E865] font-sfProSemibold">
+            ${longPayout.toFixed(4)}
+          </p>
+        </div>
+        <div className="flex items-center gap-0.5 text-[12px] leading-[8px] border border-[#2f2f2f] rounded-full px-[11px] py-[2.5px]">
+          <p className="text-[#EC4545] font-sfProSemibold">
+            ${shortPayout.toFixed(4)}
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+};
