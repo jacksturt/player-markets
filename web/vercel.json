@@ -1,47 +1,11 @@
 {
     "crons": [
       {
-        "path": "/api/cron/updatePlayerStats?playerId=22587",
+        "path": "/api/cron/updatePlayerStats?teamId=PHI",
         "schedule": "* */1 * * *"
       },
       {
-        "path": "/api/cron/updatePlayerStats?playerId=17922",
-        "schedule": "* */1 * * *"
-      },
-      {
-        "path": "/api/cron/updatePlayerStats?playerId=18877",
-        "schedule": "* */1 * * *"
-      },
-      {
-        "path": "/api/cron/updatePlayerStats?playerId=19063",
-        "schedule": "* */1 * * *"
-      },
-      {
-        "path": "/api/cron/updatePlayerStats?playerId=24423",
-        "schedule": "* */1 * * *"
-      },
-      {
-        "path": "/api/cron/checkOrdersAndFills?marketAddress=CrojKuiFj4WHWcYejoHscTDKJySCtK2oCf9hoRUG26y6",
-        "schedule": "* * * * *"
-      },
-      {
-        "path": "/api/cron/checkOrdersAndFills?marketAddress=8oLZQS97KaKe8WuXwHRN6QkWEX3YThtg56HVHGKU7TJj",
-        "schedule": "* * * * *"
-      },
-      {
-        "path": "/api/cron/checkOrdersAndFills?marketAddress=GRSv377m45SjSLSM1J9ZEF2KUrjU88LSGyo2JBidhCwq",
-        "schedule": "* * * * *"
-      },
-      {
-        "path": "/api/cron/checkOrdersAndFills?marketAddress=CinWc5q8nBq8TYpdEhsuxBzpKNeFywFJYWos1tqsrF1x",
-        "schedule": "* * * * *"
-      },
-      {
-        "path": "/api/cron/checkOrdersAndFills?marketAddress=4KCNsaKKvFSqroMwk1iAhdLtmX954hhvC98STCeEcKCA",
-        "schedule": "* * * * *"
-      },
-      {
-        "path": "/api/cron/checkOrdersAndFills?marketAddress=9PNDJs89FpQmXbHWrM4jrM4VvZwQ4bEJUmgfbB9syQYE",
+        "path": "/api/cron/checkOrdersAndFills?marketAddress=AAWZ1UyEeSkMyvgrhJEmgyvBj32HKYBeDQRs7cpCL2Pi",
         "schedule": "* * * * *"
       }
     ]
