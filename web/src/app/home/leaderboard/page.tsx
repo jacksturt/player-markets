@@ -2,7 +2,7 @@
 import Navbar from "@/components/shared/navbar";
 import LeaderboardView from "@/components/leaderboard/leaderboard-view";
 import { useSession } from "next-auth/react";
-import { useRouter } from "next/router";
+import { useRouter } from "next/navigation";
 
 export default function LeaderboardPage() {
   const { data: session } = useSession();

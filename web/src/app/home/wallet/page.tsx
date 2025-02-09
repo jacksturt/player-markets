@@ -14,7 +14,7 @@ import {
 } from "@/components/web/web-ui";
 import { useMyBags } from "@/components/web/market-data-access";
 import { useSession } from "next-auth/react";
-import { useRouter } from "next/router";
+import { useRouter } from "next/navigation";
 
 const balanceData = {
   "24h_pct_change": 10,

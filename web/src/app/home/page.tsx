@@ -4,7 +4,7 @@ import PlayersList from "@/components/home/players-list";
 import Navbar from "@/components/shared/navbar";
 import { usePlayerMarketCardStore, CardView } from "@/lib/zustand";
 import { useSession } from "next-auth/react";
-import { useRouter } from "next/router";
+import { useRouter } from "next/navigation";
 
 export type Player = {
   imageUrl: string;
