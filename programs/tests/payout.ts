@@ -305,38 +305,9 @@ describe("payout", () => {
 
     console.log("timestamp", timestamp);
     const tx = await program.methods
-      .initMint(LAMAR_ID, timestamp)
+      .initMint(LAMAR_ID, timestamp, projection1)
       .accountsPartial(context)
       .signers([maker])
-      .rpc()
-      .catch(async (e: SendTransactionError) => {
-        console.log("error", e);
-        const logs = await e.getLogs(connection);
-        console.log(logs);
-      });
-    console.log("Your transaction signature", tx);
-    await new Promise((resolve) => setTimeout(resolve, 5000));
-  });
-
-  it("Can Init Projection Oracle!", async () => {
-    // Add your test here.
-    const context = {
-      payer: provider.publicKey,
-      playerStats,
-      config: mintConfig,
-      tokenProgram: TOKEN_PROGRAM_ID,
-      systemProgram: SystemProgram.programId,
-      associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
-    };
-
-    Object.entries(context).forEach(([key, value]) => {
-      console.log(key, value.toBase58());
-    });
-
-    console.log("timestamp", timestamp);
-    const tx = await program.methods
-      .initProjectionOracle()
-      .accountsPartial(context)
       .rpc()
       .catch(async (e: SendTransactionError) => {
         console.log("error", e);

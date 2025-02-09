@@ -30,16 +30,10 @@ pub mod tradetalk {
         ctx: Context<InitializeMint>,
         player_id: String,
         timestamp: String,
+        projected_points: f64,
     ) -> Result<()> {
         ctx.accounts
-            .initialize_mint(player_id.clone(), timestamp, &ctx.bumps)
-            .unwrap();
-        Ok(())
-    }
-
-    pub fn init_projection_oracle(ctx: Context<InitializeProjectionOracle>) -> Result<()> {
-        ctx.accounts
-            .initialize_projection_oracle(&ctx.bumps)
+            .initialize_mint(player_id.clone(), timestamp, projected_points, &ctx.bumps)
             .unwrap();
         Ok(())
     }

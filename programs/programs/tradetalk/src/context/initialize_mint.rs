@@ -1,4 +1,4 @@
-use crate::state::mint::PlayerMintConfig;
+use crate::state::{mint::PlayerMintConfig, PlayerStats};
 use anchor_lang::prelude::*;
 use anchor_spl::{
     associated_token::AssociatedToken,
@@ -36,6 +36,14 @@ pub struct InitializeMint<'info> {
         mint::decimals = 6,
     )]
     pub player_token_mint: Box<InterfaceAccount<'info, Mint>>,
+    #[account(
+        init,
+        payer = payer,
+        space = PlayerStats::INIT_SPACE,
+        seeds = [b"player_stats", player_id.as_bytes(), timestamp.as_bytes()],
+        bump
+    )]
+    pub player_stats: Box<Account<'info, PlayerStats>>,
     pub system_program: Program<'info, System>,
     pub token_program: Program<'info, Token>,
     pub associated_token_program: Program<'info, AssociatedToken>,
@@ -46,9 +54,11 @@ impl<'info> InitializeMint<'info> {
         &mut self,
         player_id: String,
         timestamp: String,
+        projected_points: f64,
         bumps: &InitializeMintBumps,
     ) -> Result<()> {
-        let (config_bump, player_token_bump) = (bumps.config, bumps.player_token_mint);
+        let (config_bump, player_token_bump, player_stats_bump) =
+            (bumps.config, bumps.player_token_mint, bumps.player_stats);
 
         self.config.set_inner(PlayerMintConfig {
             config_bump,
@@ -61,6 +71,14 @@ impl<'info> InitializeMint<'info> {
             player_id,
             total_deposited_amount: 0,
         });
+
+        self.player_stats.set_inner(PlayerStats {
+            bump: player_stats_bump,
+            projected_points,
+            actual_points: 0.0,
+            last_updated: Clock::get()?.unix_timestamp,
+        });
+
         Ok(())
     }
 }
