@@ -80,8 +80,9 @@ function SignInContent() {
           handleparaSetup();
           router.push(callbackUrl);
         }}
-        appName="Your App Name"
-        oAuthMethods={[OAuthMethod.GOOGLE]}
+        disableEmailLogin={true}
+        disablePhoneLogin={true}
+        appName="Trade Talk"
         externalWallets={[
           ExternalWallet.PHANTOM,
           ExternalWallet.GLOW,
