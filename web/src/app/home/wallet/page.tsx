@@ -44,17 +44,19 @@ function WalletPageContent() {
         {/* left column - balance, stats, positions etc */}
         <div className="w-full flex flex-col gap-[58px] pb-20">
           {/* current positions */}
-          <div className="w-full flex flex-col">
-            <p className="text-2xl text-white font-clashMed">Positions</p>
-            <div className="flex items-center justify-between">
-              <p className="text-[#6A6A6A] text-[13px]">
-                These are your active positions. You can sell or cash out at any
-                time.
-              </p>
-              <Button>Close all</Button>
+          <div className="w-full flex flex-col max-h-[250px]">
+            <div className="flex items-end justify-between">
+              <div className="flex flex-col gap-2">
+                <p className="text-2xl text-white font-clashMed">Positions</p>
+                <p className="text-[#6A6A6A] text-[13px]">
+                  These are your active positions. You can sell or cash out at
+                  any time.
+                </p>
+              </div>
+              <Button variant="secondary">Close all</Button>
             </div>
             {/* TODO: positions.map */}
-            <div className="w-full flex flex-col gap-2 pt-7">
+            <div className="w-full h-full overflow-y-auto flex flex-col gap-2 mt-5">
               {myPositions.data?.map((position) => (
                 <Position
                   key={position.marketInfo?.baseMint.id}
@@ -68,46 +70,49 @@ function WalletPageContent() {
             </div>
           </div>
           {/* open orders */}
-          <div className="w-full flex flex-col">
-            <p className="text-2xl text-white font-clashMed">Open Orders</p>
-            <div className="flex items-center justify-between">
-              <p className="text-[#6A6A6A] text-[13px]">
-                Here are your buy and sell orders that are currently
-                outstanding.
-              </p>
-              <Button>Cancel all</Button>
-            </div>
-            {myOpenOrders.data && myOpenOrders.data.length > 0 ? (
-              myOpenOrders.data.map((order) => (
-                <OrderHistoryItem
-                  key={order.id}
-                  order={{ ...order, isMyOrder: true }}
-                />
-              ))
-            ) : (
-              <div className="w-full flex flex-col gap-2 pt-7">
-                <p className="text-white text-center">No open orders</p>
+          <div className="w-full flex flex-col max-h-[250px]">
+            <div className="flex items-end justify-between">
+              <div className="flex flex-col gap-2">
+                <p className="text-2xl text-white font-clashMed">Open Orders</p>
+                <p className="text-[#6A6A6A] text-[13px]">
+                  Here are your buy and sell orders that are currently
+                  outstanding.
+                </p>
               </div>
-            )}
+              <Button variant="secondary">Cancel all</Button>
+            </div>
+            <div className="w-full h-full overflow-y-auto flex flex-col gap-2 mt-5">
+              {myOpenOrders.data && myOpenOrders.data.length > 0 ? (
+                myOpenOrders.data.map((order) => (
+                  <OrderHistoryItem
+                    key={order.id}
+                    order={{ ...order, isMyOrder: true }}
+                  />
+                ))
+              ) : (
+                <div className="w-full flex flex-col gap-2 pt-7">
+                  <p className="text-white text-center">No open orders</p>
+                </div>
+              )}
+            </div>
           </div>
           {/* trade history */}
-          <div className="w-full flex flex-col">
-            <p className="text-2xl text-white font-clashMed">Trade History</p>
-            <div className="flex items-center justify-between">
+          <div className="w-full flex flex-col max-h-[250px]">
+            <div className="flex flex-col gap-2">
+              <p className="text-2xl text-white font-clashMed">Trade History</p>
               <p className="text-[#6A6A6A] text-[13px]">
                 These are your past trades. Embarrassed yet?
               </p>
             </div>
-
-            {myTrades.data && myTrades.data.length > 0 ? (
-              myTrades.data.map((trade) => (
-                <TradeHistoryItem key={trade.id} trade={trade} />
-              ))
-            ) : (
-              <div className="w-full flex flex-col gap-2 pt-7">
-                <p className="text-white text-center">No trades yet</p>
-              </div>
-            )}
+            <div className="w-full h-full overflow-y-auto flex flex-col gap-2 mt-5">
+              {myTrades.data && myTrades.data.length > 0 ? (
+                myTrades.data.map((trade) => (
+                  <TradeHistoryItem key={trade.id} trade={trade} />
+                ))
+              ) : (
+                <p className="text-white">No trades yet</p>
+              )}
+            </div>
           </div>
         </div>
         <ProfileCard />

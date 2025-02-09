@@ -11,6 +11,7 @@ import {
   usePlayerToken,
   useManifestClient,
   useLivePlays,
+  useParaWallet,
 } from "./market-data-access";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -21,13 +22,19 @@ import TrendUpIcon from "../icons/trend-up";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { usePlayerMarketCardStore } from "@/lib/zustand";
 import { Switch } from "@/components/ui/switch";
-import { type RouterOutputs } from "@/trpc/react";
+import { api, type RouterOutputs } from "@/trpc/react";
 import { RestingOrder } from "manifest/src";
 import { BN, ProgramAccount } from "@coral-xyz/anchor";
 import { PublicKey } from "@solana/web3.js";
 import { bignum } from "@metaplex-foundation/beet";
 import { Decimal } from "@prisma/client/runtime/library";
 import { ChevronDown, ChevronUp } from "lucide-react";
+import { UploadButton } from "@/utils/uploadthing";
+import { Edit2Icon } from "lucide-react";
+import toast from "react-hot-toast";
+import { useWallet } from "@solana/wallet-adapter-react";
+import { updateUsername } from "@/server/api/routers/user/update";
+
 export const Trade = () => {
   const { playerStatsAccount, market, lastTradePrice } = usePlayerMarket();
   const { liveProjectedScore } = useLivePlays();
@@ -54,6 +61,7 @@ export const Trade = () => {
     useMyMarket();
   const { playerTokenBalance } = usePlayerToken();
   const [placeOrderError, setPlaceOrderError] = useState("");
+
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     console.log("placing order");
@@ -540,7 +548,7 @@ export const Trade = () => {
 
             {/* TODO: dynamic player and projection data */}
             <p className="text-[#6A6A6A] text-[11px] leading-[11px] max-w-[254px] mx-auto text-center">
-              Make money if Patrick Mahomes scores{" "}
+              Make money if {market?.data?.player?.name} scores{" "}
               {orderType === "buy" ? "more" : "less"} than{" "}
               <span className="text-white">
                 {playerStatsAccount.data?.projectedPoints.toFixed(2)} fantasy
@@ -1024,36 +1032,113 @@ export function CashoutAll() {
 }
 
 export const ProfileCard = () => {
+  const [isEditing, setIsEditing] = useState(false);
+  const [username, setUsername] = useState("");
+  const { publicKey } = useWallet();
+  const { paraPubkey } = useParaWallet();
+  const myKey = paraPubkey.data?.toString() ?? publicKey?.toString() ?? "";
+
+  const { data: user, refetch: refetchUser } = api.user.readUser.useQuery({
+    walletAddress: myKey,
+  });
+
+  const updateUsernameMutation = api.user.updateUsername.useMutation();
+  const updateImageMutation = api.user.updateImage.useMutation();
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    try {
+      await updateUsernameMutation.mutateAsync({
+        walletAddress: myKey,
+        username: username,
+      });
+      await refetchUser();
+      toast.success("Username updated");
+    } catch (error) {
+      toast.error("Error updating username");
+    } finally {
+      setIsEditing(false);
+    }
+  };
+
+  const handleImageUpload = async (res: any) => {
+    await updateImageMutation.mutateAsync({
+      walletAddress: myKey,
+      image: res[0].url,
+    });
+    await refetchUser();
+    setIsEditing(false);
+    toast.success("Profile image updated sucessfully");
+  };
+
+  // useEffect(() => {
+  //   console.log("user", user);
+  // }, [user]);
+
   return (
-    <Card className="w-[450px] bg-black/50 border-[#2B2B2B] rounded-[30px] !p-0">
-      <CardHeader>
+    <Card className="relative w-[450px] bg-black/50 border-[#2B2B2B] rounded-[30px] !p-6">
+      <button
+        onClick={() => setIsEditing(!isEditing)}
+        className="absolute top-4 right-4"
+      >
+        <Edit2Icon className="w-4 h-4 text-white" />
+      </button>
+      <CardHeader className="sr-only">
         <CardTitle className="sr-only text-2xl font-bold text-center">
           Profile
         </CardTitle>
       </CardHeader>
-      <CardContent className="flex flex-col items-center gap-8">
+      <CardContent className="flex flex-col items-center gap-8 !p-0">
         {/* user data */}
-        <div className="flex flex-col items-center">
-          <Image
-            src="/player-temp/diggs.webp"
-            alt="player"
-            width={100}
-            height={100}
-            className="rounded-full object-cover w-[100px] h-[100px]"
-          />
-          <p className="text-white font-clashGroteskMed text-[19px] leading-[19px] mt-[15px]">
-            matt.sol
-          </p>
-        </div>
-        {/* my team */}
-        <div className="flex flex-col items-center gap-1">
+        <form onSubmit={handleSubmit}>
+          <div className="flex flex-col items-center">
+            {isEditing ? (
+              <UploadButton
+                endpoint="imageUploader"
+                onClientUploadComplete={(res: any) => {
+                  handleImageUpload(res);
+                }}
+                onUploadError={(error: Error) => {
+                  toast.error(`ERROR! ${error.message}`);
+                }}
+              />
+            ) : (
+              <Image
+                src={user?.image ?? "/player-temp/diggs.webp"}
+                alt="player"
+                width={100}
+                height={100}
+                className="rounded-full object-cover w-[100px] h-[100px]"
+              />
+            )}
+            {isEditing ? (
+              <Input
+                type="text"
+                className="text-white font-clashGroteskMed text-[19px] leading-[19px] mt-[15px]"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+              />
+            ) : (
+              <p className="text-white font-clashGroteskMed text-[19px] leading-[19px] mt-[15px]">
+                {user?.username ?? myKey.slice(0, 6) + "..." + myKey.slice(-6)}
+              </p>
+            )}
+            {isEditing && (
+              <Button type="submit" variant="secondary" className="mt-2">
+                Save
+              </Button>
+            )}
+          </div>
+        </form>
+        {/* TODO: my team */}
+        {/* <div className="flex flex-col items-center gap-1">
           <p className="text-white font-clashGroteskMed text-[15px] leading-[15px]">
             My Team
           </p>
           <p className="text-[#6A6A6A] text-[11px] leading-[11px]">
             TODO: NFL team dropdown
           </p>
-        </div>
+        </div> */}
       </CardContent>
     </Card>
   );
