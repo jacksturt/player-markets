@@ -71,3 +71,17 @@ export function convertDownAndDistanceToBetterString(
   }
   return `4th & ${distance} yard${distance === 1 ? "" : "s"}`;
 }
+
+export function getPercentGameRemaining(
+  quarter: number,
+  minutesRemainingInQuarter: number,
+  secondsRemainingInQuarter: number
+) {
+  const totalSecondsRemaining =
+    3600 -
+    quarter * 900 +
+    minutesRemainingInQuarter * 60 +
+    secondsRemainingInQuarter;
+  const totalSecondsInGame = 3600;
+  return totalSecondsRemaining / totalSecondsInGame;
+}
