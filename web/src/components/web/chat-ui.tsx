@@ -188,6 +188,8 @@ export default function ChatUI() {
     scrollToBottom(messagesEndRef.current, true);
   }, [messages]);
 
+  if (!myKey) return null;
+
   return (
     <div className="fixed bottom-[20px] right-[20px]">
       <DropdownMenu open={open} onOpenChange={setOpen}>

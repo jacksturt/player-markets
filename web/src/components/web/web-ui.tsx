@@ -26,7 +26,8 @@ import { BN, ProgramAccount } from "@coral-xyz/anchor";
 import { PublicKey } from "@solana/web3.js";
 import { bignum } from "@metaplex-foundation/beet";
 import { Decimal } from "@prisma/client/runtime/library";
-// import { UploadButton } from "@/utils/uploadthing";
+import { UploadButton } from "@/utils/uploadthing";
+import { Edit2Icon } from "lucide-react";
 
 export const Trade = () => {
   const { playerStatsAccount, market } = usePlayerMarket();
@@ -922,8 +923,15 @@ export function CashoutAll() {
 }
 
 export const ProfileCard = () => {
+  const [isEditing, setIsEditing] = useState(false);
   return (
-    <Card className="w-[450px] bg-black/50 border-[#2B2B2B] rounded-[30px] !p-0">
+    <Card className="relative w-[450px] bg-black/50 border-[#2B2B2B] rounded-[30px] !p-0">
+      <button
+        onClick={() => setIsEditing(!isEditing)}
+        className="absolute top-4 right-4"
+      >
+        <Edit2Icon className="w-4 h-4 text-white" />
+      </button>
       <CardHeader>
         <CardTitle className="sr-only text-2xl font-bold text-center">
           Profile
@@ -932,25 +940,26 @@ export const ProfileCard = () => {
       <CardContent className="flex flex-col items-center gap-8">
         {/* user data */}
         <div className="flex flex-col items-center">
-          {/* <UploadButton
-            endpoint="imageUploader"
-            onClientUploadComplete={(res) => {
-              // Do something with the response
-              console.log("Files: ", res);
-              alert("Upload Completed");
-            }}
-            onUploadError={(error: Error) => {
-              // Do something with the error.
-              alert(`ERROR! ${error.message}`);
-            }}
-          /> */}
-          <Image
-            src="/player-temp/diggs.webp"
-            alt="player"
-            width={100}
-            height={100}
-            className="rounded-full object-cover w-[100px] h-[100px]"
-          />
+          {isEditing ? (
+            <UploadButton
+              endpoint="imageUploader"
+              onClientUploadComplete={(res) => {
+                console.log("Files: ", res);
+                alert("Upload Completed");
+              }}
+              onUploadError={(error: Error) => {
+                alert(`ERROR! ${error.message}`);
+              }}
+            />
+          ) : (
+            <Image
+              src="/player-temp/diggs.webp"
+              alt="player"
+              width={100}
+              height={100}
+              className="rounded-full object-cover w-[100px] h-[100px]"
+            />
+          )}
           <p className="text-white font-clashGroteskMed text-[19px] leading-[19px] mt-[15px]">
             matt.sol
           </p>

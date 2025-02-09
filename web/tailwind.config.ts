@@ -1,7 +1,7 @@
-/** @type {import('tailwindcss').Config} */
+import type { Config } from "tailwindcss";
 import { withUt } from "uploadthing/tw";
 
-module.exports = {
+const config: Config = {
   darkMode: ["class"],
   content: [
     "./src/pages/**/*.{js,ts,jsx,tsx,mdx}",
@@ -78,4 +78,6 @@ module.exports = {
     },
   },
   plugins: [require("daisyui"), require("tailwindcss-animate")],
-};
+} satisfies Config;
+
+export default withUt(config);
