@@ -4,9 +4,11 @@ import React, { useState } from "react";
 import MarketDetails, { GameUpdate, MarketStats } from "./market-details";
 import MarketTrades from "./market-trades";
 import MarketOrders from "./market-orders";
+import PlayDetails from "./play-details";
 
 export enum PlayerDataView {
   DETAILS = "Details",
+  PLAYS = "Plays",
   TRADE_HISTORY = "Trade History",
   ORDERS = "Orders",
 }
@@ -26,10 +28,10 @@ const gameUpdates: GameUpdate[] = [
 ];
 
 export default function DataTablesPlayer() {
-  const [activeTab, setActiveTab] = useState(PlayerDataView.ORDERS);
+  const [activeTab, setActiveTab] = useState(PlayerDataView.DETAILS);
 
   return (
-    <div className="w-full flex flex-col gap-4">
+    <div className="w-full flex flex-col gap-4 overflow-y-scroll">
       <div className="px-5 flex items-center justify-between text-white pr-[50px]">
         {Object.values(PlayerDataView).map((view) => (
           <button
@@ -44,6 +46,7 @@ export default function DataTablesPlayer() {
         ))}
       </div>
       {activeTab === PlayerDataView.DETAILS && <MarketDetails />}
+      {activeTab === PlayerDataView.PLAYS && <PlayDetails />}
       {activeTab === PlayerDataView.TRADE_HISTORY && <MarketTrades />}
       {activeTab === PlayerDataView.ORDERS && <MarketOrders />}
     </div>

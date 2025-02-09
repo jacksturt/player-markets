@@ -36,3 +36,38 @@ export function shortenAddress(address: PublicKey | string) {
   }
   return address.toBase58().slice(0, 4) + "..." + address.toBase58().slice(-4);
 }
+
+export function quarterNameToBetterString(quarterName: string) {
+  if (quarterName === "1") {
+    return "1st Quarter";
+  }
+  if (quarterName === "2") {
+    return "2nd Quarter";
+  }
+  if (quarterName === "3") {
+    return "3rd Quarter";
+  }
+  if (quarterName === "4") {
+    return "4th Quarter";
+  }
+  if (quarterName === "OT") {
+    return "Overtime";
+  }
+  return quarterName;
+}
+
+export function convertDownAndDistanceToBetterString(
+  down: number,
+  distance: number
+) {
+  if (down === 1) {
+    return `1st & ${distance} yard${distance === 1 ? "" : "s"}`;
+  }
+  if (down === 2) {
+    return `2nd & ${distance} yard${distance === 1 ? "" : "s"}`;
+  }
+  if (down === 3) {
+    return `3rd & ${distance} yard${distance === 1 ? "" : "s"}`;
+  }
+  return `4th & ${distance} yard${distance === 1 ? "" : "s"}`;
+}

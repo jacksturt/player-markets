@@ -2035,3 +2035,20 @@ export const useLeaderboards = () => {
     largestPools,
   };
 };
+
+export const useLivePlays = () => {
+  const { market } = usePlayerMarket();
+  const latestPlay = api.plays.latestPlay.useQuery();
+  const playsByTeam = api.plays.playsByTeam.useQuery(
+    market?.data?.team?.id ?? market?.data?.player?.teamId ?? ""
+  );
+  const playsByPlayer = api.plays.playsByPlayer.useQuery(
+    market?.data?.player?.id ?? ""
+  );
+
+  return {
+    latestPlay,
+    playsByTeam,
+    playsByPlayer,
+  };
+};

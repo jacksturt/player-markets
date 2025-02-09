@@ -152,7 +152,7 @@ export default function MarketFeatureNew() {
   return (
     <div className="w-full flex flex-col gap-[79px] px-14 text-white mb-20">
       <div className="w-full flex items-start gap-10">
-        <div className="w-full flex flex-col gap-10">
+        <div className="w-full flex flex-col gap-10 overflow-y-scroll max-h-[85vh]">
           <PlayerCard />
           <ChartComponent data={tradeData} />
           <DataTablesPlayer />
