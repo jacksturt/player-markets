@@ -20,6 +20,7 @@ import { Button } from "../ui/button";
 import { X } from "lucide-react";
 import MaximizeIcon from "../icons/maximize";
 import { timestampToTime } from "@/utils/sendbird";
+import { api } from "@/trpc/react";
 
 const sb = SendbirdChat.init({
   appId: "434D4E2C-4EEF-41DB-AE99-30D00B5AFF1D",
@@ -42,6 +43,15 @@ export default function ChatUI() {
   const [message, setMessage] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
+  const { data: user } = api.user.readUser.useQuery(
+    {
+      walletAddress: myKey?.toBase58(),
+    },
+    {
+      enabled: !!myKey,
+    }
+  );
+
   const scrollToBottom = (item: HTMLDivElement | null, smooth: boolean) => {
     item?.scrollTo({
       top: item.scrollHeight,
@@ -63,7 +73,7 @@ export default function ChatUI() {
       const userMessageParams = {
         message: message.trim(),
         data: JSON.stringify({
-          profileUrl: "/player-temp/allen.jpg",
+          profileUrl: user?.image ?? "/player-temp/allen.jpg",
         }),
         customType: "userMessage",
       };
@@ -76,7 +86,7 @@ export default function ChatUI() {
           message: message.trim(), // Use the message directly
           sender:
             myKey.toBase58().slice(0, 5) + "..." + myKey.toBase58().slice(-5),
-          image: "/player-temp/allen.jpg",
+          image: user?.image ?? "/player-temp/allen.jpg",
           timestamp: timestampToTime(Date.now()),
         },
       ]);
