@@ -1,8 +1,8 @@
 import { db } from "@/server/db";
-import { protectedProcedure } from "@/server/api/trpc";
+import { protectedProcedure, publicProcedure } from "@/server/api/trpc";
 import { z } from "zod";
 
-export const readUser = protectedProcedure
+export const readUser = publicProcedure
   .input(
     z.object({
       walletAddress: z.string(),
