@@ -15,6 +15,7 @@ import { ListFilter } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { LargestPool, useLeaderboards } from "../web/market-data-access";
 import { TradeHistoryItem } from "../web/web-ui";
+import { useRouter } from "next/navigation";
 
 const filterOptions = [
   {
@@ -106,6 +107,7 @@ export default function LeaderboardView() {
 }
 
 function PopularMarketCard({ market }: { market: LargestPool }) {
+  const router = useRouter();
   if (!market.db) return <div>bad {market.config.account.playerId}</div>;
   const sellPercent =
     (market.shortPayout / (market.shortPayout + market.longPayout)) * 100;
@@ -113,7 +115,12 @@ function PopularMarketCard({ market }: { market: LargestPool }) {
     (market.longPayout / (market.shortPayout + market.longPayout)) * 100;
 
   return (
-    <div className="w-full bg-black/50 rounded-[20px] px-6 py-4 flex items-center justify-between">
+    <div
+      onClick={() => {
+        router.push(`/home/players/${market.config.publicKey.toBase58()}`);
+      }}
+      className="w-full bg-black/50 rounded-[20px] px-6 py-4 flex items-center justify-between"
+    >
       <div className="flex items-center gap-4 w-[250px] mr-4">
         <div className="flex flex-col w-full gap-2">
           <div className="flex flex-row items-center gap-2">

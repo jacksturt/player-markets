@@ -1,10 +1,16 @@
+import { EnvWallet } from "@/lib/envWallet";
 import {
   PlayByPlayResponse,
   PlayStat,
   RawPlayData,
   ScoringPlay,
 } from "@/lib/types/sportsdata";
+import { PublicKey } from "@solana/web3.js";
+import { getTradetalkProgram } from "@project/anchor";
+import { getTradetalkProgramId } from "@project/anchor";
+import { AnchorProvider } from "@coral-xyz/anchor";
 import { db } from "@/server/db";
+import { Connection } from "@solana/web3.js";
 import { NextResponse } from "next/server";
 export async function GET(request: Request) {
   if (
@@ -66,6 +72,67 @@ export async function GET(request: Request) {
       return NextResponse.json(
         { success: false, error: "Play by play response not found" },
         { status: 404 }
+      );
+    }
+
+    const { homeTeam, homeScore } = {
+      homeTeam: playByPlayResponse.Score.HomeTeam,
+      homeScore: playByPlayResponse.Score.HomeScore,
+    };
+    const { awayTeam, awayScore } = {
+      awayTeam: playByPlayResponse.Score.AwayTeam,
+      awayScore: playByPlayResponse.Score.AwayScore,
+    };
+
+    const homeTeamDB = await db.team.findUnique({
+      where: {
+        sportsDataId: homeTeam,
+      },
+      include: {
+        mint: true,
+      },
+    });
+    if (homeTeamDB) {
+      await db.teamStats.update({
+        where: {
+          teamId: homeTeamDB?.id,
+        },
+        data: {
+          actualPoints: homeScore,
+        },
+      });
+
+      await updateProjectionOracle(
+        homeTeam,
+        homeTeamDB?.mint!.timestamp,
+        homeScore,
+        false
+      );
+    }
+
+    const awayTeamDB = await db.team.findUnique({
+      where: {
+        sportsDataId: awayTeam,
+      },
+      include: {
+        mint: true,
+      },
+    });
+    if (awayTeamDB) {
+      await db.teamStats.update({
+        where: {
+          teamId: awayTeamDB?.id,
+        },
+        data: {
+          actualPoints: awayScore,
+        },
+      });
+
+      await updateProjectionOracle(
+        awayTeam,
+        awayTeamDB?.mint!.timestamp,
+        awayScore,
+        false
       );
     }
 
@@ -321,4 +388,40 @@ function convertScoringPlayToActual(
     scoreId: scoringPlay.ScoreID,
     teamId: teamId,
   };
+}
+
+function updateProjectionOracle(
+  playerId: string,
+  timestamp: string,
+  projection: number,
+  isProjected: boolean
+) {
+  const connection = new Connection(process.env.RPC_URL!);
+  const wallet = new EnvWallet();
+  const provider = new AnchorProvider(connection, wallet);
+  const programId = getTradetalkProgramId("mainnet-beta");
+  const program = getTradetalkProgram(provider, programId);
+  const mintConfig = PublicKey.findProgramAddressSync(
+    [Buffer.from("config"), Buffer.from(playerId), Buffer.from(timestamp)],
+    program.programId
+  )[0];
+  const playerStats = PublicKey.findProgramAddressSync(
+    [
+      Buffer.from("player_stats"),
+      Buffer.from(playerId),
+      Buffer.from(timestamp),
+    ],
+    program.programId
+  )[0];
+  return program.methods
+    .updateProjectionOracle(projection, isProjected)
+    .accountsStrict({
+      authority: provider.publicKey,
+      config: mintConfig,
+      playerStats,
+    })
+    .rpc()
+    .catch((error) => {
+      console.error(error);
+    });
 }

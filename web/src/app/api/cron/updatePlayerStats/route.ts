@@ -38,8 +38,10 @@ export async function GET(request: Request) {
         market: true,
       },
     });
-
-    const url = `https://api.sportsdata.io/v3/nfl/stats/json/PlayerGameStatsByTeam/${players[0].market?.season}/${players[0].market?.week}/${players[0].team?.sportsDataId}?key=${process.env.SPORTSDATA_API_KEY}`;
+    const url =
+      teamId === "PHI"
+        ? `https://api.sportsdata.io/v3/nfl/stats/json/PlayerGameStatsByTeamFinal/2024POST/4/PHI?key=1c17a32c80204a28a51e768c72ae0f60`
+        : "https://api.sportsdata.io/v3/nfl/stats/json/PlayerGameStatsByTeamFinal/2024POST/4/KC?key=1c17a32c80204a28a51e768c72ae0f60";
     const response = await fetch(url, {
       headers: {
         Authorization: `Bearer ${process.env.ORACLE_API_KEY}`,
@@ -57,6 +59,7 @@ export async function GET(request: Request) {
       const playerActualData = playerActualDataList.find(
         (data) => data.PlayerID === player.sportsDataId
       );
+      console.log("playerActualData", playerActualData);
 
       if (!playerActualData) {
         console.error(`Player actual data not found for ${player.name}`);

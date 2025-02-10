@@ -337,6 +337,9 @@ export type PlayerGameStats = {
 
 export type PlayByPlayResponse = {
   Plays: RawPlayData[];
+
+  Score: Score;
+  Quarters: Quarter[];
 };
 
 export type RawPlayData = {
