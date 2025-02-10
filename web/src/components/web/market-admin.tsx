@@ -6,6 +6,7 @@ import {
   CloseMintAccounts,
   SetMintingEnabled,
   SetPayoutEnabled,
+  SetPayoutEnabledAndMintingDisabled,
 } from "./web-ui";
 import { PublicKey } from "@solana/web3.js";
 
@@ -34,6 +35,7 @@ export default function MarketAdmin() {
           <CloseMintAccounts />
           <SetMintingEnabled />
           <SetPayoutEnabled />
+          <SetPayoutEnabledAndMintingDisabled />
         </div>
       </div>
     </div>

@@ -34,6 +34,7 @@ import { Edit2Icon } from "lucide-react";
 import toast from "react-hot-toast";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { updateUsername } from "@/server/api/routers/user/update";
+import { useRouter } from "next/navigation";
 
 export const Trade = () => {
   const { playerStatsAccount, market, lastTradePrice } = usePlayerMarket();
@@ -878,6 +879,23 @@ export function CancelAllOrders() {
   );
 }
 
+export function SetPayoutEnabledAndMintingDisabled() {
+  const { setPayoutEnabledAndMintingDisabled } = useMarketAdmin();
+  const { market } = usePlayerMarket();
+  const marketId = market?.data?.baseMint.symbol;
+
+  return (
+    <button
+      className="btn btn-xs lg:btn-md btn-primary"
+      onClick={() => setPayoutEnabledAndMintingDisabled.mutateAsync()}
+      disabled={setPayoutEnabledAndMintingDisabled.isPending}
+    >
+      Set Payout Enabled and Minting Disabled for {marketId}
+      {setPayoutEnabledAndMintingDisabled.isPending && "..."}
+    </button>
+  );
+}
+
 export function SetMintingEnabled() {
   const { setMintingEnabled } = useMarketAdmin();
   const { market } = usePlayerMarket();
@@ -1163,8 +1181,14 @@ export const Position = ({
   const ticker = marketInfo.baseMint.symbol;
   console.log(shortPositionMinted, longPositionHeld);
   if (isNaN(shortPositionMinted) || isNaN(longPositionHeld)) return null;
+  const router = useRouter();
   return (
-    <div className="w-full h-[41px] flex items-center justify-between">
+    <div
+      className="w-full h-[41px] flex items-center justify-between"
+      onClick={() => {
+        router.push(`/home/players/${marketInfo.address}`);
+      }}
+    >
       <div className="flex items-center gap-3">
         <Avatar>
           <AvatarImage src={marketInfo.baseMint.image} />

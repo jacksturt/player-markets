@@ -481,6 +481,7 @@ export function useMarketAdmin() {
         ],
         program.programId
       )[0];
+
       const signature = await program.methods
         .setIsPayoutEnabled(isPayoutEnabled)
         .accountsStrict({
@@ -488,6 +489,50 @@ export function useMarketAdmin() {
           config: mintConfig,
         })
         .rpc();
+      return { signature, mintConfig };
+    },
+    onSuccess: async (data: { signature: string; mintConfig: PublicKey }) => {
+      transactionToast(data.signature);
+      return accounts.refetch();
+    },
+    onError: () => toast.error("Failed to initialize account"),
+  });
+
+  const setPayoutEnabledAndMintingDisabled = useMutation({
+    mutationKey: ["markets", "set-payout-enabled"],
+    mutationFn: async () => {
+      const mintConfig = PublicKey.findProgramAddressSync(
+        [
+          Buffer.from("config"),
+          Buffer.from(playerId.data!),
+          Buffer.from(timestamp.data!),
+        ],
+        program.programId
+      )[0];
+      const recentBlockhash = await provider.connection.getLatestBlockhash();
+      const tx = new Transaction({
+        feePayer: provider.publicKey,
+        blockhash: recentBlockhash.blockhash,
+        lastValidBlockHeight: recentBlockhash.lastValidBlockHeight,
+      });
+      const payoutIX = await program.methods
+        .setIsPayoutEnabled(true)
+        .accountsStrict({
+          authority: provider.publicKey,
+          config: mintConfig,
+        })
+        .instruction();
+      const mintingDisabledIX = await program.methods
+        .setIsMintEnabled(false)
+        .accountsStrict({
+          authority: provider.publicKey,
+          config: mintConfig,
+        })
+        .instruction();
+
+      tx.add(payoutIX);
+      tx.add(mintingDisabledIX);
+      const signature = await provider.sendAndConfirm(tx);
       return { signature, mintConfig };
     },
     onSuccess: async (data: { signature: string; mintConfig: PublicKey }) => {
@@ -549,6 +594,7 @@ export function useMarketAdmin() {
     setMintingEnabled,
     setPayoutEnabled,
     initializeMintBE,
+    setPayoutEnabledAndMintingDisabled,
   };
 }
 
