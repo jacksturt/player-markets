@@ -39,112 +39,50 @@ export async function GET(request: Request) {
       },
     });
 
-    const hasGameStarted = players[0].market?.hasGameStarted;
+    const url = `https://api.sportsdata.io/v3/nfl/stats/json/PlayerGameStatsByTeam/${players[0].market?.season}/${players[0].market?.week}/${players[0].team?.sportsDataId}?key=${process.env.SPORTSDATA_API_KEY}`;
+    const response = await fetch(url, {
+      headers: {
+        Authorization: `Bearer ${process.env.ORACLE_API_KEY}`,
+      },
+    });
+    const playerActualDataList: PlayerGameStats[] = await response.json();
+    if (!playerActualDataList) {
+      return NextResponse.json(
+        { success: false, error: "Player projection not found" },
+        { status: 404 }
+      );
+    }
 
-    if (hasGameStarted) {
-      const url = `https://replay.sportsdata.io/api/v3/nfl/stats/json/playergamestatsbyteam/${players[0].market?.season.toLowerCase()}/${
-        players[0].market?.week
-      }/${players[0].team?.sportsDataId.toLowerCase()}?key=d6f0c46073bf4bf2a70d2d6b01f74046`;
-      // const url = `https://api.sportsdata.io/v3/nfl/stats/json/PlayerGameStatsByTeam/${player.market?.season}/${player.market?.week}/${player?.team?.sportsDataId}?key=${process.env.SPORTSDATA_API_KEY}`;
-      const response = await fetch(url, {
-        headers: {
-          Authorization: `Bearer ${process.env.ORACLE_API_KEY}`,
-        },
-      });
-      const playerActualDataList: PlayerGameStats[] = await response.json();
-      if (!playerActualDataList) {
-        return NextResponse.json(
-          { success: false, error: "Player projection not found" },
-          { status: 404 }
-        );
+    for (const player of players) {
+      const playerActualData = playerActualDataList.find(
+        (data) => data.PlayerID === player.sportsDataId
+      );
+
+      if (!playerActualData) {
+        console.error(`Player actual data not found for ${player.name}`);
+        continue;
       }
 
-      for (const player of players) {
-        const playerActualData = playerActualDataList.find(
-          (data) => data.PlayerID === player.sportsDataId
+      const camelCaseData = convertPlayerGameStatsToActual(playerActualData);
+
+      if (
+        player.projections?.actualFantasyPointsPpr !==
+        camelCaseData.actualFantasyPointsPpr
+      ) {
+        await db.playerStatsAndProjection.update({
+          where: {
+            playerId: player.id,
+          },
+          data: {
+            ...camelCaseData,
+          },
+        });
+        await updateProjectionOracle(
+          player.sportsDataId.toString(),
+          player.mint!.timestamp,
+          camelCaseData.actualFantasyPointsPpr,
+          false
         );
-
-        if (!playerActualData) {
-          console.error(`Player actual data not found for ${player.name}`);
-          continue;
-        }
-
-        const camelCaseData = convertPlayerGameStatsToActual(playerActualData);
-
-        if (
-          player.projections?.actualFantasyPointsPpr !==
-          camelCaseData.actualFantasyPointsPpr
-        ) {
-          await db.playerStatsAndProjection.update({
-            where: {
-              playerId: player.id,
-            },
-            data: {
-              ...camelCaseData,
-            },
-          });
-          await updateProjectionOracle(
-            player.sportsDataId.toString(),
-            player.mint!.timestamp,
-            camelCaseData.actualFantasyPointsPpr,
-            false
-          );
-        }
-      }
-    } else {
-      const url = `https://api.sportsdata.io/v3/nfl/projections/json/PlayerGameProjectionStatsByTeam/${players[0].market?.season}/${players[0].market?.week}/${players[0].team?.sportsDataId}?key=${process.env.SPORTSDATA_API_KEY}`;
-
-      const response = await fetch(url, {
-        headers: {
-          Authorization: `Bearer ${process.env.ORACLE_API_KEY}`,
-        },
-      });
-      const playerProjectionDataList: PlayerGameStats[] = await response.json();
-
-      if (!playerProjectionDataList) {
-        return NextResponse.json(
-          { success: false, error: "Player projections not found" },
-          { status: 404 }
-        );
-      }
-      for (const player of players) {
-        const playerProjectionData = playerProjectionDataList.find(
-          (data) => data.PlayerID === player.sportsDataId
-        );
-
-        if (!playerProjectionData) {
-          console.error(`Player projection data not found for ${player.name}`);
-          continue;
-        }
-        const camelCaseData =
-          convertPlayerGameStatsToProjected(playerProjectionData);
-        if (
-          player.projections?.projectedFantasyPointsPpr !==
-          camelCaseData.projectedFantasyPointsPpr
-        ) {
-          await db.playerStatsAndProjection.upsert({
-            where: {
-              playerId: player.id,
-            },
-            update: {
-              ...camelCaseData,
-            },
-            create: {
-              player: {
-                connect: {
-                  id: player.id,
-                },
-              },
-              ...camelCaseData,
-            },
-          });
-          await updateProjectionOracle(
-            player.sportsDataId.toString(),
-            player.mint!.timestamp,
-            camelCaseData.projectedFantasyPointsPpr,
-            true
-          );
-        }
       }
     }
 
@@ -156,32 +94,6 @@ export async function GET(request: Request) {
       { status: 500 }
     );
   }
-}
-
-function convertPlayerGameStatsToProjected(actual: PlayerGameStats) {
-  return {
-    projectedRushingAttempts: actual.RushingAttempts,
-    projectedRushingYards: actual.RushingYards,
-    projectedRushingTouchdowns: actual.RushingTouchdowns,
-    projectedFumblesLost: actual.FumblesLost,
-    projectedCatches: actual.Receptions,
-    projectedReceivingYards: actual.ReceivingYards,
-    projectedReceivingTouchdowns: actual.ReceivingTouchdowns,
-    projectedPassingInterceptions: actual.PassingInterceptions,
-    projectedPassingYards: actual.PassingYards,
-    projectedPassingTouchdowns: actual.PassingTouchdowns,
-    projectedPassingSacks: actual.PassingSacks,
-    projectedFieldGoalsMade: actual.FieldGoalsMade,
-    projectedFieldGoalsMissed:
-      actual.FieldGoalsAttempted - actual.FieldGoalsMade,
-    projectedExtraPointKickingConversions: actual.ExtraPointsMade,
-    projectedExtraPointKickingMisses:
-      actual.ExtraPointsAttempted - actual.ExtraPointsMade,
-    projectedFantasyPointsHalfPpr:
-      (actual.FantasyPointsPPR + actual.FantasyPoints) / 2,
-    projectedFantasyPointsPpr: actual.FantasyPointsPPR,
-    projectedFantasyPointsNonPpr: actual.FantasyPoints,
-  };
 }
 
 function convertPlayerGameStatsToActual(actual: PlayerGameStats) {

@@ -77,6 +77,7 @@ export const authConfig = {
           if (!credentials) {
             throw new Error("No credentials provided");
           }
+          console.log("Credentials", credentials);
           if (credentials.paraUserId !== "undefined") {
             paraServer.importSession(credentials.serializedSession as string);
 
@@ -101,7 +102,7 @@ export const authConfig = {
               });
               return wallet.user;
             } else {
-              if (credentials.email) {
+              if (credentials.email && credentials.email !== "undefined") {
                 const user = await db.user.create({
                   data: {
                     paraUserId: credentials.paraUserId as string,

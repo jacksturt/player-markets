@@ -60,6 +60,7 @@ export async function GET(request: Request) {
       },
     });
     const playByPlayResponse: PlayByPlayResponse = await response.json();
+    console.log(playByPlayResponse);
 
     if (!playByPlayResponse) {
       return NextResponse.json(
@@ -67,84 +68,83 @@ export async function GET(request: Request) {
         { status: 404 }
       );
     }
-    for (const player of players) {
-      const filteredPlays = playByPlayResponse.Plays.filter(
-        (play) => play.PlayID > team.lastPlayID
-      );
 
-      for (const play of filteredPlays) {
-        try {
-          const rawPlay = convertRawPlayDataToPlayCreateInput(
-            play,
+    const filteredPlays = playByPlayResponse.Plays.filter(
+      (play) => play.PlayID > team.lastPlayID
+    );
+
+    for (const play of filteredPlays) {
+      try {
+        const rawPlay = convertRawPlayDataToPlayCreateInput(
+          play,
+          team.id,
+          "cm6x74ayt0002rcp778yzmggt"
+        );
+        const createdPlay = await db.play.create({
+          data: {
+            ...rawPlay,
+          },
+        });
+        if (play.ScoringPlay) {
+          const scoringPlay = convertScoringPlayToActual(
+            play.ScoringPlay,
+            team.id
+          );
+          await db.scoringPlay.create({
+            data: {
+              ...scoringPlay,
+              playId: createdPlay.id,
+            },
+          });
+        }
+
+        const playStats = play.PlayStats.map((stat) =>
+          convertPlayerGameStatsToActual(
+            stat,
             team.id,
-            "cm6x74ayt0002rcp778yzmggt"
-          );
-          const createdPlay = await db.play.create({
-            data: {
-              ...rawPlay,
-            },
-          });
-          if (play.ScoringPlay) {
-            const scoringPlay = convertScoringPlayToActual(
-              play.ScoringPlay,
-              team.id
-            );
-            await db.scoringPlay.create({
-              data: {
-                ...scoringPlay,
-                playId: createdPlay.id,
+            createdPlay.id,
+            playersToSportsdataId
+          )
+        );
+        await db.playStat.createMany({
+          data: playStats,
+        });
+        await db.team.update({
+          where: {
+            id: team.id,
+          },
+          data: {
+            lastPlayID: play.PlayID,
+            plays: {
+              connect: {
+                id: createdPlay.id,
               },
-            });
-          }
+            },
+            playStats: {
+              connect: playStats.map((stat) => ({
+                playStatId: stat.playStatId,
+              })),
+            },
+          },
+        });
 
-          const playStats = play.PlayStats.map((stat) =>
-            convertPlayerGameStatsToActual(
-              stat,
-              team.id,
-              createdPlay.id,
-              playersToSportsdataId
-            )
+        for (const player of players) {
+          const playerPlayStats = playStats.filter(
+            (stat) => stat.playerId === player.sportsDataId.toString()
           );
-          await db.playStat.createMany({
-            data: playStats,
-          });
-          await db.team.update({
-            where: {
-              id: team.id,
-            },
+          await db.player.update({
+            where: { id: player.id },
             data: {
-              lastPlayID: play.PlayID,
-              plays: {
-                connect: {
-                  id: createdPlay.id,
-                },
-              },
               playStats: {
-                connect: playStats.map((stat) => ({
+                connect: playerPlayStats.map((stat) => ({
                   playStatId: stat.playStatId,
                 })),
               },
             },
           });
-
-          for (const player of players) {
-            const playerPlayStats = playStats.filter(
-              (stat) => stat.playerId === player.sportsDataId.toString()
-            );
-            await db.player.update({
-              where: { id: player.id },
-              data: {
-                playStats: {
-                  connect: playerPlayStats.map((stat) => ({
-                    playStatId: stat.playStatId,
-                  })),
-                },
-              },
-            });
-          }
-        } catch (error: any) {
-          console.error(error);
         }
+      } catch (error: any) {
+        console.error(error);
       }
     }
 

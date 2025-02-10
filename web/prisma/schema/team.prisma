@@ -1,11 +1,13 @@
 model Team {
-    id           String   @id @default(cuid())
-    name         String
-    image        String
-    sportsDataId String   @unique
-    createdAt    DateTime @default(now())
-    updatedAt    DateTime @updatedAt
-    lastPlayID   Int      @default(0)
+    id                   String   @id @default(cuid())
+    name                 String
+    image                String
+    sportsDataId         String   @unique
+    createdAt            DateTime @default(now())
+    updatedAt            DateTime @updatedAt
+    lastPlayID           Int      @default(0)
+    gameQuarter          Int      @default(0)
+    quarterTimeRemaining String   @default("00:00")
 
     market   Market? @relation()
     marketId String?

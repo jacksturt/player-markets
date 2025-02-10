@@ -31,7 +31,7 @@ function SignInContent() {
       if (!!publicKey || !!paraPublicKey) {
         const signInKey = publicKey ?? paraPublicKey;
         const result = await signIn("para", {
-          email: email,
+          email: email === "undefined" ? null : email,
           publicKey: signInKey,
           paraUserId: userId ?? "undefined",
           serializedSession,
