@@ -1,43 +1,94 @@
+// src/pages/auth/signin.tsx
 "use client";
-import { useEffect, Suspense } from "react";
+import { useEffect, useState, Suspense } from "react";
 import { signIn, useSession } from "next-auth/react";
+import { para } from "@/lib/para";
+import "@getpara/react-sdk/styles.css";
+import { OAuthMethod } from "@getpara/react-sdk";
+import dynamic from "next/dynamic";
 import { useRouter, useSearchParams } from "next/navigation";
+const ParaModal = dynamic(
+  () => import("@getpara/react-sdk").then((mod) => mod.ParaModal),
+  { ssr: false }
+);
+import { ExternalWallet } from "@getpara/react-sdk";
 import { useWallet } from "@solana/wallet-adapter-react";
-import { WalletButton } from "@/components/solana/solana-provider";
 
 function SignInContent() {
+  const [isOpen, setIsOpen] = useState(true);
   const router = useRouter();
   const searchParams = useSearchParams();
   const { publicKey } = useWallet();
-  const { data: session } = useSession();
   const callbackUrl = searchParams.get("callbackUrl") ?? "/";
+  const handleparaSetup = async () => {
+    try {
+      const userId = await para.getUserId();
+      console.log("userId", userId);
+
+      const serializedSession = await para.exportSession();
+      const email = para.getEmail();
+      const paraPublicKey = para.getAddress();
+      if (!!publicKey || !!paraPublicKey) {
+        const signInKey = publicKey ?? paraPublicKey;
+        const result = await signIn("para", {
+          email: email === "undefined" ? null : email,
+          publicKey: signInKey,
+          paraUserId: userId ?? "undefined",
+          serializedSession,
+          redirect: false,
+        });
+        if (result?.error) {
+          console.error("NextAuth sign in failed:", result.error);
+        } else if (result?.ok) {
+          if (callbackUrl === "/") {
+            return;
+          } else {
+            router.push(callbackUrl);
+          }
+        }
+      }
+    } catch (error) {
+      console.error("Error during para setup:", error);
+    }
+  };
 
   useEffect(() => {
-    console.log("session", session);
+    let isMounted = true;
 
-    if (session?.user) {
-      router.push(callbackUrl);
-    }
-    if (publicKey && !session) {
-      debugger;
-
-      const signInHandler = async () => {
-        const res = await signIn("wallet", {
-          publicKey,
-        });
-        if (res?.error) {
-          console.error("Error signing in:", res.error);
-        } else {
-          router.push(callbackUrl);
+    const checkparaSession = async () => {
+      try {
+        const isActive = await para.isSessionActive();
+        console.log("isActive", isActive, isMounted);
+        if (isActive && isMounted) {
+          await handleparaSetup();
         }
-      };
-      signInHandler();
-    }
-  }, [publicKey, session]);
+      } catch (error) {
+        console.error("Error checking session:", error);
+      }
+    };
+
+    checkparaSession();
+  }, [publicKey]);
 
   return (
     <div>
-      <WalletButton />
+      <ParaModal
+        para={para}
+        isOpen={isOpen}
+        onClose={() => {
+          setIsOpen(false);
+          handleparaSetup();
+          router.push(callbackUrl);
+        }}
+        disableEmailLogin={true}
+        disablePhoneLogin={true}
+        appName="Trade Talk"
+        externalWallets={[
+          ExternalWallet.PHANTOM,
+          ExternalWallet.GLOW,
+          ExternalWallet.BACKPACK,
+        ]}
+      />
     </div>
   );
 }
