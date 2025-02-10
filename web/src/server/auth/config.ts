@@ -187,6 +187,75 @@ export const authConfig = {
         }
       },
     }),
+    CredentialsProvider({
+      id: "wallet",
+      name: "Wallet",
+      credentials: {
+        publicKey: { label: "Public Key", type: "text" },
+      },
+      async authorize(credentials) {
+        try {
+          if (!credentials) {
+            throw new Error("No credentials provided");
+          }
+          console.log("Credentials", credentials);
+          if (credentials.publicKey) {
+            try {
+              const pk = new PublicKey(credentials.publicKey as string);
+            } catch (error) {
+              console.error("Invalid public key", error);
+              return null;
+            }
+            const wallet = await db.wallet.findUnique({
+              where: {
+                address: credentials.publicKey as string,
+              },
+              include: {
+                user: true,
+              },
+            });
+            if (wallet?.user) {
+              return wallet.user;
+            }
+            const newWallet = await db.wallet.create({
+              data: {
+                address: credentials.publicKey as string,
+                user: {
+                  create: {},
+                },
+              },
+            });
+            const walletWithUser = await db.wallet.findUnique({
+              where: {
+                id: newWallet.id,
+              },
+              include: {
+                user: true,
+              },
+            });
+            await db.user.update({
+              where: { id: walletWithUser?.user?.id },
+              data: {
+                wallets: {
+                  connect: {
+                    id: newWallet.id,
+                  },
+                },
+              },
+            });
+            console.log("walletWithUser", walletWithUser);
+            if (walletWithUser?.user) {
+              return walletWithUser?.user;
+            }
+            return null;
+          }
+          return null;
+        } catch (error) {
+          console.error("Authorize error:", error);
+          return null;
+        }
+      },
+    }),
   ],
   // Add a custom page that will handle the Para modal
   pages: {
