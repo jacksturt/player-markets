@@ -142,7 +142,6 @@ export default function ChatUI() {
     });
 
     // Add channel handler to listen for real-time updates
-    // TODO: this doesn't seem to be working
     const channelHandler = new OpenChannelHandler({
       onMessageReceived: (channel, message) => {
         // When new message arrives, update messages state
@@ -178,6 +177,10 @@ export default function ChatUI() {
       const ts = Date.now() - 1000 * 60 * 60 * 24;
       const messages = await channel.getMessagesByTimestamp(ts, params);
       setMessages(formatMessages(messages));
+      // Add a small delay to ensure the messages are rendered before scrolling
+      setTimeout(() => {
+        scrollToBottom(messagesEndRef.current, false);
+      }, 100);
     });
   };
 
@@ -199,8 +202,12 @@ export default function ChatUI() {
   }, [messages]);
 
   useEffect(() => {
-    scrollToBottom(messagesEndRef.current, true);
-  }, [messages]);
+    if (open && messages.length > 0) {
+      setTimeout(() => {
+        scrollToBottom(messagesEndRef.current, false);
+      }, 100);
+    }
+  }, [open]);
 
   if (!myKey) return null;
 
