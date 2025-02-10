@@ -2077,7 +2077,9 @@ export type LargestPool = {
 };
 
 export const useLeaderboards = () => {
-  const biggestTrades = api.trade.readBiggestTrades.useQuery();
+  const biggestTrades = api.trade.readBiggestTrades.useQuery(undefined, {
+    refetchInterval: 1000 * 10,
+  });
   const { marketsWithPlayerStatsAndVaults } = useMarkets();
   const largestPools = useQuery({
     queryKey: ["largest-pools"],
@@ -2091,6 +2093,7 @@ export const useLeaderboards = () => {
       );
     },
     enabled: !!marketsWithPlayerStatsAndVaults.data,
+    refetchInterval: 1000 * 10,
   });
 
   return {
