@@ -53,10 +53,12 @@ export default function ChatUI() {
   );
 
   const scrollToBottom = (item: HTMLDivElement | null, smooth: boolean) => {
-    item?.scrollTo({
-      top: item.scrollHeight,
-      behavior: smooth ? "smooth" : "instant",
-    });
+    if (item?.parentElement) {
+      item.parentElement.scrollTo({
+        top: item.parentElement.scrollHeight,
+        behavior: smooth ? "smooth" : "instant",
+      });
+    }
   };
 
   const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -90,6 +92,8 @@ export default function ChatUI() {
           timestamp: timestampToTime(Date.now()),
         },
       ]);
+
+      scrollToBottom(messagesEndRef.current, false);
 
       setMessage("");
     } catch (err) {
@@ -227,34 +231,81 @@ export default function ChatUI() {
           <div className="h-[1px] bg-black opacity-[.12] w-full" />
           {/* messages */}
           <div className="flex-1 overflow-y-auto flex flex-col gap-3 pt-[5.5px]">
-            {messages.map((message, index) => (
-              <div key={"message-" + index} className={`flex items-end gap-3`}>
-                <Image
-                  src={message.image}
-                  alt="profile"
-                  className="w-[28px] h-[28px] rounded-full"
-                  width={28}
-                  height={28}
-                />
-                <div className="flex flex-col gap-1">
-                  <div className="text-xs font-bold">
-                    {message.sender ===
-                    myKey.toBase58().slice(0, 5) +
-                      "..." +
-                      myKey.toBase58().slice(-5)
-                      ? "You"
-                      : message.sender.length > 12
-                      ? message.sender.slice(0, 12) + "..."
-                      : message.sender}
+            {messages.map((message, index) => {
+              const isUserMessage =
+                message.sender ===
+                myKey.toBase58().slice(0, 5) +
+                  "..." +
+                  myKey.toBase58().slice(-5);
+
+              // Check if next message is from the same sender (for avatar)
+              const nextMessage =
+                index < messages.length - 1 ? messages[index + 1] : null;
+              const isPartOfGroup = nextMessage?.sender === message.sender;
+
+              // Check if previous message is from the same sender (for name)
+              const prevMessage = index > 0 ? messages[index - 1] : null;
+              const isStartOfGroup = prevMessage?.sender !== message.sender;
+
+              return (
+                <div
+                  key={"message-" + index}
+                  className={`flex items-end gap-3 ${
+                    isUserMessage
+                      ? "flex-row-reverse "
+                      : "flex-row justify-start"
+                  }`}
+                >
+                  {/* Show avatar only if it's the last message in a group */}
+                  {!isPartOfGroup && (
+                    <Image
+                      src={message.image}
+                      alt="profile"
+                      className="w-[28px] h-[28px] rounded-full"
+                      width={28}
+                      height={28}
+                    />
+                  )}
+                  {/* Add placeholder div to maintain spacing when avatar is hidden */}
+                  {isPartOfGroup && <div className="w-[28px]" />}
+                  <div
+                    className={`flex flex-col gap-1 ${
+                      isUserMessage
+                        ? "items-end justify-end"
+                        : "items-start justify-start"
+                    }`}
+                  >
+                    {/* Show sender name only if it's the first message in a group */}
+                    {isStartOfGroup && (
+                      <div className="text-xs font-bold">
+                        {isUserMessage
+                          ? "You"
+                          : message.sender.length > 12
+                          ? message.sender.slice(0, 12) + "..."
+                          : message.sender}
+                      </div>
+                    )}
+                    <div
+                      className={`text-sm px-3 py-2 rounded-[16px] ${
+                        !isUserMessage
+                          ? "bg-[#EEEEEE] text-black"
+                          : "bg-[#742DDD] text-white"
+                      }`}
+                    >
+                      {message.message}
+                    </div>
                   </div>
-                  <div className="text-sm px-3 py-2 rounded-[16px] bg-[#EEEEEE]">
-                    {message.message}
-                  </div>
+                  <p
+                    className={`text-xs text-black/50 ${
+                      isUserMessage ? "mr-auto" : "ml-auto"
+                    }`}
+                  >
+                    {message.timestamp}
+                  </p>
                 </div>
-                <p className="text-xs text-black/50">{message.timestamp}</p>
-              </div>
-            ))}
-            <div ref={messagesEndRef} />
+              );
+            })}
+            <div ref={messagesEndRef} className="h-0" />
           </div>
           <div className="w-full pt-6">
             <input
