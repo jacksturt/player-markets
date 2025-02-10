@@ -21,6 +21,12 @@ import { X } from "lucide-react";
 import MaximizeIcon from "../icons/maximize";
 import { timestampToTime } from "@/utils/sendbird";
 import { api } from "@/trpc/react";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "../ui/tooltip";
 
 const sb = SendbirdChat.init({
   appId: "434D4E2C-4EEF-41DB-AE99-30D00B5AFF1D",
@@ -233,7 +239,16 @@ export default function ChatUI() {
               <p className="font-clashMedium">General Chat</p>
             </div>
             {/* TODO: function to open expanded chat (page?) */}
-            <MaximizeIcon />
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger>
+                  <MaximizeIcon />
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Expand Chat Coming Soon</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
           </div>
           <div className="h-[1px] bg-black opacity-[.12] w-full" />
           {/* messages */}

@@ -83,7 +83,7 @@ export default function LeaderboardView() {
       <div className="w-full lg:w-auto flex flex-row gap-[25px]">
         <div className="flex flex-col gap-[25px] lg:w-[800px]">
           <p className="text-2xl text-white font-clashMed">Popular Markets</p>
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 max-h-[900px] overflow-y-scroll">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 max-h-[900px] overflow-y-scroll pb-20">
             {largestPools.data?.map((market) => (
               <PopularMarketCard
                 key={market.config.publicKey.toBase58()}
@@ -119,7 +119,7 @@ function PopularMarketCard({ market }: { market: LargestPool }) {
       onClick={() => {
         router.push(`/home/players/${market.config.publicKey.toBase58()}`);
       }}
-      className="w-full bg-black/50 rounded-[20px] px-6 py-4 flex items-center justify-between"
+      className="w-full bg-black/50 border border-[#373737]/50 rounded-[20px] px-6 py-4 flex items-center justify-between"
     >
       <div className="flex items-center gap-4 w-[250px] mr-4">
         <div className="flex flex-col w-full gap-2">
