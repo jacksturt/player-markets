@@ -81,6 +81,7 @@ export default function ChatUI() {
       const userMessageParams = {
         message: message.trim(),
         data: JSON.stringify({
+          nickname: user?.username ?? "",
           profileUrl: user?.image ?? "/player-temp/allen.jpg",
         }),
         customType: "userMessage",
@@ -93,6 +94,7 @@ export default function ChatUI() {
         {
           message: message.trim(), // Use the message directly
           sender:
+            user?.username ??
             myKey.toBase58().slice(0, 5) + "..." + myKey.toBase58().slice(-5),
           image: user?.image ?? "/player-temp/allen.jpg",
           timestamp: timestampToTime(Date.now()),
@@ -256,9 +258,10 @@ export default function ChatUI() {
             {messages.map((message, index) => {
               const isUserMessage =
                 message.sender ===
-                myKey.toBase58().slice(0, 5) +
-                  "..." +
-                  myKey.toBase58().slice(-5);
+                  myKey.toBase58().slice(0, 5) +
+                    "..." +
+                    myKey.toBase58().slice(-5) ||
+                message.sender === user?.username;
 
               // Check if next message is from the same sender (for avatar)
               const nextMessage =
@@ -302,7 +305,7 @@ export default function ChatUI() {
                       <div className="text-xs font-bold">
                         {isUserMessage
                           ? "You"
-                          : message.sender.length > 12
+                          : message.sender.length > 20
                           ? message.sender.slice(0, 12) + "..."
                           : message.sender}
                       </div>
