@@ -666,7 +666,10 @@ export function useMarkets() {
         );
         const playerMintAmount = Number(playerMintAccount?.supply!);
         const actualPoints = playerStats?.account.actualPoints ?? 0;
-        const longPayout = (playerMintAmount * actualPoints) / 10 ** 6;
+        const longPayout = Math.max(
+          0,
+          (playerMintAmount * actualPoints) / 10 ** 6
+        );
         const vaultAmount = Number(vault?.amount!);
         const shortPayout = vaultAmount / 10 ** 6 - longPayout;
 
@@ -913,11 +916,7 @@ export function usePlayerMarket() {
           );
           console.log("ask2");
           if (!ask) {
-            return {
-              ...order,
-              isBid: true,
-              isMyOrder: order?.userId === session?.user.id,
-            };
+            return order;
           }
           return {
             ...order,
