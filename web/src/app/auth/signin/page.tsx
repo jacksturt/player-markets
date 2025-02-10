@@ -18,7 +18,7 @@ function SignInContent() {
     if (session?.user) {
       router.push(callbackUrl);
     }
-    if (publicKey && session && !session.user) {
+    if (publicKey && !session) {
       debugger;
 
       const signInHandler = async () => {
