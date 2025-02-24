@@ -35,6 +35,9 @@ export const readAllMarkets = protectedProcedure.query(async () => {
       player: true,
       team: true,
     },
+    where: {
+      player: { team: { sportsDataId: { in: ["DET", "SF"] } } },
+    },
   });
   return markets;
 });
