@@ -1,7 +1,7 @@
 "use client";
 
 import {
-  useCapsuleWallet,
+  useParaWallet,
   useManifestClient,
   useMarkets,
   useMyMarket,
@@ -31,7 +31,7 @@ import { UserMessage } from "@sendbird/chat/message";
 import { FillLogResult } from "manifest/src";
 import toast from "react-hot-toast";
 import { useSession } from "next-auth/react";
-import { capsule } from "@/lib/capsule";
+import { para } from "@/lib/para";
 import ChartComponent from "@/components/player-data/chart";
 import { PlaceOrderLogResult } from "@/lib/types";
 import { useQueryClient } from "@tanstack/react-query";
@@ -80,16 +80,16 @@ export default function MarketFeature() {
 
   const { publicKey } = useWallet();
   const { quoteTokenBalance } = useQuoteToken();
-  const { capsulePubkey } = useCapsuleWallet();
+  const { paraPubkey } = useParaWallet();
   const { hasSeatBeenClaimed } = useManifestClient();
   const queryClient = useQueryClient();
   const utils = api.useUtils();
-  const myKey = publicKey ?? capsulePubkey.data!;
+  const myKey = publicKey ?? paraPubkey.data!;
   useEffect(() => {
-    async function checkCapsuleSession() {
-      const isActive = await capsule.isSessionActive();
+    async function checkParaSession() {
+      const isActive = await para.isSessionActive();
     }
-    checkCapsuleSession();
+    checkParaSession();
   }, []);
 
   useEffect(() => {

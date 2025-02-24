@@ -3,7 +3,7 @@ import { type DefaultSession, type NextAuthOptions } from "next-auth";
 
 import CredentialsProvider from "next-auth/providers/credentials";
 import { db } from "@/server/db";
-import { capsuleServer } from "../capsule";
+import { paraServer } from "../para";
 import { PublicKey } from "@solana/web3.js";
 
 /**
@@ -64,11 +64,11 @@ export const authConfig = {
   adapter: PrismaAdapter(db),
   providers: [
     CredentialsProvider({
-      id: "capsule",
-      name: "Capsule",
+      id: "para",
+      name: "Para",
       credentials: {
         email: { label: "Email", type: "text" },
-        capsuleUserId: { label: "Capsule User ID", type: "text" },
+        paraUserId: { label: "Para User ID", type: "text" },
         publicKey: { label: "Public Key", type: "text" },
         serializedSession: { label: "Serialized Session", type: "text" },
       },
@@ -77,69 +77,60 @@ export const authConfig = {
           if (!credentials) {
             throw new Error("No credentials provided");
           }
-          if (credentials.capsuleUserId !== "undefined") {
-            capsuleServer.importSession(
-              credentials.serializedSession as string
-            );
-            let user = await db.user.findUnique({
-              where: { capsuleUserId: credentials.capsuleUserId as string },
+          console.log("Credentials", credentials);
+          if (credentials.paraUserId !== "undefined") {
+            paraServer.importSession(credentials.serializedSession as string);
+
+            const wallet = await db.wallet.findFirst({
+              where: {
+                address: credentials.publicKey as string,
+              },
+              include: {
+                user: true,
+              },
             });
 
-            if (!user) {
-              if (credentials.email) {
-                user = await db.user.create({
+            if (wallet?.user?.paraUserId === credentials.paraUserId) {
+              return wallet.user;
+            }
+            if (wallet?.user) {
+              await db.user.update({
+                where: { id: wallet.user.id },
+                data: {
+                  paraUserId: credentials.paraUserId as string,
+                },
+              });
+              return wallet.user;
+            } else {
+              if (credentials.email && credentials.email !== "undefined") {
+                const user = await db.user.create({
                   data: {
-                    capsuleUserId: credentials.capsuleUserId as string,
+                    paraUserId: credentials.paraUserId as string,
                     email: credentials.email as string,
                   },
                 });
-              } else {
-                user = await db.user.create({
+                await db.wallet.create({
                   data: {
-                    capsuleUserId: credentials.capsuleUserId as string,
+                    address: credentials.publicKey as string,
+                    userId: user.id,
                   },
                 });
+                return user;
+              } else {
+                const user = await db.user.create({
+                  data: {
+                    paraUserId: credentials.paraUserId as string,
+                  },
+                });
+                await db.wallet.create({
+                  data: {
+                    address: credentials.publicKey as string,
+                    userId: user.id,
+                  },
+                });
+                return user;
               }
             }
-
-            if (user && !user.email && credentials.email) {
-              await db.user.update({
-                where: { id: user.id },
-                data: {
-                  email: credentials.email as string,
-                },
-              });
-            }
-
-            const wallets = await db.wallet.findMany({
-              where: {
-                userId: user.id,
-              },
-            });
-            const walletAddresses = wallets.map((wallet) => wallet.address);
-            if (
-              walletAddresses.length === 0 ||
-              !walletAddresses.includes(credentials.publicKey as string)
-            ) {
-              const wallet = await db.wallet.create({
-                data: {
-                  address: credentials.publicKey as string,
-                  userId: user.id,
-                },
-              });
-              await db.user.update({
-                where: { id: user.id },
-                data: {
-                  wallets: {
-                    connect: {
-                      id: wallet.id,
-                    },
-                  },
-                },
-              });
-            }
-
-            return user;
           } else if (credentials.publicKey) {
             try {
               const pk = new PublicKey(credentials.publicKey as string);
@@ -197,7 +188,7 @@ export const authConfig = {
       },
     }),
   ],
-  // Add a custom page that will handle the Capsule modal
+  // Add a custom page that will handle the Para modal
   pages: {
     signIn: "/auth/signin",
   },

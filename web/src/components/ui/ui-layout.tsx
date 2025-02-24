@@ -5,7 +5,7 @@ import { useRouter, usePathname } from "next/navigation";
 import * as React from "react";
 import { ReactNode, Suspense, useEffect, useRef, useState } from "react";
 import toast, { Toaster } from "react-hot-toast";
-import { capsule } from "@/lib/capsule";
+import { para } from "@/lib/para";
 import { IconCopy } from "@tabler/icons-react";
 
 import { WalletButton } from "../solana/solana-provider";
@@ -52,7 +52,7 @@ export function UiLayout({
           </Link>
         </div>
         <div className="flex-none space-x-2">
-          <CapsuleAccountInfo />
+          <ParaAccountInfo />
           <WalletButton />
         </div>
       </div>
@@ -171,14 +171,14 @@ export function useTransactionToast() {
   };
 }
 
-function CapsuleAccountInfo() {
+function ParaAccountInfo() {
   const [isActive, setIsActive] = useState(false);
   const router = useRouter();
   const pathname = usePathname();
 
   useEffect(() => {
-    capsule.isSessionActive().then(setIsActive);
-  }, [capsule]);
+    para.isSessionActive().then(setIsActive);
+  }, [para]);
 
   if (!isActive) {
     return (
@@ -194,7 +194,7 @@ function CapsuleAccountInfo() {
       </Button>
     );
   }
-  const pk = new PublicKey(capsule.getAddress()!);
+  const pk = new PublicKey(para.getAddress()!);
   return (
     <div
       className="btn btn-primary flex flex-row gap-2 h-full"

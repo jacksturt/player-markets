@@ -1,0 +1,2 @@
+-- AlterTable
+ALTER TABLE "Trade" ADD COLUMN     "cost" DECIMAL(65,30) NOT NULL DEFAULT 0;

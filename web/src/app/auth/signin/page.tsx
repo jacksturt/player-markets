@@ -2,16 +2,16 @@
 "use client";
 import { useEffect, useState, Suspense } from "react";
 import { signIn, useSession } from "next-auth/react";
-import { capsule } from "@/lib/capsule";
-import "@usecapsule/react-sdk/styles.css";
-import { OAuthMethod } from "@usecapsule/react-sdk";
+import { para } from "@/lib/para";
+import "@getpara/react-sdk/styles.css";
+import { OAuthMethod } from "@getpara/react-sdk";
 import dynamic from "next/dynamic";
 import { useRouter, useSearchParams } from "next/navigation";
-const CapsuleModal = dynamic(
-  () => import("@usecapsule/react-sdk").then((mod) => mod.CapsuleModal),
+const ParaModal = dynamic(
+  () => import("@getpara/react-sdk").then((mod) => mod.ParaModal),
   { ssr: false }
 );
-import { ExternalWallet } from "@usecapsule/react-sdk";
+import { ExternalWallet } from "@getpara/react-sdk";
 import { useWallet } from "@solana/wallet-adapter-react";
 
 function SignInContent() {
@@ -20,19 +20,20 @@ function SignInContent() {
   const searchParams = useSearchParams();
   const { publicKey } = useWallet();
   const callbackUrl = searchParams.get("callbackUrl") ?? "/";
-  const handleCapsuleSetup = async () => {
+  const handleParaSetup = async () => {
     try {
-      const { data } = await capsule.userSetupAfterLogin();
+      const userId = await para.getUserId();
+      console.log("userId", userId);
 
-      const serializedSession = await capsule.exportSession();
-      const email = capsule.getEmail();
-      const capsulePublicKey = capsule.getAddress();
-      if (!!publicKey || !!capsulePublicKey) {
-        const signInKey = publicKey ?? capsulePublicKey;
-        const result = await signIn("capsule", {
+      const serializedSession = await para.exportSession();
+      const email = para.getEmail();
+      const paraPublicKey = para.getAddress();
+      if (!!publicKey || !!paraPublicKey) {
+        const signInKey = publicKey ?? paraPublicKey;
+        const result = await signIn("para", {
           email: email,
           publicKey: signInKey,
-          capsuleUserId: (data as any).userId ?? "undefined",
+          paraUserId: userId ?? "undefined",
           serializedSession,
           redirect: false,
         });
@@ -43,36 +44,36 @@ function SignInContent() {
         }
       }
     } catch (error) {
-      console.error("Error during Capsule setup:", error);
+      console.error("Error during Para setup:", error);
     }
   };
 
   useEffect(() => {
     let isMounted = true;
 
-    const checkCapsuleSession = async () => {
+    const checkParaSession = async () => {
       try {
-        const isActive = await capsule.isSessionActive();
+        const isActive = await para.isSessionActive();
         console.log("isActive", isActive, isMounted);
         if (isActive && isMounted) {
-          await handleCapsuleSetup();
+          await handleParaSetup();
         }
       } catch (error) {
         console.error("Error checking session:", error);
       }
     };
 
-    checkCapsuleSession();
+    checkParaSession();
   }, [publicKey]);
 
   return (
     <div>
-      <CapsuleModal
-        capsule={capsule}
+      <ParaModal
+        para={para}
         isOpen={isOpen}
         onClose={() => {
           setIsOpen(false);
-          handleCapsuleSetup();
+          handleParaSetup();
           router.push(callbackUrl);
         }}
         appName="Your App Name"

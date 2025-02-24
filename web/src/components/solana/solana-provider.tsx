@@ -14,10 +14,10 @@ import { WalletModalProvider } from "@solana/wallet-adapter-react-ui";
 import { ReactNode, useCallback, useMemo } from "react";
 import {
   backpackWallet,
-  CapsuleSolanaProvider,
+  ParaSolanaProvider,
   glowWallet,
   phantomWallet,
-} from "@usecapsule/solana-wallet-connectors";
+} from "@getpara/solana-wallet-connectors";
 require("@solana/wallet-adapter-react-ui/styles.css");
 
 export const WalletButton = dynamic(
@@ -34,7 +34,7 @@ export function SolanaProvider({ children }: { children: ReactNode }) {
   }, []);
 
   return (
-    <CapsuleSolanaProvider
+    <ParaSolanaProvider
       endpoint={process.env.NEXT_PUBLIC_RPC_URL!}
       wallets={[glowWallet, phantomWallet, backpackWallet]}
       chain={"solana:mainnet-beta"}
@@ -48,7 +48,7 @@ export function SolanaProvider({ children }: { children: ReactNode }) {
           <WalletModalProvider>{children}</WalletModalProvider>
         </WalletProvider>
       </ConnectionProvider>
-    </CapsuleSolanaProvider>
+    </ParaSolanaProvider>
   );
 }
 

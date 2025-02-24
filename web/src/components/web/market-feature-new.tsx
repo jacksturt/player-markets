@@ -11,7 +11,7 @@ import {
 import { Payout, Trade, WithdrawAll, QuoteTokenFaucet } from "./web-ui";
 import { FillLogResult } from "manifest/src";
 import toast from "react-hot-toast";
-import { capsule } from "@/lib/capsule";
+import { para } from "@/lib/para";
 import ChartComponent from "@/components/player-data/chart";
 import { PlaceOrderLogResult } from "@/lib/types";
 import { useQueryClient } from "@tanstack/react-query";
@@ -65,10 +65,10 @@ export default function MarketFeatureNew() {
   const queryClient = useQueryClient();
   const utils = api.useUtils();
   useEffect(() => {
-    async function checkCapsuleSession() {
-      const isActive = await capsule.isSessionActive();
+    async function checkParaSession() {
+      const isActive = await para.isSessionActive();
     }
-    checkCapsuleSession();
+    checkParaSession();
   }, []);
 
   useEffect(() => {

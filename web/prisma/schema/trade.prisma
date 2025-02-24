@@ -3,6 +3,7 @@ model Trade {
     signature            String  @unique
     price                Decimal
     quantity             Decimal @default(0)
+    cost                 Decimal @default(0)
     slot                 Int     @default(0)
     buyerSequenceNumber  Int?
     sellerSequenceNumber Int?

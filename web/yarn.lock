@@ -703,10 +703,10 @@
   resolved "https://registry.yarnpkg.com/@floating-ui/utils/-/utils-0.2.9.tgz#50dea3616bc8191fb8e112283b49eaff03e78429"
   integrity sha512-MDWhGtE+eHw5JW7lq4qhc5yRLS11ERl1c7Z6Xd0a58DozHES6EnNNwUWbMiG4J9Cgj053Bhk8zvlhFYKVhULwg==
 
-"@getpara/core-components@1.0.1":
-  version "1.0.1"
-  resolved "https://registry.yarnpkg.com/@getpara/core-components/-/core-components-1.0.1.tgz#8fc978b114ef53b87fda81d5519e3cf89215904e"
-  integrity sha512-XE1z5Do1H6uM5vevah0oBQh6f8FBC/wWRsJJYb0SPqZ+VLRzUDBuko1nH5cuVoezUnJuaYSvCxgKyL4aHKBbKA==
+"@getpara/core-components@1.1.0":
+  version "1.1.0"
+  resolved "https://registry.npmjs.org/@getpara/core-components/-/core-components-1.1.0.tgz#c447b6c5b5050102f918920b436755ed720649d4"
+  integrity sha512-33zDzwycvjWxcl1V/jh/cYUyCsVvHn2SMDQ6nKC9dJZatyhgwEHPcDXxzL/yE8mPw9Ok3fM84uKmQjI9RIjdOQ==
   dependencies:
     "@stencil/core" "^4.7.0"
     color-blend "^4.0.0"
@@ -715,14 +715,14 @@
     inputmask "5.0.9"
     qrcode-with-logos "1.1.1"
 
-"@getpara/core-sdk@1.0.1":
-  version "1.0.1"
-  resolved "https://registry.yarnpkg.com/@getpara/core-sdk/-/core-sdk-1.0.1.tgz#a40c589b16e8bdc19e4744c1843336a432bd8797"
-  integrity sha512-pbktswYjhjS6ySeOUIhCuO6wxr4Uh3N+3OhIeG0YFgZJg6AqGcBhASCySJqV2tVES191LubqnCFUwkhkCsELzA==
+"@getpara/core-sdk@1.1.0":
+  version "1.1.0"
+  resolved "https://registry.npmjs.org/@getpara/core-sdk/-/core-sdk-1.1.0.tgz#068825e9f28c54d6a58f09939b200d0922722ed5"
+  integrity sha512-FLwUWureQf0wR+jdfnUKlFS0Fddj+iwRZY19d2PENeulGgPuhdD5eexujyX94Z3txBYKSdnKrBsxIO8RCpP5GQ==
   dependencies:
     "@celo/utils" "^8.0.0"
     "@cosmjs/encoding" "^0.32.4"
-    "@getpara/user-management-client" "1.0.1"
+    "@getpara/user-management-client" "1.1.0"
     "@noble/hashes" "^1.5.0"
     base64url "^3.0.1"
     buffer "6.0.3"
@@ -731,13 +731,13 @@
     node-forge "^1.3.1"
     qs "^6.12.0"
 
-"@getpara/react-common@1.0.1":
-  version "1.0.1"
-  resolved "https://registry.yarnpkg.com/@getpara/react-common/-/react-common-1.0.1.tgz#724b1e7c74bf33362549ac4541907a4cd2714389"
-  integrity sha512-GD+06NfN8HHx0Ol3kZ3Lb65HYN6iyi7U5P46saK5DfU7OnKkAlmRhgcz132SIDfXdKF4x0/Y5P4KQbHW+m/HKw==
+"@getpara/react-common@1.1.0":
+  version "1.1.0"
+  resolved "https://registry.npmjs.org/@getpara/react-common/-/react-common-1.1.0.tgz#1562424f96c5a69afaf8851c57d82ace43b2504e"
+  integrity sha512-4oU+Ox4a8K0yjWvZ2FuazItZ7i2AI0DetxdmX4RBuF/Yls0No9e/PU7trA2AbDP5UwURBmDkQ7Ju81b/cpzz7Q==
   dependencies:
-    "@getpara/react-components" "1.0.1"
-    "@getpara/web-sdk" "1.0.1"
+    "@getpara/react-components" "1.1.0"
+    "@getpara/web-sdk" "1.1.0"
     "@moonpay/moonpay-react" "^1.8.3"
     "@ramp-network/ramp-instant-sdk" "^4.0.5"
     "@stripe/crypto" "^0.0.4"
@@ -745,21 +745,21 @@
     libphonenumber-js "^1.11.1"
     styled-components "^6.1.8"
 
-"@getpara/react-components@1.0.1":
-  version "1.0.1"
-  resolved "https://registry.yarnpkg.com/@getpara/react-components/-/react-components-1.0.1.tgz#8816ec2657be68e32b9a6326e43c581dc73d7f77"
-  integrity sha512-hKreaX95Y+cf6LEmSQ5yjtbhvIwIJheskbt3O62LXWBykN03FteQSR5CAP19WmIXaC8mKNxcRCIrqI6w787BXA==
+"@getpara/react-components@1.1.0":
+  version "1.1.0"
+  resolved "https://registry.npmjs.org/@getpara/react-components/-/react-components-1.1.0.tgz#f43031939c3b00d62112491b292e1694db6b2072"
+  integrity sha512-XBDViKu0BHQOwERKIXe4lcl+Cy88zM9g3mBhB0ugrXcp0k2sZ9WGiZ5ntA1upUNdwvxpiaHO/VaM+wQXwMKVkg==
   dependencies:
-    "@getpara/core-components" "1.0.1"
+    "@getpara/core-components" "1.1.0"
 
-"@getpara/react-sdk@^1.0.1":
-  version "1.0.1"
-  resolved "https://registry.yarnpkg.com/@getpara/react-sdk/-/react-sdk-1.0.1.tgz#fd0472408d4028296fd0c4bab2528f93023b22d8"
-  integrity sha512-vow8/8qvus7aqaoMs23HHsGiZsdsEhGcCvqLtRnpeuPL7QC9jG/0ChJtzuqoL+zVOpXrlj/X/wzEstMez0LR2g==
+"@getpara/react-sdk@1.1.0":
+  version "1.1.0"
+  resolved "https://registry.npmjs.org/@getpara/react-sdk/-/react-sdk-1.1.0.tgz#907f9290f9352d26348d0a492b97856945075bdf"
+  integrity sha512-oYC8JVjSSRzqFtiQPqzTbjsalDFMqPFrCj3BPhYval8U6XXLxj+73B+mlsiiDC9GvQD75y0rsxBylCTY9vzbLg==
   dependencies:
-    "@getpara/react-common" "1.0.1"
-    "@getpara/react-components" "1.0.1"
-    "@getpara/web-sdk" "1.0.1"
+    "@getpara/react-common" "1.1.0"
+    "@getpara/react-components" "1.1.0"
+    "@getpara/web-sdk" "1.1.0"
     "@tanstack/react-query" "^5.0.0"
     date-fns "^3.6.0"
     detect-browser "^5.3.0"
@@ -768,22 +768,47 @@
     styled-components "^6.1.8"
     zustand "^4.5.2"
 
-"@getpara/user-management-client@1.0.1":
-  version "1.0.1"
-  resolved "https://registry.yarnpkg.com/@getpara/user-management-client/-/user-management-client-1.0.1.tgz#ac1bd909c49c6af4577a717ca1dddf4899091cda"
-  integrity sha512-NQKq9G32xALKlRD0q5uBXC6reGMUPbjaTfaAtAoQrCyJOIH5h6JsmRdecd1ZhCapN0X6FtuILSt7RfKEy+HYkg==
+"@getpara/server-sdk@1.1.0":
+  version "1.1.0"
+  resolved "https://registry.npmjs.org/@getpara/server-sdk/-/server-sdk-1.1.0.tgz#9957ed8bb44fac2837c711a0468b3a2645ff6d8e"
+  integrity sha512-WKUY3h1HJdiCNeypcy5RrVMX9WYCNrWTwL7M9C15AgkwyCsBLYdcvIDEr9tLOIctC2DO7br7k1Tthh3XPgT/SQ==
+  dependencies:
+    "@getpara/core-sdk" "1.1.0"
+    "@getpara/user-management-client" "1.1.0"
+    uuid "^9.0.1"
+    ws "^8.14.2"
+
+"@getpara/solana-wallet-connectors@1.1.0":
+  version "1.1.0"
+  resolved "https://registry.npmjs.org/@getpara/solana-wallet-connectors/-/solana-wallet-connectors-1.1.0.tgz#2baad612469d988d2a9c937321cca42569853c36"
+  integrity sha512-k8mgzDBAnX9xJ/dQNl40zuJJesz22mZRFo0QHJSUouuzRFCRZ588YAAOiVQNqvoXLhHTEmpe80Tdp00GuGzenA==
+  dependencies:
+    "@getpara/react-sdk" "1.1.0"
+
+"@getpara/solana-web3.js-v1-integration@1.1.0":
+  version "1.1.0"
+  resolved "https://registry.npmjs.org/@getpara/solana-web3.js-v1-integration/-/solana-web3.js-v1-integration-1.1.0.tgz#f1ca42f6f56c9cfbe4ccc48407d7453dad0cf554"
+  integrity sha512-AFMisCtXAxrJZHSbmXC+JT0biE0YkG61D4mCSWg44eFD69v5y94St/VD0avL+JFxzgr+O4+SCrtfqzAQgCd9nA==
+  dependencies:
+    "@getpara/core-sdk" "1.1.0"
+    "@solana/web3.js" "^1.95.8"
+
+"@getpara/user-management-client@1.1.0":
+  version "1.1.0"
+  resolved "https://registry.npmjs.org/@getpara/user-management-client/-/user-management-client-1.1.0.tgz#88cdce4c1bb12c746427c14cd69a3b4f04d9d7f4"
+  integrity sha512-zsOxmcA8SkJfq+f1S43nvNjN0NoTLmHeRd0maxJm+Kfw/YZaDJj0GsOKrvq6lGXScleC3l62BavcRATEdpSHzA==
   dependencies:
     axios "^1.6.3"
     libphonenumber-js "1.11.2"
     qs "^6.12.0"
 
-"@getpara/web-sdk@1.0.1":
-  version "1.0.1"
-  resolved "https://registry.yarnpkg.com/@getpara/web-sdk/-/web-sdk-1.0.1.tgz#30a72731953520890bf7887260c2bc19c3b6433f"
-  integrity sha512-YBrNEuRTpvdjzirhLIr42Q9vFeWTmZmpycrr50baIKjfQpq6kHZiLHRmjzB7wRdURGiU8gcY1DF6InUP9f0zBg==
+"@getpara/web-sdk@1.1.0":
+  version "1.1.0"
+  resolved "https://registry.npmjs.org/@getpara/web-sdk/-/web-sdk-1.1.0.tgz#52bf17e8dea92d59d72fe238f87278a85e939ffe"
+  integrity sha512-6HU/Q6mkbxBtJMWAmUxK5L2QKiRKBPBUpPq6jXrFzjBRUsJRWw4Q1Ej9DkdIVG/ER8Qq/J5Ynf2P2aSGi78WUg==
   dependencies:
-    "@getpara/core-sdk" "1.0.1"
-    "@getpara/user-management-client" "1.0.1"
+    "@getpara/core-sdk" "1.1.0"
+    "@getpara/user-management-client" "1.1.0"
     assert "^2.1.0"
     base64url "3.0.1"
     buffer "6.0.3"
@@ -2432,117 +2457,6 @@
   version "1.3.0"
   resolved "https://registry.yarnpkg.com/@ungap/structured-clone/-/structured-clone-1.3.0.tgz#d06bbb384ebcf6c505fde1c3d0ed4ddffe0aaff8"
   integrity sha512-WmoN8qaIAo7WTYWbAZuG8PYEhn5fkz7dZrqTBZ7dtt//lL2Gwms1IcnQ5yHqjDfX8Ft5j4YzDM23f87zBfDe9g==
-
-"@usecapsule/core-components@3.25.0":
-  version "3.25.0"
-  resolved "https://registry.yarnpkg.com/@usecapsule/core-components/-/core-components-3.25.0.tgz#9939a415a07c9a1dbd4b82740f8cba9715490821"
-  integrity sha512-YsFyWTyBiSqqnE+EmfJnwgnO61EYEJH1BGwgsNgdiW/R7heQUalRMyyMn2c4rDHPw/jbsHO9zgnHpwQ+Evbs8w==
-  dependencies:
-    "@stencil/core" "^4.7.0"
-    color-blend "^4.0.0"
-    color2k "^2.0.3"
-    gsap "^3.12.5"
-    inputmask "5.0.9"
-    qrcode-with-logos "1.1.1"
-
-"@usecapsule/core-sdk@2.20.0":
-  version "2.20.0"
-  resolved "https://registry.yarnpkg.com/@usecapsule/core-sdk/-/core-sdk-2.20.0.tgz#5bf7c377220ce95538ee879415b97c0f8a2a9e39"
-  integrity sha512-Faid6gh04cYU7a6Nl2N1hHp5wnwXGst651T6P3i7+aTPoO5vGEYLmaRhorDpk2H9Wdmm8DvC3odAXhZohAAk9Q==
-  dependencies:
-    "@celo/utils" "^8.0.0"
-    "@cosmjs/encoding" "^0.32.4"
-    "@noble/hashes" "^1.5.0"
-    "@usecapsule/user-management-client" "1.42.0"
-    base64url "^3.0.1"
-    buffer "6.0.3"
-    ethereumjs-util "7.1.5"
-    libphonenumber-js "1.11.2"
-    node-forge "^1.3.1"
-    qs "^6.12.0"
-
-"@usecapsule/react-common@1.17.0":
-  version "1.17.0"
-  resolved "https://registry.yarnpkg.com/@usecapsule/react-common/-/react-common-1.17.0.tgz#04a152ab770fb4b47e7f76b5febf478fa380572f"
-  integrity sha512-PV/8nOW3QJPyEO7fDK6MJhB0FEML20os/n0oPgESu9NPICL99wyVdhYqYU3AzdbdDy83SQbqlAMooH0crNoSeA==
-  dependencies:
-    "@moonpay/moonpay-react" "^1.8.3"
-    "@ramp-network/ramp-instant-sdk" "^4.0.5"
-    "@stripe/crypto" "^0.0.4"
-    "@stripe/stripe-js" "^3.4.0"
-    "@usecapsule/web-sdk" "2.20.0"
-    libphonenumber-js "^1.11.1"
-    styled-components "^6.1.8"
-
-"@usecapsule/react-components@3.25.0":
-  version "3.25.0"
-  resolved "https://registry.yarnpkg.com/@usecapsule/react-components/-/react-components-3.25.0.tgz#89fbace8eb29de8c0a0afac3abac0c981df5c572"
-  integrity sha512-ewzrTI+kWwT+Eho4suoKXLx64kZPcU/MhKoponOYTXfn+DmngJJNOwqcYOSc0/aUWVeO7ikZ4ZLnKJkmONhm9w==
-  dependencies:
-    "@usecapsule/core-components" "3.25.0"
-
-"@usecapsule/react-sdk@4.20.0", "@usecapsule/react-sdk@^4.20.0":
-  version "4.20.0"
-  resolved "https://registry.yarnpkg.com/@usecapsule/react-sdk/-/react-sdk-4.20.0.tgz#717681615b35e3f7357cbc6f239bd3d2832fd1dd"
-  integrity sha512-0u/MfROdOT1M/PYxFONoimcETSoxRn5svZBzH7K5tXwB+PHxfR2YXooa2wQ+0Z1ygHX3S7G7Sd2cdOmHV7XkSQ==
-  dependencies:
-    "@usecapsule/react-common" "1.17.0"
-    "@usecapsule/react-components" "3.25.0"
-    "@usecapsule/web-sdk" "2.20.0"
-    date-fns "^3.6.0"
-    detect-browser "^5.3.0"
-    framer-motion "11.3.28"
-    libphonenumber-js "^1.11.1"
-    styled-components "^6.1.8"
-    zustand "^4.5.2"
-
-"@usecapsule/server-sdk@^2.20.0":
-  version "2.20.0"
-  resolved "https://registry.yarnpkg.com/@usecapsule/server-sdk/-/server-sdk-2.20.0.tgz#98bf6bc1af776f4e3e20fc62a7ddc633e7f88e62"
-  integrity sha512-EpFwVXfEg/3BiE0dBLeUVJBVQs3ArTlZNxZZtQt6k0biaB0xqgDWaS5/+qOYuD6SQ43Kat7q3qNhGEXhocyjEw==
-  dependencies:
-    "@usecapsule/core-sdk" "2.20.0"
-    "@usecapsule/user-management-client" "1.42.0"
-    uuid "^9.0.1"
-    ws "^8.14.2"
-
-"@usecapsule/solana-wallet-connectors@1.20.0":
-  version "1.20.0"
-  resolved "https://registry.yarnpkg.com/@usecapsule/solana-wallet-connectors/-/solana-wallet-connectors-1.20.0.tgz#b5a3de0904daeccfee6e3d207b0e5c9bd7fb3af7"
-  integrity sha512-XkjwGgxbr9kMds8X58uEpX9S/sao7/y7ZG+DFYHLdXlOi+7uuYIMSL9jgzHWvy+krtNFzCT4wPWpjjqTyLtHHA==
-  dependencies:
-    "@usecapsule/react-sdk" "4.20.0"
-
-"@usecapsule/solana-web3.js-v1-integration@1.20.0":
-  version "1.20.0"
-  resolved "https://registry.yarnpkg.com/@usecapsule/solana-web3.js-v1-integration/-/solana-web3.js-v1-integration-1.20.0.tgz#8c25bb5bdbc7f09f12c7d9236624f843cb84a260"
-  integrity sha512-c5KJY8gOnF0GbSpjJSIV3rk5w59Dg/qWwwU0ecnPkCZJCaJBvmk0odZkFLyJ3RLzK/skcWXFXzdgYKhwnCq+HA==
-  dependencies:
-    "@solana/web3.js" "^1.95.8"
-    "@usecapsule/core-sdk" "2.20.0"
-
-"@usecapsule/user-management-client@1.42.0":
-  version "1.42.0"
-  resolved "https://registry.yarnpkg.com/@usecapsule/user-management-client/-/user-management-client-1.42.0.tgz#2f1796e77b41650800bae5c614fdd3f46cc7ea8f"
-  integrity sha512-O0KZMbEr+isORouIfwv4p17iScaOKFy03WzMLQ416I9mqz3Ab6zp2T8Youo6sEHNWwIucCmeauHOLCGjemH4EQ==
-  dependencies:
-    axios "^1.6.3"
-    libphonenumber-js "1.11.2"
-    qs "^6.12.0"
-
-"@usecapsule/web-sdk@2.20.0":
-  version "2.20.0"
-  resolved "https://registry.yarnpkg.com/@usecapsule/web-sdk/-/web-sdk-2.20.0.tgz#c48a8e0cc07c406e34edd1d367339e10f2f8adc6"
-  integrity sha512-WGUnBA3Sqab3tRNpBpWDInTpPRQFLdKY5veC0g6fnXIB124GKZTqE2EFYZyPUvUmEuhF1gLHOoMxgnNyqy8LJg==
-  dependencies:
-    "@usecapsule/core-sdk" "2.20.0"
-    "@usecapsule/user-management-client" "1.42.0"
-    assert "^2.1.0"
-    base64url "3.0.1"
-    buffer "6.0.3"
-    cbor-web "8.1.0"
-    node-forge "1.3.1"
-    ua-parser-js "1.0.39"
 
 "@wallet-standard/app@^1.1.0":
   version "1.1.0"
@@ -7513,16 +7427,7 @@ string-length@^4.0.1:
     char-regex "^1.0.2"
     strip-ansi "^6.0.0"
 
-"string-width-cjs@npm:string-width@^4.2.0":
-  version "4.2.3"
-  resolved "https://registry.yarnpkg.com/string-width/-/string-width-4.2.3.tgz#269c7117d27b05ad2e536830a8ec895ef9c6d010"
-  integrity sha512-wKyQRQpjJ0sIp62ErSZdGsjMJWsap5oRNihHhu6G7JVO/9jIB6UyevL+tXuOqrng8j/cxKTWyWUwvSTriiZz/g==
-  dependencies:
-    emoji-regex "^8.0.0"
-    is-fullwidth-code-point "^3.0.0"
-    strip-ansi "^6.0.1"
-
-string-width@^4.1.0, string-width@^4.2.0, string-width@^4.2.3:
+"string-width-cjs@npm:string-width@^4.2.0", string-width@^4.1.0, string-width@^4.2.0, string-width@^4.2.3:
   version "4.2.3"
   resolved "https://registry.yarnpkg.com/string-width/-/string-width-4.2.3.tgz#269c7117d27b05ad2e536830a8ec895ef9c6d010"
   integrity sha512-wKyQRQpjJ0sIp62ErSZdGsjMJWsap5oRNihHhu6G7JVO/9jIB6UyevL+tXuOqrng8j/cxKTWyWUwvSTriiZz/g==
@@ -7623,14 +7528,7 @@ stringify-entities@^4.0.0:
     character-entities-html4 "^2.0.0"
     character-entities-legacy "^3.0.0"
 
-"strip-ansi-cjs@npm:strip-ansi@^6.0.1":
-  version "6.0.1"
-  resolved "https://registry.yarnpkg.com/strip-ansi/-/strip-ansi-6.0.1.tgz#9e26c63d30f53443e9489495b2105d37b67a85d9"
-  integrity sha512-Y38VPSHcqkFrCpFnQ9vuSXmquuv5oXOKpGeT6aGrr3o3Gc9AlVa6JBfUSOCnbxGGZF+/0ooI7KrPuUSztUdU5A==
-  dependencies:
-    ansi-regex "^5.0.1"
-
-strip-ansi@^6.0.0, strip-ansi@^6.0.1:
+"strip-ansi-cjs@npm:strip-ansi@^6.0.1", strip-ansi@^6.0.0, strip-ansi@^6.0.1:
   version "6.0.1"
   resolved "https://registry.yarnpkg.com/strip-ansi/-/strip-ansi-6.0.1.tgz#9e26c63d30f53443e9489495b2105d37b67a85d9"
   integrity sha512-Y38VPSHcqkFrCpFnQ9vuSXmquuv5oXOKpGeT6aGrr3o3Gc9AlVa6JBfUSOCnbxGGZF+/0ooI7KrPuUSztUdU5A==
@@ -8343,7 +8241,7 @@ word-wrap@^1.2.5:
   resolved "https://registry.yarnpkg.com/word-wrap/-/word-wrap-1.2.5.tgz#d2c45c6dd4fbce621a66f136cbe328afd0410b34"
   integrity sha512-BN22B5eaMMI9UMtjrGd5g5eCYPpCPDUy0FJXbYsaT5zYxjFOckS53SQDE3pWkVoWpHXVb3BrYcEN4Twa55B5cA==
 
-"wrap-ansi-cjs@npm:wrap-ansi@^7.0.0":
+"wrap-ansi-cjs@npm:wrap-ansi@^7.0.0", wrap-ansi@^7.0.0:
   version "7.0.0"
   resolved "https://registry.yarnpkg.com/wrap-ansi/-/wrap-ansi-7.0.0.tgz#67e145cff510a6a6984bdf1152911d69d2eb9e43"
   integrity sha512-YVGIj2kamLSTxw6NsZjoBxfSwsn0ycdesmc4p+Q21c5zPuZ1pl+NfxVdxPtdHvmNVOQ6XSYG4AUtyt/Fi7D16Q==
@@ -8356,15 +8254,6 @@ wrap-ansi@^6.2.0:
   version "6.2.0"
   resolved "https://registry.yarnpkg.com/wrap-ansi/-/wrap-ansi-6.2.0.tgz#e9393ba07102e6c91a3b221478f0257cd2856e53"
   integrity sha512-r6lPcBGxZXlIcymEu7InxDMhdW0KDxpLgoFLcguasxCaJ/SOIZwINatK9KY/tf+ZrlywOKU0UDj3ATXUBfxJXA==
-  dependencies:
-    ansi-styles "^4.0.0"
-    string-width "^4.1.0"
-    strip-ansi "^6.0.0"
-
-wrap-ansi@^7.0.0:
-  version "7.0.0"
-  resolved "https://registry.yarnpkg.com/wrap-ansi/-/wrap-ansi-7.0.0.tgz#67e145cff510a6a6984bdf1152911d69d2eb9e43"
-  integrity sha512-YVGIj2kamLSTxw6NsZjoBxfSwsn0ycdesmc4p+Q21c5zPuZ1pl+NfxVdxPtdHvmNVOQ6XSYG4AUtyt/Fi7D16Q==
   dependencies:
     ansi-styles "^4.0.0"
     string-width "^4.1.0"

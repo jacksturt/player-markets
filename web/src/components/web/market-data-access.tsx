@@ -27,8 +27,8 @@ import {
 } from "@solana/spl-token";
 import { createMarketTX } from "manifest/instructions/createMarket";
 import { ManifestClient } from "manifest/src/client";
-import { CapsuleSolanaWeb3Signer } from "@usecapsule/solana-web3.js-v1-integration";
-import { capsule } from "@/lib/capsule";
+import { ParaSolanaWeb3Signer } from "@getpara/solana-web3.js-v1-integration";
+import { para } from "@/lib/para";
 import { OrderType } from "manifest/src/manifest";
 import { Market, Wrapper, WrapperMarketInfo, WrapperData } from "manifest/src";
 import { api } from "@/trpc/react";
@@ -96,26 +96,26 @@ export function useQuoteToken() {
     program.programId
   )[0];
 
-  const capsulePubkey = useQuery({
-    queryKey: ["capsule-pubkey"],
-    queryFn: () => new PublicKey(capsule.getAddress()!),
+  const paraPubkey = useQuery({
+    queryKey: ["para-pubkey"],
+    queryFn: () => new PublicKey(para.getAddress()!),
   });
 
   const quoteTokenAccount = useQuery({
     queryKey: ["quote-token-account"],
     queryFn: async () => {
       if (!publicKey) {
-        console.log("capsulePubkey.data!", capsulePubkey.data?.toBase58());
+        console.log("paraPubkey.data!", paraPubkey.data?.toBase58());
         return getAssociatedTokenAddressSync(
           quoteTokenMint,
-          capsulePubkey.data!,
+          paraPubkey.data!,
           true
         );
       } else {
         return getAssociatedTokenAddressSync(quoteTokenMint, publicKey);
       }
     },
-    enabled: !!capsulePubkey.data || !!publicKey,
+    enabled: !!paraPubkey.data || !!publicKey,
   });
 
   const initialize = useMutation({
@@ -158,15 +158,15 @@ export function useQuoteToken() {
     mutationKey: ["quote-token", "faucet"],
     mutationFn: async () => {
       if (!publicKey) {
-        const solanaSigner = new CapsuleSolanaWeb3Signer(
-          capsule,
+        const solanaSigner = new ParaSolanaWeb3Signer(
+          para,
           provider.connection
         );
 
         const ix = await program.methods
           .faucetQuote(new BN(10000000000000))
           .accountsStrict({
-            payer: capsulePubkey.data!,
+            payer: paraPubkey.data!,
             quoteTokenMint,
             config: quoteConfig,
             destination: quoteTokenAccount.data!,
@@ -180,7 +180,7 @@ export function useQuoteToken() {
         await provider.connection.getLatestBlockhash();
 
         const transaction = new Transaction({
-          feePayer: capsulePubkey.data!,
+          feePayer: paraPubkey.data!,
           blockhash: blockhash.blockhash,
           lastValidBlockHeight: blockhash.lastValidBlockHeight,
         }).add(ix);
@@ -755,8 +755,6 @@ export function useMarketAdmin() {
   const closeMintAccounts = useMutation({
     mutationKey: ["markets", "close-mint-accounts"],
     mutationFn: async () => {
-      const playerId = { data: "18890" };
-      const timestamp = { data: "1738715534348" };
       const mintConfig = PublicKey.findProgramAddressSync(
         [
           Buffer.from("config"),
@@ -1099,7 +1097,7 @@ export const usePlayerToken = () => {
   const createOrder = api.order.create.useMutation();
   const provider = useAnchorProvider();
   const { publicKey, wallet } = useWallet();
-  const { capsulePubkey, solanaSigner } = useCapsuleWallet();
+  const { paraPubkey, solanaSigner } = useParaWallet();
   const { playerId, timestamp } = usePlayerMarket();
   const playerTokenMint = useQuery({
     queryKey: ["player-token-mint"],
@@ -1124,7 +1122,7 @@ export const usePlayerToken = () => {
       if (!publicKey) {
         const playerTokenAccount = getAssociatedTokenAddressSync(
           playerTokenMint.data!,
-          capsulePubkey.data!,
+          paraPubkey.data!,
           true
         );
         return playerTokenAccount;
@@ -1132,7 +1130,7 @@ export const usePlayerToken = () => {
         return getAssociatedTokenAddressSync(playerTokenMint.data!, publicKey);
       }
     },
-    enabled: !!capsulePubkey.data || !!publicKey,
+    enabled: !!paraPubkey.data || !!publicKey,
   });
 
   const playerTokenBalance = useQuery({
@@ -1173,22 +1171,19 @@ export const usePlayerToken = () => {
   };
 };
 
-export const useCapsuleWallet = () => {
+export const useParaWallet = () => {
   const provider = useAnchorProvider();
   const { publicKey } = useWallet();
-  const capsulePubkey = useQuery({
-    queryKey: ["capsule-pubkey"],
-    queryFn: () => new PublicKey(capsule.getAddress()!),
+  const paraPubkey = useQuery({
+    queryKey: ["para-pubkey"],
+    queryFn: () => new PublicKey(para.getAddress()!),
   });
 
   const solanaSigner = useQuery({
     queryKey: ["solana-signer"],
     queryFn: () => {
       if (!publicKey) {
-        const signer = new CapsuleSolanaWeb3Signer(
-          capsule,
-          provider.connection
-        );
+        const signer = new ParaSolanaWeb3Signer(para, provider.connection);
         return signer;
       } else {
         return null;
@@ -1196,14 +1191,14 @@ export const useCapsuleWallet = () => {
     },
   });
 
-  return { capsulePubkey, solanaSigner };
+  return { paraPubkey, solanaSigner };
 };
 
 export const useManifestClient = () => {
   const { marketAddress } = useCurrentMarket();
   const provider = useAnchorProvider();
   const { publicKey, wallet } = useWallet();
-  const { capsulePubkey } = useCapsuleWallet();
+  const { paraPubkey } = useParaWallet();
   const marketPK = marketAddress ? new PublicKey(marketAddress) : null;
 
   const hasSeatBeenClaimed = useQuery({
@@ -1211,7 +1206,7 @@ export const useManifestClient = () => {
     queryFn: async () => {
       const userWrapper = await ManifestClient.fetchFirstUserWrapper(
         provider.connection,
-        publicKey ?? capsulePubkey.data!
+        publicKey ?? paraPubkey.data!
       );
       if (!userWrapper) {
         return false;
@@ -1295,7 +1290,7 @@ export function useMyMarket() {
   const provider = useAnchorProvider();
   const { publicKey, wallet } = useWallet();
   const queryClient = useQueryClient();
-  const { capsulePubkey, solanaSigner } = useCapsuleWallet();
+  const { paraPubkey, solanaSigner } = useParaWallet();
   const cancelOrderDB = api.order.cancelOrderForMarketByUser.useMutation();
   const cancelAllOrdersDB =
     api.order.cancelAllOrdersForMarketByUser.useMutation();
@@ -1312,7 +1307,7 @@ export function useMyMarket() {
         ],
         program.programId
       )[0];
-      const pubkey = publicKey ?? capsulePubkey.data!;
+      const pubkey = publicKey ?? paraPubkey.data!;
       const mintRecordAddress = PublicKey.findProgramAddressSync(
         [Buffer.from("mint_record"), mintConfig.toBuffer(), pubkey.toBuffer()],
         program.programId
@@ -1385,7 +1380,7 @@ export function useMyMarket() {
       if (!hasSeatBeenClaimed.data) {
         return null;
       }
-      const payer = publicKey ?? capsulePubkey.data!;
+      const payer = publicKey ?? paraPubkey.data!;
       const balances = await client.market.getBalances(payer);
       return balances;
     },
@@ -1414,7 +1409,7 @@ export function useMyMarket() {
         (neededQuote * 10 ** 6 - withdrawableQuote * 10 ** 6) / 10 ** 6;
       console.log("amountToDeposit", amountToDeposit);
 
-      const feePayer = publicKey ?? capsulePubkey.data!;
+      const feePayer = publicKey ?? paraPubkey.data!;
       const blockhash = await provider.connection.getLatestBlockhash();
       const transaction = new Transaction({
         feePayer,
@@ -1514,7 +1509,7 @@ export function useMyMarket() {
       const quantityToMint = new BN(baseToMintSafe);
       console.log("quantityToMint", quantityToMint.toString());
 
-      if (!publicKey && !capsulePubkey.data) {
+      if (!publicKey && !paraPubkey.data) {
         throw new Error("No public key found");
       }
       const mintConfig = PublicKey.findProgramAddressSync(
@@ -1539,13 +1534,13 @@ export function useMyMarket() {
           [
             Buffer.from("mint_record"),
             mintConfig.toBuffer(),
-            capsulePubkey.data!.toBuffer(),
+            paraPubkey.data!.toBuffer(),
           ],
           program.programId
         )[0];
         const blockhash = await provider.connection.getLatestBlockhash();
         const transaction = new Transaction({
-          feePayer: capsulePubkey.data!,
+          feePayer: paraPubkey.data!,
           blockhash: blockhash.blockhash,
           lastValidBlockHeight: blockhash.lastValidBlockHeight,
         });
@@ -1554,7 +1549,7 @@ export function useMyMarket() {
           const ix = await program.methods
             .mintTokens(quantityToMint)
             .accountsStrict({
-              payer: capsulePubkey.data!,
+              payer: paraPubkey.data!,
               quoteTokenMint: quoteToken,
               vault,
               playerTokenMint: playerTokenMint.data!,
@@ -1572,7 +1567,7 @@ export function useMyMarket() {
         }
         if (quantityToDeposit > 0) {
           const depositIx = client.depositIx(
-            capsulePubkey.data!,
+            paraPubkey.data!,
             playerTokenMint.data!,
             quantityToDeposit
           );
@@ -1691,7 +1686,7 @@ export function useMyMarket() {
       const cancelAllOrdersIx = client.cancelAllIx();
       const blockhash = await provider.connection.getLatestBlockhash();
       const transaction = new Transaction({
-        feePayer: publicKey ?? capsulePubkey.data!,
+        feePayer: publicKey ?? paraPubkey.data!,
         blockhash: blockhash.blockhash,
         lastValidBlockHeight: blockhash.lastValidBlockHeight,
       }).add(cancelAllOrdersIx);
@@ -1726,7 +1721,7 @@ export function useMyMarket() {
       });
       const blockhash = await provider.connection.getLatestBlockhash();
       const transaction = new Transaction({
-        feePayer: publicKey ?? capsulePubkey.data!,
+        feePayer: publicKey ?? paraPubkey.data!,
         blockhash: blockhash.blockhash,
         lastValidBlockHeight: blockhash.lastValidBlockHeight,
       }).add(cancelOrderIx);
@@ -1758,7 +1753,7 @@ export function useMyMarket() {
   const payout = useMutation({
     mutationKey: ["market", "init-payout", { playerMintPK: marketAddress }],
     mutationFn: async () => {
-      const feePayer = publicKey ?? capsulePubkey.data!;
+      const feePayer = publicKey ?? paraPubkey.data!;
       const playerTokenAccount = getAssociatedTokenAddressSync(
         playerTokenMint.data!,
         feePayer
@@ -1843,7 +1838,7 @@ export function useMyMarket() {
     mutationKey: ["market", "withdraw-all", { playerMintPK: marketAddress }],
     mutationFn: async () => {
       const withdrawIx = await client.withdrawAllIx();
-      const feePayer = publicKey ?? capsulePubkey.data!;
+      const feePayer = publicKey ?? paraPubkey.data!;
       const blockhash = await provider.connection.getLatestBlockhash();
       const transaction = new Transaction({
         feePayer,
@@ -1886,7 +1881,7 @@ export function useMyMarket() {
       const cancelAllOrdersIx = client.cancelAllIx();
       const withdrawAllIx = await client.withdrawAllIx();
       const blockhash = await provider.connection.getLatestBlockhash();
-      const feePayer = publicKey ?? capsulePubkey.data!;
+      const feePayer = publicKey ?? paraPubkey.data!;
       const playerTokenAccount = getAssociatedTokenAddressSync(
         playerTokenMint.data!,
         feePayer,
@@ -1956,7 +1951,7 @@ export function useMyMarket() {
         .accountsStrict(context)
         .instruction();
       const transaction = new Transaction({
-        feePayer: publicKey ?? capsulePubkey.data!,
+        feePayer: publicKey ?? paraPubkey.data!,
         blockhash: blockhash.blockhash,
         lastValidBlockHeight: blockhash.lastValidBlockHeight,
       });
@@ -2019,8 +2014,8 @@ export function useMyMarket() {
 
 const useMyPubkey = () => {
   const { publicKey } = useWallet();
-  const { capsulePubkey } = useCapsuleWallet();
-  return publicKey ?? capsulePubkey.data!;
+  const { paraPubkey } = useParaWallet();
+  return publicKey ?? paraPubkey.data!;
 };
 
 export function useMyBags() {
