@@ -49,7 +49,7 @@ export default function RootLayout({
           >
             <main className="relative max-w-screen min-h-screen">
               {children}
-              <ChatUI />
+              {/* <ChatUI /> */}
             </main>
           </Suspense>
         </Providers>

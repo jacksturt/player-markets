@@ -31,10 +31,10 @@ import { useWallet } from "@solana/wallet-adapter-react";
 import Image from "next/image";
 import { shortenAddress } from "@/lib/utils";
 
-const sb = SendbirdChat.init({
-  appId: "434D4E2C-4EEF-41DB-AE99-30D00B5AFF1D",
-  modules: [new OpenChannelModule()],
-}) as SendbirdOpenChat;
+// const sb = SendbirdChat.init({
+//   appId: "434D4E2C-4EEF-41DB-AE99-30D00B5AFF1D",
+//   modules: [new OpenChannelModule()],
+// }) as SendbirdOpenChat;
 
 export default function MarketFeature() {
   const [username, setUsername] = useState<string>("");
@@ -160,61 +160,61 @@ export default function MarketFeature() {
   //   // };
   // }, [marketAddress, queryClient, utils]);
 
-  const connectToChat = async () => {
-    const uniqueID = myKey.toBase58();
-    await sb.connect(uniqueID);
-    await sb.updateCurrentUserInfo({
-      nickname: username,
-      profileUrl: "/player-temp/allen.jpg",
-    });
-    const open_channel_params = {
-      channelUrl: "market",
-      name: "Market",
-    };
-    // const channel = await sb.openChannel.createChannel(open_channel_params);
-    sb.openChannel.getChannel("market").then(async (channel) => {
-      channel.enter();
-      const chat_params = {
-        // UserMessageCreateParams can be imported from @sendbird/chat/message.
-        message: "Hello2",
-      };
-      const params = {
-        prevResultSize: 100,
-        nextResultSize: 100,
-      };
-      const ts = Date.now() - 1000 * 60 * 60 * 24;
-      const messages = await channel.getMessagesByTimestamp(ts, params);
-      setMessages(
-        messages.map((message) => {
-          const sender = message.isUserMessage() ? message.sender : null;
-          const senderName = sender
-            ? sender.nickname !== ""
-              ? sender.nickname
-              : sender.userId
-            : null;
-          return {
-            message: message.message,
-            sender: senderName ?? "Market",
-            image: sender?.profileUrl ?? "",
-          };
-        })
-      );
+  // const connectToChat = async () => {
+  //   const uniqueID = myKey.toBase58();
+  //   await sb.connect(uniqueID);
+  //   await sb.updateCurrentUserInfo({
+  //     nickname: username,
+  //     profileUrl: "/player-temp/allen.jpg",
+  //   });
+  //   const open_channel_params = {
+  //     channelUrl: "market",
+  //     name: "Market",
+  //   };
+  //   // const channel = await sb.openChannel.createChannel(open_channel_params);
+  //   sb.openChannel.getChannel("market").then(async (channel) => {
+  //     channel.enter();
+  //     const chat_params = {
+  //       // UserMessageCreateParams can be imported from @sendbird/chat/message.
+  //       message: "Hello2",
+  //     };
+  //     const params = {
+  //       prevResultSize: 100,
+  //       nextResultSize: 100,
+  //     };
+  //     const ts = Date.now() - 1000 * 60 * 60 * 24;
+  //     const messages = await channel.getMessagesByTimestamp(ts, params);
+  //     setMessages(
+  //       messages.map((message) => {
+  //         const sender = message.isUserMessage() ? message.sender : null;
+  //         const senderName = sender
+  //           ? sender.nickname !== ""
+  //             ? sender.nickname
+  //             : sender.userId
+  //           : null;
+  //         return {
+  //           message: message.message,
+  //           sender: senderName ?? "Market",
+  //           image: sender?.profileUrl ?? "",
+  //         };
+  //       })
+  //     );
 
-      channel
-        .sendUserMessage(chat_params)
-        .onPending((message) => {
-          // The pending message for the message being sent has been created.
-          // The pending message has the same reqId value as the corresponding failed/succeeded message.
-        })
-        .onFailed((err, message) => {
-          console.log(err);
-        })
-        .onSucceeded((message) => {
-          // The message is successfully sent to the channel.
-          // The current user can receive messages from other users through the onMessageReceived() method of an event handler.
-        });
-    });
-  };
+  //     channel
+  //       .sendUserMessage(chat_params)
+  //       .onPending((message) => {
+  //         // The pending message for the message being sent has been created.
+  //         // The pending message has the same reqId value as the corresponding failed/succeeded message.
+  //       })
+  //       .onFailed((err, message) => {
+  //         console.log(err);
+  //       })
+  //       .onSucceeded((message) => {
+  //         // The message is successfully sent to the channel.
+  //         // The current user can receive messages from other users through the onMessageReceived() method of an event handler.
+  //       });
+  //   });
+  // };
 
   return (
     <div className="w-screen px-[10%] flex items-center justify-center bg-white">
@@ -366,7 +366,7 @@ export default function MarketFeature() {
               value={username}
               onChange={(e) => setUsername(e.target.value)}
             />
-            <button onClick={connectToChat}>Connect</button>
+            {/* <button onClick={connectToChat}>Connect</button> */}
           </div>
           <div>
             {messages.map((message, index) => (

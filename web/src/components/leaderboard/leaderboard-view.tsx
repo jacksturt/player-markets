@@ -117,7 +117,7 @@ function PopularMarketCard({ market }: { market: LargestPool }) {
   return (
     <div
       onClick={() => {
-        router.push(`/home/players/${market.config.publicKey.toBase58()}`);
+        router.push(`/home/players/${market.db?.address}`);
       }}
       className="w-full bg-black/50 border border-[#373737]/50 rounded-[20px] px-6 py-4 flex items-center justify-between"
     >

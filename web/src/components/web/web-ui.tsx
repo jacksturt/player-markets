@@ -730,10 +730,9 @@ export function CreateTeam() {
       className="btn btn-xs lg:btn-md btn-primary"
       onClick={() =>
         createTeam.mutateAsync({
-          teamName: "Baltimore Ravens",
-          teamImage:
-            "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a2/Washington_Commanders_logo.svg/1200px-Washington_Commanders_logo.svg.png",
-          teamSportsdataId: "BAL",
+          teamName: "New England Patriots",
+          teamImage: "/logos/new-england-patriots.svg",
+          teamSportsdataId: "NE",
         })
       }
     >
@@ -744,19 +743,19 @@ export function CreateTeam() {
 
 export function InitPlayerMint() {
   const { initialize } = useMarketAdmin();
-  const playerName = "Philadelphia Eagles";
-  const playerImage = "/logos/philadelphia-eagles.png";
+  const playerName = "New England Patriots";
+  const playerImage = "/logos/new-england-patriots.svg";
   const playerPosition = "WR";
   // PHI
-  const teamId = "cm6l90r8j0000rcxnu1blil7n";
+  const teamId = "cm7awyxag0004rcml8tetjba3";
   // KC
   // const teamId = "cm6qtbj7c0000rcmm8v7l5132";
-  const teamSportsdataId = "PHI";
-  const mintSymbol = "EAGLES";
-  const season = "2024POST";
-  const week = "4";
+  const teamSportsdataId = "NE";
+  const mintSymbol = "PATRIOTS";
+  const season = "2007POST";
+  const week = "3";
   const network = "MAINNET";
-  const projection = 23.5;
+  const projection = 34.5;
 
   return (
     <button

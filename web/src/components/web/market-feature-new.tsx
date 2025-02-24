@@ -103,7 +103,8 @@ export default function MarketFeatureNew() {
   }, [trades.data]);
 
   useEffect(() => {
-    const feedUrl = "wss://fillfeed-production.up.railway.app";
+    // const feedUrl = "wss://fillfeed-production.up.railway.app";
+    const feedUrl = "ws://localhost:1234";
     if (!feedUrl) {
       toast.error("NEXT_PUBLIC_FEED_URL not set");
       throw new Error("NEXT_PUBLIC_FEED_URL not set");

@@ -545,8 +545,6 @@ export function useMarketAdmin() {
   const closeMintAccounts = useMutation({
     mutationKey: ["markets", "close-mint-accounts"],
     mutationFn: async () => {
-      const playerId = { data: "19766" };
-      const timestamp = { data: "1739054250215" };
       const mintConfig = PublicKey.findProgramAddressSync(
         [
           Buffer.from("config"),
