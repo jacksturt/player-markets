@@ -1178,9 +1178,8 @@ export const Position = ({
   marketInfo: MarketRouterObject;
 }) => {
   const ticker = marketInfo.baseMint.symbol;
-  console.log(shortPositionMinted, longPositionHeld);
-  if (isNaN(shortPositionMinted) || isNaN(longPositionHeld)) return null;
   const router = useRouter();
+  if (isNaN(shortPositionMinted) || isNaN(longPositionHeld)) return null;
   return (
     <div
       className="w-full h-[41px] flex items-center justify-between"
