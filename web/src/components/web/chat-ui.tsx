@@ -127,7 +127,7 @@ export default function ChatUI() {
       profileUrl: "/player-temp/allen.jpg",
     });
 
-    // Add channel handler to listen for real-time updates
+    // Add channel handler to listen for real-time updatess
     // TODO: this doesn't seem to be working
     const channelHandler = new OpenChannelHandler({
       onMessageReceived: (channel, message) => {
