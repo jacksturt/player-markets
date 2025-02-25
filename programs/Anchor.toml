@@ -11,7 +11,7 @@ tradetalk = "A13hqcQX4g2o57dW4vRQKem5G7YykugzPGyvda5YXijV"
 url = "https://quaint-hardworking-fire.solana-mainnet.quiknode.pro/5229b2c3c59e9aea2a1c583bafb9ad2d334d751a"
 
 [provider]
-cluster = "Localnet"
+cluster = "mainnet"
 wallet = "~/.config/solana/id.json"
 
 [scripts]

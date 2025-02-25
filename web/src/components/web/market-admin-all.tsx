@@ -7,6 +7,10 @@ import {
   CloseMintAccounts,
   VaultsList,
   InitPlayerMintBE,
+  PlayerStatsList,
+  ClosePlayerStats,
+  MintRecordList,
+  MintConfigList,
 } from "./web-ui";
 
 export default function MarketAdminAll() {
@@ -33,8 +37,11 @@ export default function MarketAdminAll() {
           <CreateTeam />
           <InitPlayerMint />
           <InitPlayerMintBE />
-          {/* <VaultsList /> */}
+          {/* <VaultsList />
+          <PlayerStatsList /> */}
           <CloseMintAccounts />
+          <MintRecordList />
+          <MintConfigList />
         </div>
       </div>
     </div>

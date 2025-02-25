@@ -7,6 +7,8 @@ import {
   SetMintingEnabled,
   SetPayoutEnabled,
   SetPayoutEnabledAndMintingDisabled,
+  VaultInfo,
+  EmptyVault,
 } from "./web-ui";
 import { PublicKey } from "@solana/web3.js";
 
@@ -36,6 +38,8 @@ export default function MarketAdmin() {
           <SetMintingEnabled />
           <SetPayoutEnabled />
           <SetPayoutEnabledAndMintingDisabled />
+          <VaultInfo />
+          <EmptyVault />
         </div>
       </div>
     </div>

@@ -1,4 +1,8 @@
+pub mod admin_empty_vault;
 pub mod close_mint_accounts;
+pub mod close_mint_config;
+pub mod close_mint_record;
+pub mod close_player_stats;
 pub mod faucet_quote;
 pub mod initialize_mint;
 pub mod initialize_projection_oracle;
@@ -9,7 +13,11 @@ pub mod set_is_mint_enabled;
 pub mod set_is_payout_enabled;
 pub mod update_projection_oracle;
 
+pub use admin_empty_vault::*;
 pub use close_mint_accounts::*;
+pub use close_mint_config::*;
+pub use close_mint_record::*;
+pub use close_player_stats::*;
 pub use faucet_quote::*;
 pub use initialize_mint::*;
 pub use initialize_projection_oracle::*;

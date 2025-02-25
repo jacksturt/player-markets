@@ -844,6 +844,80 @@ export function VaultsList() {
   );
 }
 
+export function PlayerStatsList() {
+  const { playerStats } = useMarkets();
+  return (
+    <div>
+      {playerStats.data?.map((playerStat) => (
+        <div key={playerStat.publicKey.toString()}>
+          {playerStat.publicKey.toString()},{" "}
+          <ClosePlayerStats playerStatsKey={playerStat.publicKey.toString()} />
+        </div>
+      ))}
+    </div>
+  );
+}
+
+export function CloseMintConfig({ mintConfigKey }: { mintConfigKey: string }) {
+  const { closeMintConfig } = useMarketAdmin();
+  const mintConfig = new PublicKey(mintConfigKey);
+
+  return (
+    <button
+      className="btn btn-xs lg:btn-md btn-primary"
+      onClick={() => closeMintConfig.mutateAsync({ mintConfig })}
+      disabled={closeMintConfig.isPending}
+    >
+      Close Mint Config {mintConfig.toString()}{" "}
+      {closeMintConfig.isPending && "..."}
+    </button>
+  );
+}
+
+export function MintConfigList() {
+  const { markets } = useMarkets();
+  return (
+    <div>
+      {markets.data?.map((market) => (
+        <div key={market.publicKey.toString()}>
+          {market.publicKey.toString()},{" "}
+          <CloseMintConfig mintConfigKey={market.publicKey.toString()} />
+        </div>
+      ))}
+    </div>
+  );
+}
+
+export function CloseMintRecord({ mintRecordKey }: { mintRecordKey: string }) {
+  const { closeMintRecord } = useMarketAdmin();
+  const mintRecord = new PublicKey(mintRecordKey);
+
+  return (
+    <button
+      className="btn btn-xs lg:btn-md btn-primary"
+      onClick={() => closeMintRecord.mutateAsync({ mintRecord })}
+      disabled={closeMintRecord.isPending}
+    >
+      Close Mint Record {mintRecord.toString()}{" "}
+      {closeMintRecord.isPending && "..."}
+    </button>
+  );
+}
+
+export function MintRecordList() {
+  const { mintRecords } = useMarkets();
+  return (
+    <div>
+      {mintRecords.data?.map((mintRecord) => (
+        <div key={mintRecord.publicKey.toString()}>
+          {mintRecord.publicKey.toString()},{" "}
+          <CloseMintRecord mintRecordKey={mintRecord.publicKey.toString()} />
+        </div>
+      ))}
+    </div>
+  );
+}
+
 export function UpdateProjectionOracle() {
   const { updateProjectionOracle } = useMarketAdmin();
   const projection = 0;
@@ -875,6 +949,16 @@ export function CancelAllOrders() {
     >
       Cancel All Orders {cancelAllOrders.isPending && "..."}
     </button>
+  );
+}
+
+export function VaultInfo() {
+  const { vault } = usePlayerMarket();
+  return (
+    <div>
+      <p>Vault Address: {vault?.data?.address.toString()}</p>
+      <p>Vault Amount: {vault?.data?.amount.toString()}</p>
+    </div>
   );
 }
 
@@ -951,6 +1035,42 @@ export function CloseMintAccounts() {
     >
       Close Mint Accounts {vault?.data?.address.toString()}{" "}
       {closeMintAccounts.isPending && "..."}
+    </button>
+  );
+}
+
+export function EmptyVault() {
+  const { emptyVault } = useMarketAdmin();
+  const { vault } = usePlayerMarket();
+
+  return (
+    <button
+      className="btn btn-xs lg:btn-md btn-primary"
+      onClick={() => emptyVault.mutateAsync()}
+      disabled={emptyVault.isPending}
+    >
+      Empty Vault {vault?.data?.address.toString()}{" "}
+      {emptyVault.isPending && "..."}
+    </button>
+  );
+}
+
+export function ClosePlayerStats({
+  playerStatsKey,
+}: {
+  playerStatsKey: string;
+}) {
+  const { closePlayerStats } = useMarketAdmin();
+  const playerStats = new PublicKey(playerStatsKey);
+
+  return (
+    <button
+      className="btn btn-xs lg:btn-md btn-primary"
+      onClick={() => closePlayerStats.mutateAsync({ playerStats })}
+      disabled={closePlayerStats.isPending}
+    >
+      Close Player Stats {playerStats.toString()}{" "}
+      {closePlayerStats.isPending && "..."}
     </button>
   );
 }

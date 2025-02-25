@@ -97,4 +97,24 @@ pub mod tradetalk {
         ctx.accounts.close_accounts().unwrap();
         Ok(())
     }
+
+    pub fn close_player_stats(ctx: Context<ClosePlayerStats>) -> Result<()> {
+        ctx.accounts.close_player_stats().unwrap();
+        Ok(())
+    }
+
+    pub fn empty_vault(ctx: Context<AdminEmptyVault>) -> Result<()> {
+        ctx.accounts.empty_vault().unwrap();
+        Ok(())
+    }
+
+    pub fn close_mint_config(ctx: Context<CloseMintConfig>) -> Result<()> {
+        ctx.accounts.close_mint_config().unwrap();
+        Ok(())
+    }
+
+    pub fn close_mint_record(ctx: Context<CloseMintRecord>) -> Result<()> {
+        ctx.accounts.close_mint_record().unwrap();
+        Ok(())
+    }
 }

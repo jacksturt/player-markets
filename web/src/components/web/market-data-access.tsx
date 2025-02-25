@@ -498,6 +498,109 @@ export function useMarketAdmin() {
     onError: () => toast.error("Failed to initialize account"),
   });
 
+  const emptyVault = useMutation({
+    mutationKey: ["markets", "empty-vault"],
+    mutationFn: async () => {
+      const mintConfig = PublicKey.findProgramAddressSync(
+        [
+          Buffer.from("config"),
+          Buffer.from(playerId.data!),
+          Buffer.from(timestamp.data!),
+        ],
+        program.programId
+      )[0];
+      const vault = getAssociatedTokenAddressSync(quoteToken, mintConfig, true);
+      const payerQuoteTokenAccount = getAssociatedTokenAddressSync(
+        quoteToken,
+        provider.publicKey,
+        true
+      );
+      const signature = await program.methods
+        .emptyVault()
+        .accountsStrict({
+          payer: provider.publicKey,
+          vault: vault,
+          mintConfig: mintConfig,
+          quoteTokenMint: quoteToken,
+          payerQuoteTokenAccount: payerQuoteTokenAccount,
+          systemProgram: SystemProgram.programId,
+          tokenProgram: TOKEN_PROGRAM_ID,
+          associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
+        })
+        .rpc();
+      return { signature, mintConfig };
+    },
+    onSuccess: async (data: { signature: string; mintConfig: PublicKey }) => {
+      transactionToast(data.signature);
+      return accounts.refetch();
+    },
+    onError: () => toast.error("Failed to initialize account"),
+  });
+
+  const closePlayerStats = useMutation({
+    mutationKey: ["markets", "close-player-stats"],
+    mutationFn: async ({ playerStats }: { playerStats: PublicKey }) => {
+      const signature = await program.methods
+        .closePlayerStats()
+        .accountsStrict({
+          payer: provider.publicKey,
+          playerStats: playerStats,
+          systemProgram: SystemProgram.programId,
+        })
+        .rpc();
+      return { signature, playerStats };
+    },
+    onSuccess: async (data: { signature: string; playerStats: PublicKey }) => {
+      transactionToast(data.signature);
+      return accounts.refetch();
+    },
+    onError: () => toast.error("Failed to initialize account"),
+  });
+  const closeMintConfig = useMutation({
+    mutationKey: ["markets", "close-mint-config"],
+    mutationFn: async ({ mintConfig }: { mintConfig: PublicKey }) => {
+      const vault = getAssociatedTokenAddressSync(quoteToken, mintConfig, true);
+      const signature = await program.methods
+        .closeMintConfig()
+        .accountsStrict({
+          admin: provider.publicKey,
+          quoteTokenMint: quoteToken,
+          vault: vault,
+          mintConfig: mintConfig,
+          systemProgram: SystemProgram.programId,
+          tokenProgram: TOKEN_PROGRAM_ID,
+          associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
+        })
+        .rpc();
+      return { signature, mintConfig };
+    },
+    onSuccess: async (data: { signature: string; mintConfig: PublicKey }) => {
+      transactionToast(data.signature);
+      return accounts.refetch();
+    },
+    onError: () => toast.error("Failed to initialize account"),
+  });
+
+  const closeMintRecord = useMutation({
+    mutationKey: ["markets", "close-mint-record"],
+    mutationFn: async ({ mintRecord }: { mintRecord: PublicKey }) => {
+      const signature = await program.methods
+        .closeMintRecord()
+        .accountsStrict({
+          payer: provider.publicKey,
+          mintRecord: mintRecord,
+          systemProgram: SystemProgram.programId,
+        })
+        .rpc();
+      return { signature, mintRecord };
+    },
+    onSuccess: async (data: { signature: string; mintRecord: PublicKey }) => {
+      transactionToast(data.signature);
+      return accounts.refetch();
+    },
+    onError: () => toast.error("Failed to initialize account"),
+  });
+
   const setPayoutEnabledAndMintingDisabled = useMutation({
     mutationKey: ["markets", "set-payout-enabled"],
     mutationFn: async () => {
@@ -593,6 +696,10 @@ export function useMarketAdmin() {
     setPayoutEnabled,
     initializeMintBE,
     setPayoutEnabledAndMintingDisabled,
+    emptyVault,
+    closePlayerStats,
+    closeMintConfig,
+    closeMintRecord,
   };
 }
 
@@ -615,11 +722,18 @@ export function useMarkets() {
     queryKey: ["vaults"],
     queryFn: async () => {
       const vaults = [];
+      console.log("markets.data", markets.data);
       for (const market of markets.data ?? []) {
         const vaultAddress = getAssociatedTokenAddressSync(
           quoteToken,
           market.publicKey,
           true
+        );
+        console.log(
+          "vaultAddress",
+          vaultAddress.toBase58(),
+          "playerTokenMint",
+          market.account.playerTokenMint.toBase58()
         );
         try {
           const vault = await getAccount(provider.connection, vaultAddress);
@@ -629,6 +743,16 @@ export function useMarkets() {
         }
       }
       return vaults;
+    },
+    enabled: !!markets.data,
+    staleTime: 1000 * 10,
+  });
+
+  const mintRecords = useQuery({
+    queryKey: ["mint-records"],
+    queryFn: async () => {
+      const records = await program.account.mintRecord.all();
+      return records;
     },
     enabled: !!markets.data,
     staleTime: 1000 * 10,
@@ -740,7 +864,9 @@ export function useMarkets() {
     markets,
     vaults,
     allMarkets,
+    playerStats,
     marketsWithPlayerStatsAndVaults,
+    mintRecords,
   };
 }
 

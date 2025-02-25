@@ -9,7 +9,13 @@ import {
   usePlayerMarket,
   useQuoteToken,
 } from "./market-data-access";
-import { Trade, ClaimSeat } from "./web-ui";
+import {
+  Trade,
+  ClaimSeat,
+  CancelAllOrders,
+  WithdrawAll,
+  Payout,
+} from "./web-ui";
 import { FillLogResult } from "manifest/src";
 import toast from "react-hot-toast";
 import { para } from "@/lib/para";
@@ -182,6 +188,9 @@ export default function MarketFeatureNew() {
           <div className="w-[450px]">
             {mintConfigAccount.data?.mintingEnabled && <Trade />}
             {mintConfigAccount.data?.payoutEnabled && <CashoutAll />}
+            {mintConfigAccount.data?.payoutEnabled && <CancelAllOrders />}
+            {mintConfigAccount.data?.payoutEnabled && <WithdrawAll />}
+            {mintConfigAccount.data?.payoutEnabled && <Payout />}
           </div>
         ) : (
           <div className="w-[450px]">
