@@ -909,6 +909,22 @@ export function CloseMintAccounts() {
   );
 }
 
+export function EmptyVault() {
+  const { emptyVault } = useMarketAdmin();
+  const { vault } = usePlayerMarket();
+
+  return (
+    <button
+      className="btn btn-xs lg:btn-md btn-primary"
+      onClick={() => emptyVault.mutateAsync()}
+      disabled={emptyVault.isPending}
+    >
+      Empty Vault {vault?.data?.address.toString()}{" "}
+      {emptyVault.isPending && "..."}
+    </button>
+  );
+}
+
 export function ClaimSeat() {
   const { claimSeat } = useManifestClient();
 

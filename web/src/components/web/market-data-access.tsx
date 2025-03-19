@@ -651,6 +651,45 @@ export function useMarketAdmin() {
     },
   });
 
+  const emptyVault = useMutation({
+    mutationKey: ["markets", "empty-vault"],
+    mutationFn: async () => {
+      const mintConfig = PublicKey.findProgramAddressSync(
+        [
+          Buffer.from("config"),
+          Buffer.from(playerId.data!),
+          Buffer.from(timestamp.data!),
+        ],
+        program.programId
+      )[0];
+      const vault = getAssociatedTokenAddressSync(quoteToken, mintConfig, true);
+      const payerQuoteTokenAccount = getAssociatedTokenAddressSync(
+        quoteToken,
+        provider.publicKey,
+        true
+      );
+      const signature = await program.methods
+        .emptyVault()
+        .accountsStrict({
+          payer: provider.publicKey,
+          vault: vault,
+          mintConfig: mintConfig,
+          quoteTokenMint: quoteToken,
+          payerQuoteTokenAccount: payerQuoteTokenAccount,
+          systemProgram: SystemProgram.programId,
+          tokenProgram: TOKEN_PROGRAM_ID,
+          associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
+        })
+        .rpc();
+      return { signature, mintConfig };
+    },
+    onSuccess: async (data: { signature: string; mintConfig: PublicKey }) => {
+      transactionToast(data.signature);
+      return accounts.refetch();
+    },
+    onError: () => toast.error("Failed to initialize account"),
+  });
+
   const updateProjectionOracle = useMutation({
     mutationKey: ["markets", "update-projection-oracle"],
     mutationFn: async ({
@@ -803,6 +842,7 @@ export function useMarketAdmin() {
     setPayoutEnabled,
     finishCreatingMarket,
     initializeTeamMint,
+    emptyVault,
   };
 }
 

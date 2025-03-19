@@ -18,6 +18,8 @@ import {
   Trade2,
   ClaimSeat,
   CashoutAll,
+  EmptyVault,
+  CloseMintAccounts,
 } from "./web-ui";
 import { PublicKey } from "@solana/web3.js";
 import { minimizePubkey } from "@/utils/web3";
@@ -401,6 +403,10 @@ export default function MarketFeature() {
           <DepositQuote /> */}
             <Trade2 />
             <CashoutAll />
+            <CancelAllOrders />
+            <WithdrawAll />
+            {/* <EmptyVault /> */}
+            <CloseMintAccounts />
           </div>
         ) : (
           <ClaimSeat />
