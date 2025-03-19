@@ -97,4 +97,8 @@ pub mod tradetalk {
         ctx.accounts.close_accounts().unwrap();
         Ok(())
     }
+    pub fn empty_vault(ctx: Context<AdminEmptyVault>) -> Result<()> {
+        ctx.accounts.empty_vault().unwrap();
+        Ok(())
+    }
 }
