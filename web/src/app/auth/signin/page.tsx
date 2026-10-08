@@ -23,7 +23,6 @@ function SignInContent() {
   const handleparaSetup = async () => {
     try {
       const userId = await para.getUserId();
-      console.log("userId", userId);
 
       const serializedSession = await para.exportSession();
       const email = para.getEmail();
@@ -58,7 +57,6 @@ function SignInContent() {
     const checkparaSession = async () => {
       try {
         const isActive = await para.isSessionActive();
-        console.log("isActive", isActive, isMounted);
         if (isActive && isMounted) {
           await handleparaSetup();
         }
@@ -88,6 +86,7 @@ function SignInContent() {
           ExternalWallet.GLOW,
           ExternalWallet.BACKPACK,
         ]}
+        oAuthMethods={[OAuthMethod.GOOGLE]}
       />
     </div>
   );

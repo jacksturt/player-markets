@@ -167,7 +167,6 @@ export default function MarketFeatureNew() {
         utils.trade.readForMarket.invalidate({
           marketAddress: marketAddress ?? "",
         });
-        console.log("placeOrder", event.data);
       }
     };
 

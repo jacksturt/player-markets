@@ -11,7 +11,7 @@ import {
   WalletProvider,
 } from "@solana/wallet-adapter-react";
 import { WalletModalProvider } from "@solana/wallet-adapter-react-ui";
-import { ReactNode, useCallback, useMemo } from "react";
+import { ReactNode, useCallback, useMemo, useState } from "react";
 import {
   backpackWallet,
   ParaSolanaProvider,

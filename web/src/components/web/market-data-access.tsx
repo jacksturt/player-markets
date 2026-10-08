@@ -1458,19 +1458,12 @@ export function useMyMarket() {
       isFill?: boolean;
       filledOrderId?: string;
     }) => {
-      console.log("numBaseTokens", numBaseTokens);
-      console.log("tokenPrice", tokenPrice);
-      console.log("isFill", isFill);
-      console.log("filledOrderId", filledOrderId);
       const withdrawableQuote =
         balances.data?.quoteWithdrawableBalanceTokens ?? 0;
 
       const neededQuote = tokenPrice * numBaseTokens;
-      console.log("neededQuote", neededQuote);
-      console.log("withdrawableQuote", withdrawableQuote);
       const amountToDeposit =
         (neededQuote * 10 ** 6 - withdrawableQuote * 10 ** 6) / 10 ** 6;
-      console.log("amountToDeposit", amountToDeposit);
 
       const feePayer = publicKey ?? paraPubkey.data!;
       const blockhash = await provider.connection.getLatestBlockhash();
